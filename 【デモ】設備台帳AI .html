@@ -1,0 +1,3412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COSOJI 設備台帳AI — デモ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Meiryo','MS PGothic','Noto Sans JP',sans-serif; font-size:13px; background:#F5F6F8; }
+select,input,textarea,button { font-family:inherit; }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:#f0f0f0; }
+::-webkit-scrollbar-thumb { background:#b0b8c8; border-radius:3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+var _React = React,
+  useState = _React.useState,
+  useEffect = _React.useEffect,
+  useRef = _React.useRef,
+  useCallback = _React.useCallback;
+
+/* ============================================================
+   DATA
+============================================================ */
+var NAV_ITEMS = ["ダッシュボード", "物件一覧", "設備台帳", "更新予測", "見積依頼"];
+var PROPERTIES = [{
+  id: 1,
+  name: "渋谷ビル南館",
+  type: "オフィスビル",
+  floors: 10,
+  ledger: "完成",
+  alertLevel: "red",
+  alertCount: 2,
+  cost: "¥23.4M",
+  equip: 18
+}, {
+  id: 2,
+  name: "新宿レジデンス",
+  type: "マンション",
+  floors: 15,
+  ledger: "完成",
+  alertLevel: "yellow",
+  alertCount: 3,
+  cost: "¥8.1M",
+  equip: 14
+}, {
+  id: 3,
+  name: "池袋物流センター",
+  type: "倉庫",
+  floors: 3,
+  ledger: "完成",
+  alertLevel: "none",
+  alertCount: 0,
+  cost: "¥4.2M",
+  equip: 9
+}, {
+  id: 4,
+  name: "品川テラスビル",
+  type: "オフィスビル",
+  floors: 6,
+  ledger: "未作成",
+  alertLevel: "none",
+  alertCount: 0,
+  cost: "─",
+  equip: 0
+}, {
+  id: 5,
+  name: "目黒タワー",
+  type: "オフィスビル",
+  floors: 20,
+  ledger: "完成",
+  alertLevel: "yellow",
+  alertCount: 2,
+  cost: "¥15.2M",
+  equip: 22
+}, {
+  id: 6,
+  name: "横浜みなとビル",
+  type: "商業施設",
+  floors: 8,
+  ledger: "完成",
+  alertLevel: "none",
+  alertCount: 0,
+  cost: "¥6.8M",
+  equip: 11
+}, {
+  id: 7,
+  name: "大宮センタービル",
+  type: "オフィスビル",
+  floors: 12,
+  ledger: "完成",
+  alertLevel: "red",
+  alertCount: 1,
+  cost: "¥9.3M",
+  equip: 16
+}, {
+  id: 8,
+  name: "川崎ウエストタワー",
+  type: "マンション",
+  floors: 18,
+  ledger: "未作成",
+  alertLevel: "none",
+  alertCount: 0,
+  cost: "─",
+  equip: 0
+}];
+var EQ_BASE = [{
+  id: "001",
+  cat: "空調",
+  name: "ビル用マルチエアコン（室外機）",
+  loc: "1階 機械室",
+  maker: "ダイキン工業",
+  model: "RSYP224DA",
+  year: 2009,
+  life: 15,
+  st: "red",
+  maint: "2024/03",
+  next: "2024年",
+  cost: "¥2,850,000",
+  conf: "確認済"
+}, {
+  id: "002",
+  cat: "空調",
+  name: "ビル用マルチエアコン（室外機）",
+  loc: "屋上",
+  maker: "ダイキン工業",
+  model: "RSYP280DA",
+  year: 2009,
+  life: 15,
+  st: "red",
+  maint: "2024/03",
+  next: "2024年",
+  cost: "¥3,200,000",
+  conf: "確認済"
+}, {
+  id: "003",
+  cat: "空調",
+  name: "パッケージエアコン（室外機）",
+  loc: "B1F 機械室",
+  maker: "ダイキン工業",
+  model: "RZXP112DA",
+  year: 2015,
+  life: 15,
+  st: "yellow",
+  maint: "2024/09",
+  next: "2030年",
+  cost: "¥1,200,000",
+  conf: "確認済"
+}, {
+  id: "004",
+  cat: "空調",
+  name: "パッケージエアコン（室外機）",
+  loc: "B1F 機械室",
+  maker: "ダイキン工業",
+  model: "RZXP112DA",
+  year: 2015,
+  life: 15,
+  st: "yellow",
+  maint: "2024/09",
+  next: "2030年",
+  cost: "¥1,200,000",
+  conf: "確認済"
+}, {
+  id: "005",
+  cat: "空調",
+  name: "パッケージエアコン（室外機）",
+  loc: "3F 廊下",
+  maker: "ダイキン工業",
+  model: "RZXP56DA",
+  year: 2018,
+  life: 15,
+  st: "green",
+  maint: "2024/06",
+  next: "2033年",
+  cost: "¥680,000",
+  conf: "AI推定"
+}, {
+  id: "006",
+  cat: "電気",
+  name: "受変電設備（キュービクル）",
+  loc: "B1F 電気室",
+  maker: "東芝",
+  model: "VCB-6600",
+  year: 2003,
+  life: 25,
+  st: "red",
+  maint: "2024/06",
+  next: "2027年",
+  cost: "¥12,000,000",
+  conf: "確認済"
+}, {
+  id: "007",
+  cat: "電気",
+  name: "低圧盤",
+  loc: "B1F 電気室",
+  maker: "三菱電機",
+  model: "MCCB-400A",
+  year: 2003,
+  life: 25,
+  st: "red",
+  maint: "2024/06",
+  next: "2027年",
+  cost: "¥3,500,000",
+  conf: "AI推定"
+}, {
+  id: "008",
+  cat: "電気",
+  name: "非常用発電機",
+  loc: "屋上",
+  maker: "デンヨー",
+  model: "DCA-150ESK",
+  year: 2010,
+  life: 20,
+  st: "yellow",
+  maint: "2024/08",
+  next: "2030年",
+  cost: "¥5,500,000",
+  conf: "確認済"
+}, {
+  id: "009",
+  cat: "電気",
+  name: "自動火災報知設備",
+  loc: "全フロア",
+  maker: "能美防災",
+  model: "FDK-X2",
+  year: 2008,
+  life: 20,
+  st: "yellow",
+  maint: "2024/10",
+  next: "2028年",
+  cost: "¥2,200,000",
+  conf: "確認済"
+}, {
+  id: "010",
+  cat: "電気",
+  name: "誘導灯・非常照明",
+  loc: "全フロア",
+  maker: "パナソニック",
+  model: "FK78322",
+  year: 2012,
+  life: 15,
+  st: "yellow",
+  maint: "2024/10",
+  next: "2027年",
+  cost: "¥980,000",
+  conf: "AI推定"
+}, {
+  id: "011",
+  cat: "昇降",
+  name: "乗用エレベーター",
+  loc: "B1F〜10F",
+  maker: "三菱電機",
+  model: "GPS-X2000",
+  year: 2008,
+  life: 20,
+  st: "yellow",
+  maint: "2024/03",
+  next: "2028年",
+  cost: "¥8,500,000",
+  conf: "確認済"
+}, {
+  id: "012",
+  cat: "昇降",
+  name: "小荷物専用昇降機",
+  loc: "1F〜5F",
+  maker: "フジテック",
+  model: "SDH-1000",
+  year: 2010,
+  life: 20,
+  st: "green",
+  maint: "2024/03",
+  next: "2030年",
+  cost: "¥2,800,000",
+  conf: "確認済"
+}, {
+  id: "013",
+  cat: "給排水",
+  name: "給水ポンプユニット",
+  loc: "B1F 機械室",
+  maker: "荏原製作所",
+  model: "FSJD-65",
+  year: 2012,
+  life: 15,
+  st: "yellow",
+  maint: "2023/11",
+  next: "2027年",
+  cost: "¥2,800,000",
+  conf: "AI推定"
+}, {
+  id: "014",
+  cat: "給排水",
+  name: "排水ポンプ",
+  loc: "B1F ピット",
+  maker: "荏原製作所",
+  model: "32DVS5.4",
+  year: 2012,
+  life: 15,
+  st: "yellow",
+  maint: "2023/11",
+  next: "2027年",
+  cost: "¥420,000",
+  conf: "AI推定"
+}, {
+  id: "015",
+  cat: "給排水",
+  name: "受水槽・高架水槽",
+  loc: "屋上",
+  maker: "タキロンシーアイ",
+  model: "FRP-10T",
+  year: 2005,
+  life: 25,
+  st: "yellow",
+  maint: "2024/02",
+  next: "2030年",
+  cost: "¥1,800,000",
+  conf: "確認済"
+}, {
+  id: "016",
+  cat: "消防",
+  name: "スプリンクラー設備",
+  loc: "全フロア",
+  maker: "能美防災",
+  model: "SP-25A",
+  year: 2008,
+  life: 25,
+  st: "green",
+  maint: "2024/10",
+  next: "2033年",
+  cost: "¥1,800,000",
+  conf: "確認済"
+}, {
+  id: "017",
+  cat: "消防",
+  name: "屋内消火栓設備",
+  loc: "全フロア",
+  maker: "能美防災",
+  model: "HS-30",
+  year: 2008,
+  life: 25,
+  st: "green",
+  maint: "2024/10",
+  next: "2033年",
+  cost: "¥650,000",
+  conf: "確認済"
+}, {
+  id: "018",
+  cat: "外壁",
+  name: "外壁・防水（屋上）",
+  loc: "屋上",
+  maker: "田島ルーフィング",
+  model: "改質アス防水",
+  year: 2011,
+  life: 15,
+  st: "red",
+  maint: "2023/05",
+  next: "2026年",
+  cost: "¥4,200,000",
+  conf: "AI推定"
+}];
+var YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034];
+var COSTS = [1.2, 6.2, 18.8, 10.5, 2.1, 8.4, 1.5, 6.3, 2.2, 11.4];
+
+/* ============================================================
+   COLORS
+============================================================ */
+var C = {
+  navy: "#2B4B8C",
+  navyDark: "#1A3266",
+  navyLight: "#E8EDF5",
+  accent: "#2B6CB0",
+  bg: "#F5F6F8",
+  border: "#C8CDD6",
+  borderLight: "#E2E5EA",
+  tableHead: "#EEF0F4",
+  tableStripe: "#F9FAFB",
+  text: "#1F2937",
+  textMid: "#4B5563",
+  textLight: "#8D96A3",
+  red: "#B91C1C",
+  redBg: "#FEF2F2",
+  redBorder: "#FECACA",
+  yellow: "#92400E",
+  yellowBg: "#FFFBEB",
+  yellowBorder: "#FDE68A",
+  green: "#166534",
+  greenBg: "#F0FDF4",
+  greenBorder: "#BBF7D0"
+};
+
+/* ============================================================
+   SHARED COMPONENTS
+============================================================ */
+function Btn(_ref) {
+  var label = _ref.label,
+    onClick = _ref.onClick,
+    primary = _ref.primary,
+    small = _ref.small,
+    danger = _ref.danger,
+    disabled = _ref.disabled;
+  var bg = disabled ? "#ccc" : danger ? C.red : primary ? C.navy : "#fff";
+  var col = disabled ? "#888" : danger || primary ? "#fff" : C.navy;
+  var bdr = disabled ? "#ccc" : danger ? C.red : primary ? C.navy : C.border;
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: disabled ? undefined : onClick,
+    disabled: disabled,
+    style: {
+      background: bg,
+      color: col,
+      border: "1px solid ".concat(bdr),
+      borderRadius: 4,
+      padding: small ? "4px 12px" : "7px 16px",
+      fontSize: small ? 12 : 13,
+      fontWeight: 600,
+      cursor: disabled ? "default" : "pointer",
+      whiteSpace: "nowrap",
+      opacity: disabled ? 0.6 : 1
+    }
+  }, label);
+}
+function StatusCell(_ref2) {
+  var st = _ref2.st;
+  if (st === "red") return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red,
+      fontWeight: 700,
+      fontSize: 12
+    }
+  }, "\u25CF \u8981\u66F4\u65B0");
+  if (st === "yellow") return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.yellow,
+      fontWeight: 700,
+      fontSize: 12
+    }
+  }, "\u25CF \u8981\u6CE8\u610F");
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.green,
+      fontWeight: 700,
+      fontSize: 12
+    }
+  }, "\u25CF \u6B63\u5E38");
+}
+function TH(_ref3) {
+  var children = _ref3.children,
+    w = _ref3.w;
+  return /*#__PURE__*/React.createElement("th", {
+    style: {
+      padding: "7px 10px",
+      fontSize: 12,
+      fontWeight: 700,
+      color: C.textMid,
+      textAlign: "left",
+      background: C.tableHead,
+      borderBottom: "1px solid ".concat(C.border),
+      borderRight: "1px solid ".concat(C.borderLight),
+      whiteSpace: "nowrap",
+      width: w
+    }
+  }, children);
+}
+function TD(_ref4) {
+  var children = _ref4.children,
+    center = _ref4.center,
+    bold = _ref4.bold,
+    small = _ref4.small;
+  return /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "7px 10px",
+      fontSize: small ? 11 : 13,
+      fontWeight: bold ? 600 : 400,
+      color: bold ? C.text : C.textMid,
+      textAlign: center ? "center" : "left",
+      borderBottom: "1px solid ".concat(C.borderLight),
+      borderRight: "1px solid ".concat(C.borderLight),
+      whiteSpace: "nowrap"
+    }
+  }, children);
+}
+
+/* ヘッダー専用 PropertySelector（includeAll=true固定） */
+function HeaderPropertySelector(_ref5) {
+  var _PROPERTIES$find$name, _PROPERTIES$find;
+  var scope = _ref5.scope,
+    setScope = _ref5.setScope;
+  var _useState = useState(false),
+    _useState2 = _slicedToArray(_useState, 2),
+    open = _useState2[0],
+    setOpen = _useState2[1];
+  var _useState3 = useState(""),
+    _useState4 = _slicedToArray(_useState3, 2),
+    q = _useState4[0],
+    setQ = _useState4[1];
+  var ref = useRef(null);
+  var iref = useRef(null);
+  var done = PROPERTIES.filter(function (p) {
+    return p.ledger === "完成";
+  });
+  var list = done.filter(function (p) {
+    return !q || p.name.includes(q);
+  });
+  useEffect(function () {
+    var fn = function fn(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", fn);
+    return function () {
+      return document.removeEventListener("mousedown", fn);
+    };
+  }, []);
+  useEffect(function () {
+    if (open && iref.current) iref.current.focus();
+  }, [open]);
+  var label = scope === "all" ? "全物件サマリー" : (_PROPERTIES$find$name = (_PROPERTIES$find = PROPERTIES.find(function (p) {
+    return p.id === scope;
+  })) === null || _PROPERTIES$find === void 0 ? void 0 : _PROPERTIES$find.name) !== null && _PROPERTIES$find$name !== void 0 ? _PROPERTIES$find$name : "─";
+  var dotC = function dotC(p) {
+    return p.alertLevel === "red" ? C.red : p.alertLevel === "yellow" ? C.yellow : C.green;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    ref: ref,
+    style: {
+      position: "relative",
+      zIndex: 60
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setOpen(function (o) {
+        return !o;
+      });
+    },
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 7,
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 4,
+      padding: "6px 10px",
+      fontSize: 13,
+      fontWeight: 600,
+      color: C.text,
+      cursor: "pointer",
+      minWidth: 190,
+      justifyContent: "space-between",
+      outline: open ? "2px solid ".concat(C.accent) : "none"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, scope !== "all" && function () {
+    var p = PROPERTIES.find(function (x) {
+      return x.id === scope;
+    });
+    return (p === null || p === void 0 ? void 0 : p.alertLevel) !== "none" ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: dotC(p),
+        display: "inline-block"
+      }
+    }) : null;
+  }(), label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.textLight,
+      fontSize: 10
+    }
+  }, open ? "▲" : "▼")), open && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: "calc(100% + 3px)",
+      right: 0,
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 4,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+      width: 260,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "7px 9px",
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    ref: iref,
+    value: q,
+    onChange: function onChange(e) {
+      return setQ(e.target.value);
+    },
+    placeholder: "\u7269\u4EF6\u540D\u3067\u7D5E\u308A\u8FBC\u307F...",
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "4px 8px",
+      fontSize: 12,
+      color: C.text,
+      outline: "none"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxHeight: 220,
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick() {
+      setScope("all");
+      setOpen(false);
+      setQ("");
+    },
+    style: {
+      padding: "8px 12px",
+      fontSize: 13,
+      cursor: "pointer",
+      fontWeight: scope === "all" ? 700 : 400,
+      background: scope === "all" ? C.navyLight : "transparent",
+      color: C.text,
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, "\u5168\u7269\u4EF6\u30B5\u30DE\u30EA\u30FC"), list.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 12,
+      fontSize: 12,
+      color: C.textLight,
+      textAlign: "center"
+    }
+  }, "\u8A72\u5F53\u306A\u3057") : list.map(function (p) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: p.id,
+      onClick: function onClick() {
+        setScope(p.id);
+        setOpen(false);
+        setQ("");
+      },
+      onMouseEnter: function onMouseEnter(e) {
+        if (scope !== p.id) e.currentTarget.style.background = C.bg;
+      },
+      onMouseLeave: function onMouseLeave(e) {
+        e.currentTarget.style.background = scope === p.id ? C.navyLight : "transparent";
+      },
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 12px",
+        cursor: "pointer",
+        fontSize: 13,
+        background: scope === p.id ? C.navyLight : "transparent",
+        color: C.text
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, p.alertLevel !== "none" && /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: dotC(p),
+        display: "inline-block",
+        flexShrink: 0
+      }
+    }), p.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, p.type));
+  }))));
+}
+
+/* ============================================================
+   DETAIL MODAL
+============================================================ */
+function DetailModal(_ref6) {
+  var equip = _ref6.equip,
+    onClose = _ref6.onClose,
+    onUpdate = _ref6.onUpdate,
+    handleNav = _ref6.handleNav,
+    showToast = _ref6.showToast;
+  var _useState5 = useState("info"),
+    _useState6 = _slicedToArray(_useState5, 2),
+    tab = _useState6[0],
+    setTab = _useState6[1];
+  var _useState7 = useState(null),
+    _useState8 = _slicedToArray(_useState7, 2),
+    editField = _useState8[0],
+    setEditField = _useState8[1];
+  var _useState9 = useState(""),
+    _useState0 = _slicedToArray(_useState9, 2),
+    editVal = _useState0[0],
+    setEditVal = _useState0[1];
+  var _useState1 = useState({
+      date: "",
+      content: "",
+      cost: ""
+    }),
+    _useState10 = _slicedToArray(_useState1, 2),
+    incForm = _useState10[0],
+    setIncForm = _useState10[1];
+  var _useState11 = useState(""),
+    _useState12 = _slicedToArray(_useState11, 2),
+    photoLabel = _useState12[0],
+    setPhotoLabel = _useState12[1];
+  var photoRef = useRef(null);
+  if (!equip) return null;
+  var startEdit = function startEdit(field, val, e) {
+    e && e.stopPropagation();
+    setEditField(field);
+    setEditVal(String(val !== null && val !== void 0 ? val : ""));
+  };
+  var commitEdit = function commitEdit() {
+    if (!editField) return;
+    var num = editField === "year" || editField === "life";
+    onUpdate(equip.id, editField, num ? Number(editVal) : editVal);
+    setEditField(null);
+    showToast("✅ 更新しました");
+  };
+  var handleKey = function handleKey(e) {
+    if (e.key === "Enter") commitEdit();
+    if (e.key === "Escape") setEditField(null);
+  };
+  var addInc = function addInc() {
+    if (!incForm.content) return;
+    var rec = {
+      date: incForm.date || new Date().toLocaleDateString("ja"),
+      content: incForm.content,
+      cost: incForm.cost
+    };
+    onUpdate(equip.id, "incidents", [].concat(_toConsumableArray(equip.incidents || []), [rec]));
+    setIncForm({
+      date: "",
+      content: "",
+      cost: ""
+    });
+    showToast("✅ 不具合履歴を登録しました");
+  };
+  var addPhoto = function addPhoto(fname) {
+    var lbl = photoLabel || fname;
+    onUpdate(equip.id, "photos", [].concat(_toConsumableArray(equip.photos || []), [{
+      name: lbl,
+      file: fname,
+      date: new Date().toLocaleDateString("ja")
+    }]));
+    setPhotoLabel("");
+    showToast("✅ 写真を登録しました");
+  };
+  var Field = function Field(_ref7) {
+    var label = _ref7.label,
+      field = _ref7.field,
+      val = _ref7.val;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: C.bg,
+        border: "1px solid ".concat(C.borderLight)
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight,
+        padding: "4px 8px",
+        borderBottom: "1px solid ".concat(C.borderLight)
+      }
+    }, label), editField === field ? /*#__PURE__*/React.createElement("input", {
+      autoFocus: true,
+      value: editVal,
+      onChange: function onChange(e) {
+        return setEditVal(e.target.value);
+      },
+      onBlur: commitEdit,
+      onKeyDown: handleKey,
+      style: {
+        width: "100%",
+        border: "none",
+        borderBottom: "2px solid ".concat(C.navy),
+        padding: "6px 8px",
+        fontSize: 13,
+        background: "#FFFDE7",
+        outline: "none",
+        boxSizing: "border-box"
+      }
+    }) : /*#__PURE__*/React.createElement("div", {
+      onClick: function onClick(e) {
+        return startEdit(field, val, e);
+      },
+      style: {
+        padding: "6px 8px",
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.navy,
+        cursor: "pointer",
+        minHeight: 32
+      },
+      title: "\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u7DE8\u96C6"
+    }, val));
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 200
+    },
+    onClick: function onClick(e) {
+      if (e.target === e.currentTarget) onClose();
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      width: 720,
+      maxWidth: "95vw",
+      maxHeight: "90vh",
+      display: "flex",
+      flexDirection: "column",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.18)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.navyDark,
+      padding: "12px 18px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: "#fff"
+    }
+  }, equip.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "#A0B4D4",
+      marginLeft: 10
+    }
+  }, equip.model, "\u3000", equip.maker, "\u3000", equip.loc)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 12,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement(StatusCell, {
+    st: equip.st
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    style: {
+      background: "none",
+      border: "none",
+      color: "#A0B4D4",
+      fontSize: 20,
+      cursor: "pointer",
+      lineHeight: 1
+    }
+  }, "\u2715"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      borderBottom: "1px solid ".concat(C.border),
+      background: C.bg,
+      flexShrink: 0
+    }
+  }, [{
+    id: "info",
+    label: "基本情報・編集"
+  }, {
+    id: "photos",
+    label: "\u5199\u771F (".concat((equip.photos || []).length, ")")
+  }, {
+    id: "history",
+    label: "\u4E0D\u5177\u5408\u30FB\u4FEE\u7E55\u5C65\u6B74 (".concat((equip.incidents || []).length, ")")
+  }].map(function (t) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: t.id,
+      onClick: function onClick() {
+        return setTab(t.id);
+      },
+      style: {
+        padding: "9px 20px",
+        fontSize: 13,
+        fontWeight: tab === t.id ? 700 : 400,
+        color: tab === t.id ? C.navy : C.textMid,
+        background: tab === t.id ? "#fff" : "transparent",
+        border: "none",
+        borderBottom: tab === t.id ? "2px solid ".concat(C.navy) : "2px solid transparent",
+        cursor: "pointer"
+      }
+    }, t.label);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 18,
+      overflowY: "auto",
+      flex: 1
+    }
+  }, tab === "info" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textLight,
+      marginBottom: 12
+    }
+  }, "\u5404\u9805\u76EE\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u7DE8\u96C6\u3067\u304D\u307E\u3059\u3002"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(3,1fr)",
+      gap: 10,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(Field, {
+    label: "\u8A2D\u5099\u540D\u79F0",
+    field: "name",
+    val: equip.name
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u8A2D\u7F6E\u5834\u6240",
+    field: "loc",
+    val: equip.loc
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u30E1\u30FC\u30AB\u30FC",
+    field: "maker",
+    val: equip.maker
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u578B\u756A\u30FB\u54C1\u756A",
+    field: "model",
+    val: equip.model
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u8A2D\u7F6E\u5E74",
+    field: "year",
+    val: equip.year
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u6CD5\u5B9A\u8010\u7528\u5E74\u6570",
+    field: "life",
+    val: equip.life
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u66F4\u65B0\u63A8\u5968\u5E74",
+    field: "next",
+    val: equip.next
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u63A8\u5B9A\u66F4\u65B0\u8CBB\u7528",
+    field: "cost",
+    val: equip.cost
+  }), /*#__PURE__*/React.createElement(Field, {
+    label: "\u6700\u7D42\u70B9\u691C\u65E5",
+    field: "maint",
+    val: equip.maint
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      marginBottom: 4
+    }
+  }, "\u5099\u8003"), editField === "note" ? /*#__PURE__*/React.createElement("textarea", {
+    autoFocus: true,
+    value: editVal,
+    onChange: function onChange(e) {
+      return setEditVal(e.target.value);
+    },
+    onBlur: commitEdit,
+    style: {
+      width: "100%",
+      border: "2px solid ".concat(C.navy),
+      borderRadius: 3,
+      padding: "7px 9px",
+      fontSize: 13,
+      height: 80,
+      resize: "none",
+      background: "#FFFDE7",
+      outline: "none",
+      boxSizing: "border-box"
+    }
+  }) : /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick(e) {
+      return startEdit("note", equip.note || "", e);
+    },
+    style: {
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "8px 10px",
+      fontSize: 13,
+      color: equip.note ? C.text : C.textLight,
+      minHeight: 56,
+      cursor: "pointer",
+      background: C.bg
+    }
+  }, equip.note || "クリックして備考を入力...")), /*#__PURE__*/React.createElement(Btn, {
+    label: "\u3053\u306E\u8A2D\u5099\u306E\u898B\u7A4D\u4F9D\u983C",
+    onClick: function onClick() {
+      onClose();
+      handleNav("見積依頼");
+    },
+    primary: true,
+    small: true
+  })), tab === "photos" && /*#__PURE__*/React.createElement("div", null, (equip.photos || []).length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "24px 0",
+      textAlign: "center",
+      fontSize: 13,
+      color: C.textLight
+    }
+  }, "\u307E\u3060\u5199\u771F\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(4,1fr)",
+      gap: 10,
+      marginBottom: 16
+    }
+  }, (equip.photos || []).map(function (p, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        border: "1px solid ".concat(C.border),
+        background: C.bg
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 80,
+        background: "hsl(".concat(i * 47 + 200, ",30%,88%)"),
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 28
+      }
+    }, "\uD83D\uDCF7"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "6px 8px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 600,
+        color: C.text
+      }
+    }, p.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: C.textLight
+      }
+    }, p.date)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid ".concat(C.border),
+      padding: 14,
+      background: C.bg
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 10
+    }
+  }, "\u5199\u771F\u3092\u8FFD\u52A0"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: photoLabel,
+    onChange: function onChange(e) {
+      return setPhotoLabel(e.target.value);
+    },
+    placeholder: "\u5199\u771F\u306E\u8AAC\u660E\uFF08\u4F8B\uFF1A\u5916\u89B3\u30FB\u9298\u677F\uFF09",
+    style: {
+      flex: 1,
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "5px 8px",
+      fontSize: 12
+    }
+  }), /*#__PURE__*/React.createElement("input", {
+    ref: photoRef,
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: "none"
+    },
+    onChange: function onChange(e) {
+      if (e.target.files[0]) {
+        addPhoto(e.target.files[0].name);
+        e.target.value = "";
+      }
+    }
+  }), /*#__PURE__*/React.createElement(Btn, {
+    label: "\uD83D\uDCF7 \u5199\u771F\u3092\u9078\u629E",
+    small: true,
+    onClick: function onClick() {
+      var _photoRef$current;
+      return (_photoRef$current = photoRef.current) === null || _photoRef$current === void 0 ? void 0 : _photoRef$current.click();
+    }
+  })))), tab === "history" && /*#__PURE__*/React.createElement("div", null, (equip.incidents || []).length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "16px 0",
+      textAlign: "center",
+      fontSize: 13,
+      color: C.textLight
+    }
+  }, "\u307E\u3060\u5C65\u6B74\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u305B\u3093") : /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse",
+      fontSize: 13,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement(TH, {
+    w: 100
+  }, "\u65E5\u4ED8"), /*#__PURE__*/React.createElement(TH, null, "\u5185\u5BB9"), /*#__PURE__*/React.createElement(TH, {
+    w: 120
+  }, "\u8CBB\u7528"))), /*#__PURE__*/React.createElement("tbody", null, (equip.incidents || []).map(function (inc, i) {
+    return /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      style: {
+        background: i % 2 === 0 ? "#fff" : C.tableStripe
+      }
+    }, /*#__PURE__*/React.createElement(TD, null, inc.date), /*#__PURE__*/React.createElement(TD, null, inc.content), /*#__PURE__*/React.createElement(TD, null, inc.cost || "─"));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid ".concat(C.border),
+      padding: 14,
+      background: C.bg
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 10
+    }
+  }, "\u4E0D\u5177\u5408\u30FB\u4FEE\u7E55\u5C65\u6B74\u3092\u8FFD\u52A0"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "120px 1fr 130px auto",
+      gap: 8,
+      alignItems: "end"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textMid,
+      marginBottom: 3
+    }
+  }, "\u65E5\u4ED8"), /*#__PURE__*/React.createElement("input", {
+    value: incForm.date,
+    onChange: function onChange(e) {
+      return setIncForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          date: e.target.value
+        });
+      });
+    },
+    placeholder: "2025/06/01",
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "5px 7px",
+      fontSize: 12,
+      boxSizing: "border-box"
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textMid,
+      marginBottom: 3
+    }
+  }, "\u5185\u5BB9 ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red
+    }
+  }, "*")), /*#__PURE__*/React.createElement("input", {
+    value: incForm.content,
+    onChange: function onChange(e) {
+      return setIncForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          content: e.target.value
+        });
+      });
+    },
+    placeholder: "\u4F8B\uFF1A\u7570\u97F3\u767A\u751F\u306E\u305F\u3081\u90E8\u54C1\u4EA4\u63DB",
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "5px 7px",
+      fontSize: 12,
+      boxSizing: "border-box"
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textMid,
+      marginBottom: 3
+    }
+  }, "\u8CBB\u7528\uFF08\u4EFB\u610F\uFF09"), /*#__PURE__*/React.createElement("input", {
+    value: incForm.cost,
+    onChange: function onChange(e) {
+      return setIncForm(function (f) {
+        return _objectSpread(_objectSpread({}, f), {}, {
+          cost: e.target.value
+        });
+      });
+    },
+    placeholder: "\xA5120,000",
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "5px 7px",
+      fontSize: 12,
+      boxSizing: "border-box"
+    }
+  })), /*#__PURE__*/React.createElement(Btn, {
+    label: "\u8FFD\u52A0",
+    primary: true,
+    small: true,
+    onClick: addInc
+  })))))));
+}
+
+/* ============================================================
+   LEDGER SCREEN
+============================================================ */
+function LedgerScreen(_ref8) {
+  var handleNav = _ref8.handleNav,
+    showToast = _ref8.showToast;
+  var _useState13 = useState(function () {
+      return EQ_BASE.map(function (e) {
+        return _objectSpread(_objectSpread({}, e), {}, {
+          note: "",
+          photos: [],
+          incidents: []
+        });
+      });
+    }),
+    _useState14 = _slicedToArray(_useState13, 2),
+    equip = _useState14[0],
+    setEquip = _useState14[1];
+  var _useState15 = useState(null),
+    _useState16 = _slicedToArray(_useState15, 2),
+    editCell = _useState16[0],
+    setEditCell = _useState16[1]; // {id,field}
+  var _useState17 = useState(""),
+    _useState18 = _slicedToArray(_useState17, 2),
+    editVal = _useState18[0],
+    setEditVal = _useState18[1];
+  var _useState19 = useState(null),
+    _useState20 = _slicedToArray(_useState19, 2),
+    detailEquip = _useState20[0],
+    setDetailEquip = _useState20[1];
+  var updateEquip = useCallback(function (id, field, val) {
+    setEquip(function (prev) {
+      return prev.map(function (e) {
+        return e.id === id ? _objectSpread(_objectSpread({}, e), {}, _defineProperty({}, field, val)) : e;
+      });
+    });
+    // detailEquipも同期
+    setDetailEquip(function (prev) {
+      return prev && prev.id === id ? _objectSpread(_objectSpread({}, prev), {}, _defineProperty({}, field, val)) : prev;
+    });
+  }, []);
+  var startCellEdit = function startCellEdit(e, field, val, ev) {
+    ev.stopPropagation();
+    setEditCell({
+      id: e.id,
+      field: field
+    });
+    setEditVal(String(val !== null && val !== void 0 ? val : ""));
+  };
+  var commitCell = function commitCell() {
+    if (!editCell) return;
+    var num = editCell.field === "year" || editCell.field === "life";
+    updateEquip(editCell.id, editCell.field, num ? Number(editVal) : editVal);
+    setEditCell(null);
+    showToast("✅ 更新しました");
+  };
+
+  // 詳細ボタン押下
+  var openDetail = function openDetail(e) {
+    var fresh = equip.find(function (x) {
+      return x.id === e.id;
+    });
+    setDetailEquip(_objectSpread({}, fresh));
+  };
+
+  // テーブル編集セル
+  function ECell(_ref9) {
+    var row = _ref9.row,
+      field = _ref9.field,
+      val = _ref9.val,
+      center = _ref9.center,
+      bold = _ref9.bold,
+      small = _ref9.small;
+    var isEdit = (editCell === null || editCell === void 0 ? void 0 : editCell.id) === row.id && (editCell === null || editCell === void 0 ? void 0 : editCell.field) === field;
+    var base = {
+      padding: "7px 8px",
+      fontSize: small ? 11 : 13,
+      fontWeight: bold ? 600 : 400,
+      color: bold ? C.text : C.textMid,
+      textAlign: center ? "center" : "left",
+      borderBottom: "1px solid ".concat(C.borderLight),
+      borderRight: "1px solid ".concat(C.borderLight),
+      whiteSpace: "nowrap"
+    };
+    if (isEdit) return /*#__PURE__*/React.createElement("td", {
+      style: _objectSpread(_objectSpread({}, base), {}, {
+        padding: 0
+      })
+    }, /*#__PURE__*/React.createElement("input", {
+      autoFocus: true,
+      value: editVal,
+      onChange: function onChange(ev) {
+        return setEditVal(ev.target.value);
+      },
+      onBlur: commitCell,
+      onKeyDown: function onKeyDown(ev) {
+        if (ev.key === "Enter") commitCell();
+        if (ev.key === "Escape") setEditCell(null);
+      },
+      style: {
+        width: "100%",
+        height: "100%",
+        border: "2px solid ".concat(C.navy),
+        padding: "5px 8px",
+        fontSize: small ? 11 : 13,
+        fontWeight: bold ? 600 : 400,
+        outline: "none",
+        background: "#FFFDE7",
+        boxSizing: "border-box"
+      }
+    }));
+    return /*#__PURE__*/React.createElement("td", {
+      style: _objectSpread(_objectSpread({}, base), {}, {
+        cursor: "text"
+      }),
+      onDoubleClick: function onDoubleClick(ev) {
+        return startCellEdit(row, field, val, ev);
+      },
+      title: "\u30C0\u30D6\u30EB\u30AF\u30EA\u30C3\u30AF\u3067\u7DE8\u96C6"
+    }, val);
+  }
+  var redCount = equip.filter(function (e) {
+    return e.st === "red";
+  }).length;
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 14
+    }
+  }, "\u8A2D\u5099\u53F0\u5E33"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: C.textLight
+    }
+  }, equip.length, "\u4EF6"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.textLight
+    }
+  }, "\uFF5C \u30BB\u30EB\u3092\u30C0\u30D6\u30EB\u30AF\u30EA\u30C3\u30AF\u3067\u7DE8\u96C6")), /*#__PURE__*/React.createElement(Btn, {
+    label: "\uD83D\uDCE5 Excel\u3067\u51FA\u529B",
+    onClick: function onClick() {
+      return showToast("✅ Excelファイルをダウンロードしました");
+    }
+  })), redCount > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.redBg,
+      border: "1px solid ".concat(C.redBorder),
+      padding: "7px 12px",
+      marginBottom: 10,
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red,
+      fontWeight: 700,
+      fontSize: 12
+    }
+  }, "\u26A0 ", redCount, "\u4EF6\u306E\u8A2D\u5099\u304C\u66F4\u65B0\u63A8\u5968\u6642\u671F\u3092\u8D85\u904E\u3057\u3066\u3044\u307E\u3059"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return handleNav("見積依頼");
+    },
+    style: {
+      marginLeft: "auto",
+      fontSize: 11,
+      color: C.red,
+      background: "none",
+      border: "1px solid ".concat(C.redBorder),
+      borderRadius: 3,
+      padding: "2px 9px",
+      cursor: "pointer"
+    }
+  }, "\u898B\u7A4D\u4F9D\u983C\u3059\u308B")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      overflow: "auto",
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      borderCollapse: "collapse",
+      tableLayout: "fixed",
+      width: 1280
+    }
+  }, /*#__PURE__*/React.createElement("colgroup", null, /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 40
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 55
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 160
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 110
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 90
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 110
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 60
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 65
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 85
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 105
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 70
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 55
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 155
+    }
+  }), /*#__PURE__*/React.createElement("col", {
+    style: {
+      width: 60
+    }
+  })), /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement(TH, null, "No."), /*#__PURE__*/React.createElement(TH, null, "\u5206\u985E"), /*#__PURE__*/React.createElement(TH, null, "\u8A2D\u5099\u540D\u79F0"), /*#__PURE__*/React.createElement(TH, null, "\u8A2D\u7F6E\u5834\u6240"), /*#__PURE__*/React.createElement(TH, null, "\u30E1\u30FC\u30AB\u30FC"), /*#__PURE__*/React.createElement(TH, null, "\u578B\u756A\u30FB\u54C1\u756A"), /*#__PURE__*/React.createElement(TH, null, "\u8A2D\u7F6E\u5E74"), /*#__PURE__*/React.createElement(TH, null, "\u8010\u7528\u5E74\u6570"), /*#__PURE__*/React.createElement(TH, null, "\u66F4\u65B0\u63A8\u5968\u5E74"), /*#__PURE__*/React.createElement(TH, null, "\u63A8\u5B9A\u8CBB\u7528"), /*#__PURE__*/React.createElement(TH, null, "\u72B6\u614B"), /*#__PURE__*/React.createElement(TH, null, "\u4FE1\u983C\u5EA6"), /*#__PURE__*/React.createElement(TH, null, "\u5099\u8003"), /*#__PURE__*/React.createElement(TH, null, "\u8A73\u7D30"))), /*#__PURE__*/React.createElement("tbody", null, equip.map(function (e, i) {
+    var rowBg = i % 2 === 0 ? "#fff" : C.tableStripe;
+    return /*#__PURE__*/React.createElement("tr", {
+      key: e.id,
+      style: {
+        background: rowBg
+      },
+      onMouseEnter: function onMouseEnter(ev) {
+        return ev.currentTarget.style.background = "#EEF3FA";
+      },
+      onMouseLeave: function onMouseLeave(ev) {
+        return ev.currentTarget.style.background = rowBg;
+      }
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        fontSize: 11,
+        color: C.textLight,
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight),
+        textAlign: "center"
+      }
+    }, e.id), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        fontSize: 11,
+        color: C.textMid,
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight)
+      }
+    }, e.cat), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "name",
+      val: e.name,
+      bold: true
+    }), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "loc",
+      val: e.loc
+    }), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "maker",
+      val: e.maker
+    }), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "model",
+      val: e.model,
+      small: true
+    }), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "year",
+      val: "".concat(e.year, "\u5E74"),
+      center: true
+    }), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "life",
+      val: "".concat(e.life, "\u5E74"),
+      center: true
+    }), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        fontSize: 12,
+        fontWeight: 700,
+        color: e.st === "red" ? C.red : e.st === "yellow" ? C.yellow : C.green,
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight),
+        whiteSpace: "nowrap"
+      }
+    }, e.next), /*#__PURE__*/React.createElement(ECell, {
+      row: e,
+      field: "cost",
+      val: e.cost,
+      bold: true
+    }), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight)
+      }
+    }, /*#__PURE__*/React.createElement(StatusCell, {
+      st: e.st
+    })), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        fontSize: 11,
+        color: e.conf === "AI推定" ? C.yellow : C.green,
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight),
+        textAlign: "center"
+      }
+    }, e.conf), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "7px 8px",
+        borderBottom: "1px solid ".concat(C.borderLight),
+        borderRight: "1px solid ".concat(C.borderLight),
+        cursor: "text",
+        overflow: "hidden"
+      },
+      onDoubleClick: function onDoubleClick(ev) {
+        return startCellEdit(e, "note", e.note, ev);
+      },
+      title: "\u30C0\u30D6\u30EB\u30AF\u30EA\u30C3\u30AF\u3067\u5099\u8003\u5165\u529B"
+    }, (editCell === null || editCell === void 0 ? void 0 : editCell.id) === e.id && (editCell === null || editCell === void 0 ? void 0 : editCell.field) === "note" ? /*#__PURE__*/React.createElement("input", {
+      autoFocus: true,
+      value: editVal,
+      onChange: function onChange(ev) {
+        return setEditVal(ev.target.value);
+      },
+      onBlur: commitCell,
+      onKeyDown: function onKeyDown(ev) {
+        if (ev.key === "Enter") commitCell();
+        if (ev.key === "Escape") setEditCell(null);
+      },
+      style: {
+        width: "100%",
+        border: "2px solid ".concat(C.navy),
+        padding: "3px 6px",
+        fontSize: 12,
+        outline: "none",
+        background: "#FFFDE7"
+      }
+    }) : /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: e.note ? C.text : C.textLight
+      }
+    }, e.note || "─ 入力可")), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "5px 8px",
+        borderBottom: "1px solid ".concat(C.borderLight),
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return openDetail(e);
+      },
+      style: {
+        fontSize: 11,
+        background: C.navy,
+        color: "#fff",
+        border: "1px solid ".concat(C.navy),
+        borderRadius: 3,
+        padding: "3px 10px",
+        cursor: "pointer",
+        fontWeight: 600
+      }
+    }, "\u8A73\u7D30")));
+  })))), detailEquip && /*#__PURE__*/React.createElement(DetailModal, {
+    equip: detailEquip,
+    onClose: function onClose() {
+      return setDetailEquip(null);
+    },
+    onUpdate: function onUpdate(id, field, val) {
+      updateEquip(id, field, val);
+    },
+    handleNav: handleNav,
+    showToast: showToast
+  }));
+}
+
+/* ============================================================
+   MAIN APP
+============================================================ */
+function App() {
+  var _useState21 = useState("dashboard"),
+    _useState22 = _slicedToArray(_useState21, 2),
+    screen = _useState22[0],
+    setScreen = _useState22[1];
+  var _useState23 = useState("ダッシュボード"),
+    _useState24 = _slicedToArray(_useState23, 2),
+    activeNav = _useState24[0],
+    setActiveNav = _useState24[1];
+  var _useState25 = useState("all"),
+    _useState26 = _slicedToArray(_useState25, 2),
+    scope = _useState26[0],
+    setScope = _useState26[1]; // "all" or property.id
+  var _useState27 = useState("idle"),
+    _useState28 = _slicedToArray(_useState27, 2),
+    uploadState = _useState28[0],
+    setUploadState = _useState28[1];
+  var _useState29 = useState(0),
+    _useState30 = _slicedToArray(_useState29, 2),
+    analyzeProgress = _useState30[0],
+    setAnalyzeProgress = _useState30[1];
+  var _useState31 = useState(0),
+    _useState32 = _slicedToArray(_useState31, 2),
+    analyzeStep = _useState32[0],
+    setAnalyzeStep = _useState32[1];
+  var _useState33 = useState(false),
+    _useState34 = _slicedToArray(_useState33, 2),
+    showUploadModal = _useState34[0],
+    setShowUploadModal = _useState34[1];
+  var _useState35 = useState({
+      plan: null,
+      history: null
+    }),
+    _useState36 = _slicedToArray(_useState35, 2),
+    uploadedFiles = _useState36[0],
+    setUploadedFiles = _useState36[1];
+  var _useState37 = useState(""),
+    _useState38 = _slicedToArray(_useState37, 2),
+    propName = _useState38[0],
+    setPropName = _useState38[1]; // ダッシュボード物件名
+  var _useState39 = useState(false),
+    _useState40 = _slicedToArray(_useState39, 2),
+    propNameError = _useState40[0],
+    setPropNameError = _useState40[1];
+  var _useState41 = useState(null),
+    _useState42 = _slicedToArray(_useState41, 2),
+    dragOver = _useState42[0],
+    setDragOver = _useState42[1];
+  var _useState43 = useState(null),
+    _useState44 = _slicedToArray(_useState43, 2),
+    toast = _useState44[0],
+    setToast = _useState44[1];
+  var _useState45 = useState(false),
+    _useState46 = _slicedToArray(_useState45, 2),
+    overwriteModal = _useState46[0],
+    setOverwriteModal = _useState46[1];
+  var _useState47 = useState(null),
+    _useState48 = _slicedToArray(_useState47, 2),
+    overwriteMode = _useState48[0],
+    setOverwriteMode = _useState48[1];
+  var _useState49 = useState(0),
+    _useState50 = _slicedToArray(_useState49, 2),
+    overwriteStep = _useState50[0],
+    setOverwriteStep = _useState50[1];
+  var _useState51 = useState([]),
+    _useState52 = _slicedToArray(_useState51, 2),
+    overwriteDecisions = _useState52[0],
+    setOverwriteDecisions = _useState52[1];
+  var planRef = useRef(null);
+  var histRef = useRef(null);
+  var analyzeSteps = ["図面ファイルを読み込み中...", "設備種別を自動分類中... (18件検出)", "修繕履歴と照合中...", "更新年数・費用を推定中...", "台帳データを生成中..."];
+  useEffect(function () {
+    if (uploadState === "analyzing") {
+      var iv = setInterval(function () {
+        setAnalyzeProgress(function (p) {
+          if (p >= 100) {
+            clearInterval(iv);
+            setUploadState("needsOverwrite");
+            return 100;
+          }
+          return p + 2;
+        });
+        setAnalyzeStep(function (s) {
+          return Math.min(s + 1, analyzeSteps.length - 1);
+        });
+      }, 260);
+      return function () {
+        return clearInterval(iv);
+      };
+    }
+  }, [uploadState]);
+
+  // ファイルアップロード時に物件名を自動補完（未入力の場合）
+  var handleFileDrop = function handleFileDrop(key, file) {
+    setUploadedFiles(function (p) {
+      return _objectSpread(_objectSpread({}, p), {}, _defineProperty({}, key, file.name));
+    });
+    if (!propName && key === "plan") {
+      var guessed = file.name.replace(/\.(pdf|dwg|png|jpg|jpeg)$/i, "").replace(/_|-/g, " ");
+      setPropName(guessed);
+    }
+  };
+  var showToast = function showToast(msg) {
+    var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : C.navy;
+    setToast({
+      msg: msg,
+      color: color
+    });
+    setTimeout(function () {
+      return setToast(null);
+    }, 2800);
+  };
+  var handleNav = function handleNav(item) {
+    setActiveNav(item);
+    setScreen(item === "ダッシュボード" ? "dashboard" : item === "物件一覧" ? "properties" : item === "設備台帳" ? "ledger" : item === "更新予測" ? "forecast" : "quote");
+  };
+  var activeProp = scope === "all" ? null : PROPERTIES.find(function (p) {
+    return p.id === scope;
+  });
+  var maxCost = Math.max.apply(Math, COSTS);
+  var filteredProps = scope === "all" ? PROPERTIES : PROPERTIES.filter(function (p) {
+    return p.id === scope;
+  });
+  var completedProps = PROPERTIES.filter(function (p) {
+    return p.ledger === "完成";
+  });
+  var confirmItems = EQ_BASE.slice(0, 5);
+  var currentItem = confirmItems[overwriteStep];
+  var startOverwriteFlow = function startOverwriteFlow(mode) {
+    if (mode === "all") {
+      setUploadState("done");
+      setOverwriteModal(false);
+      showToast("✅ すべての設備データを上書きしました");
+    } else {
+      setOverwriteModal(true);
+      setOverwriteStep(0);
+      setOverwriteDecisions([]);
+    }
+  };
+  var handleStepDecision = function handleStepDecision(decision) {
+    var next = [].concat(_toConsumableArray(overwriteDecisions), [decision]);
+    setOverwriteDecisions(next);
+    if (overwriteStep + 1 >= confirmItems.length) {
+      setOverwriteModal(false);
+      setUploadState("done");
+      var upd = next.filter(function (d) {
+        return d === "update";
+      }).length;
+      showToast("\u2705 ".concat(upd, "\u4EF6\u3092\u66F4\u65B0\u3001").concat(next.length - upd, "\u4EF6\u3092\u30B9\u30AD\u30C3\u30D7\u3057\u307E\u3057\u305F"));
+    } else {
+      setOverwriteStep(function (s) {
+        return s + 1;
+      });
+    }
+  };
+
+  // AI解析スタート前の物件名チェック
+  var handleAnalyzeStart = function handleAnalyzeStart() {
+    if (!propName.trim()) {
+      setPropNameError(true);
+      return;
+    }
+    setPropNameError(false);
+    setUploadState("analyzing");
+    setAnalyzeProgress(0);
+    setAnalyzeStep(0);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "'Meiryo','MS PGothic','Noto Sans JP',sans-serif",
+      background: C.bg,
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      fontSize: 13
+    }
+  }, toast && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 16,
+      right: 16,
+      zIndex: 999,
+      background: toast.color,
+      color: "#fff",
+      borderRadius: 4,
+      padding: "10px 16px",
+      fontSize: 13,
+      fontWeight: 600,
+      boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
+    }
+  }, toast.msg), /*#__PURE__*/React.createElement("header", {
+    style: {
+      background: C.navyDark,
+      color: "#fff",
+      padding: "0 16px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      height: 48,
+      flexShrink: 0,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      flexShrink: 1,
+      minWidth: 0,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      letterSpacing: "0.05em",
+      whiteSpace: "nowrap"
+    }
+  }, "COSOJI"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#A0B4D4",
+      fontSize: 12,
+      marginLeft: 2,
+      whiteSpace: "nowrap"
+    }
+  }, "\u8A2D\u5099\u53F0\u5E33AI"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#A0B4D4",
+      fontSize: 11,
+      marginLeft: 8,
+      whiteSpace: "nowrap"
+    }
+  }, "\u7BA1\u7406\u7269\u4EF6 14\u68DF\u3000\u767B\u9332\u8A2D\u5099 1,284\u53F0")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "#A0B4D4",
+      whiteSpace: "nowrap"
+    }
+  }, "\u8868\u793A\u5BFE\u8C61\uFF1A"), /*#__PURE__*/React.createElement(HeaderPropertySelector, {
+    scope: scope,
+    setScope: setScope
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      background: "#4A7AB5",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 11,
+      fontWeight: 700,
+      color: "#fff",
+      flexShrink: 0
+    }
+  }, "\u5C71"))), /*#__PURE__*/React.createElement("nav", {
+    style: {
+      background: "#fff",
+      borderBottom: "2px solid ".concat(C.border),
+      display: "flex",
+      padding: "0 20px"
+    }
+  }, NAV_ITEMS.map(function (item) {
+    return /*#__PURE__*/React.createElement("button", {
+      key: item,
+      onClick: function onClick() {
+        return handleNav(item);
+      },
+      style: {
+        padding: "9px 16px",
+        fontSize: 13,
+        fontWeight: activeNav === item ? 700 : 400,
+        color: activeNav === item ? C.navy : C.textMid,
+        background: "none",
+        border: "none",
+        borderBottom: activeNav === item ? "3px solid ".concat(C.navy) : "3px solid transparent",
+        cursor: "pointer",
+        marginBottom: -2
+      }
+    }, item);
+  })), scope !== "all" && activeProp && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.navyLight,
+      borderBottom: "1px solid ".concat(C.border),
+      padding: "5px 20px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.textMid
+    }
+  }, "\u8868\u793A\u5BFE\u8C61\uFF1A"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy
+    }
+  }, activeProp.name), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.textMid
+    }
+  }, "\uFF0F ", activeProp.type, "\u3000", activeProp.floors, "\u968E\u5EFA\u3000\u8A2D\u5099", activeProp.equip, "\u53F0"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setScope("all");
+    },
+    style: {
+      marginLeft: "auto",
+      fontSize: 11,
+      color: C.accent,
+      background: "none",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "2px 9px",
+      cursor: "pointer"
+    }
+  }, "\u5168\u7269\u4EF6\u8868\u793A\u306B\u623B\u3059")), /*#__PURE__*/React.createElement("main", {
+    style: {
+      flex: 1,
+      padding: "16px 20px",
+      maxWidth: 1280,
+      margin: "0 auto",
+      width: "100%",
+      boxSizing: "border-box"
+    }
+  }, screen === "dashboard" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(4,1fr)",
+      gap: 12,
+      marginBottom: 16
+    }
+  }, (scope === "all" ? [{
+    label: "管理物件数",
+    value: "14棟",
+    sub: "台帳完成 10棟"
+  }, {
+    label: "登録設備数",
+    value: "1,284台",
+    sub: "今月 +47台追加"
+  }, {
+    label: "要更新・要注意設備",
+    value: "11台",
+    sub: "うち要更新 3台",
+    warn: true
+  }, {
+    label: "今年度 費用予測",
+    value: "¥34.6M",
+    sub: "前年比 +12%"
+  }] : [{
+    label: "登録設備数",
+    value: "".concat(activeProp.equip, "\u53F0"),
+    sub: "AI解析済み"
+  }, {
+    label: "要更新設備",
+    value: "".concat(activeProp.alertCount, "\u53F0"),
+    sub: "要対応",
+    warn: activeProp.alertCount > 0
+  }, {
+    label: "10年費用予測",
+    value: activeProp.cost,
+    sub: "推定値"
+  }, {
+    label: "台帳状態",
+    value: activeProp.ledger,
+    sub: "最終更新 2025/03"
+  }]).map(function (s) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: s.label,
+      style: {
+        background: "#fff",
+        border: "1px solid ".concat(s.warn ? C.redBorder : C.border),
+        borderLeft: "4px solid ".concat(s.warn ? C.red : C.navy),
+        padding: "12px 14px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textMid,
+        marginBottom: 4
+      }
+    }, s.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 22,
+        fontWeight: 700,
+        color: s.warn ? C.red : C.navy
+      }
+    }, s.value), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight,
+        marginTop: 2
+      }
+    }, s.sub));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderBottom: "1px solid ".concat(C.borderLight),
+      paddingBottom: 10,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 14
+    }
+  }, "\u65B0\u898F\u53F0\u5E33\u3092\u4F5C\u6210"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: C.textLight,
+      marginLeft: 8
+    }
+  }, "\u56F3\u9762\u30FB\u4FEE\u7E55\u5C65\u6B74\u3092\u30A2\u30C3\u30D7\u30ED\u30FC\u30C9 \u2192 AI\u304C\u8A2D\u5099\u3092\u81EA\u52D5\u691C\u51FA\u3057\u307E\u3059")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      display: "block",
+      marginBottom: 4
+    }
+  }, "\u7269\u4EF6\u540D ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red
+    }
+  }, "*"), propNameError && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red,
+      marginLeft: 8,
+      fontSize: 11
+    }
+  }, "\u203B \u7269\u4EF6\u540D\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044")), /*#__PURE__*/React.createElement("input", {
+    value: propName,
+    onChange: function onChange(e) {
+      setPropName(e.target.value);
+      setPropNameError(false);
+    },
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(propNameError ? C.red : C.border),
+      borderRadius: 3,
+      padding: "6px 8px",
+      fontSize: 13,
+      color: C.text,
+      boxSizing: "border-box",
+      outline: "none",
+      background: propNameError ? "#FEF2F2" : "#fff"
+    },
+    placeholder: "\u4F8B\uFF1A\u6E0B\u8C37\u30D3\u30EB\u5357\u9928 \u203B\u30D5\u30A1\u30A4\u30EB\u9078\u629E\u5F8C\u306B\u81EA\u52D5\u88DC\u5B8C\u3055\u308C\u307E\u3059"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginBottom: 14
+    }
+  }, [{
+    key: "plan",
+    icon: "📐",
+    label: "図面ファイル",
+    sub: "PDF・DWG・画像",
+    required: true,
+    ref: planRef,
+    accept: ".pdf,.dwg,.png,.jpg"
+  }, {
+    key: "history",
+    icon: "📄",
+    label: "修繕履歴（任意）",
+    sub: "見積書・完了報告書",
+    required: false,
+    ref: histRef,
+    accept: ".pdf,.xlsx,.xls"
+  }].map(function (f) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: f.key,
+      onClick: function onClick() {
+        var _f$ref$current;
+        return (_f$ref$current = f.ref.current) === null || _f$ref$current === void 0 ? void 0 : _f$ref$current.click();
+      },
+      onDragOver: function onDragOver(e) {
+        e.preventDefault();
+        setDragOver(f.key);
+      },
+      onDragLeave: function onDragLeave() {
+        return setDragOver(null);
+      },
+      onDrop: function onDrop(e) {
+        e.preventDefault();
+        setDragOver(null);
+        var file = e.dataTransfer.files[0];
+        if (file) handleFileDrop(f.key, file);
+      },
+      style: {
+        border: "1px dashed ".concat(dragOver === f.key ? C.navy : uploadedFiles[f.key] ? C.green : C.border),
+        borderRadius: 3,
+        padding: "14px 10px",
+        textAlign: "center",
+        background: uploadedFiles[f.key] ? C.greenBg : C.bg,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      ref: f.ref,
+      type: "file",
+      accept: f.accept,
+      style: {
+        display: "none"
+      },
+      onChange: function onChange(e) {
+        if (e.target.files[0]) handleFileDrop(f.key, e.target.files[0]);
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        marginBottom: 4
+      }
+    }, uploadedFiles[f.key] ? "✅" : f.icon), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: C.navy,
+        marginBottom: 2
+      }
+    }, f.label, f.required && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.red
+      }
+    }, "*")), uploadedFiles[f.key] ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.green,
+        fontWeight: 600
+      }
+    }, uploadedFiles[f.key]) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, f.sub));
+  })), /*#__PURE__*/React.createElement(Btn, {
+    label: "AI\u89E3\u6790\u30B9\u30BF\u30FC\u30C8 \u2192",
+    onClick: function onClick() {
+      return setShowUploadModal(true);
+    },
+    primary: true
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderBottom: "1px solid ".concat(C.borderLight),
+      paddingBottom: 10,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 14
+    }
+  }, "\u5BFE\u5FDC\u304C\u5FC5\u8981\u306A\u8A2D\u5099")), (scope === "all" ? [{
+    name: "受変電設備（キュービクル）",
+    prop: "渋谷ビル南館",
+    msg: "推奨更新時期を2年超過",
+    st: "red"
+  }, {
+    name: "外壁・防水（屋上）",
+    prop: "渋谷ビル南館",
+    msg: "推奨更新時期を超過",
+    st: "red"
+  }, {
+    name: "給水ポンプユニット",
+    prop: "新宿レジデンス",
+    msg: "2027年に更新推奨",
+    st: "yellow"
+  }, {
+    name: "誘導灯・非常照明",
+    prop: "新宿レジデンス",
+    msg: "2027年に更新推奨",
+    st: "yellow"
+  }] : EQ_BASE.filter(function (e) {
+    return e.st !== "green";
+  }).slice(0, 5).map(function (e) {
+    var _activeProp$name;
+    return {
+      name: e.name,
+      prop: (_activeProp$name = activeProp === null || activeProp === void 0 ? void 0 : activeProp.name) !== null && _activeProp$name !== void 0 ? _activeProp$name : "",
+      msg: "".concat(e.next, "\u306B\u66F4\u65B0\u63A8\u5968"),
+      st: e.st
+    };
+  })).map(function (a, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        padding: "8px 0",
+        borderBottom: "1px solid ".concat(C.borderLight)
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        minWidth: 0,
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.text,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    }, a.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, a.prop, "\u3000", a.msg)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(StatusCell, {
+      st: a.st
+    })));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    label: "\u307E\u3068\u3081\u3066\u898B\u7A4D\u4F9D\u983C\u3059\u308B \u2192",
+    onClick: function onClick() {
+      return handleNav("見積依頼");
+    },
+    primary: true
+  }))))), screen === "properties" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 15
+    }
+  }, "\u7269\u4EF6\u4E00\u89A7\u3000", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 400,
+      color: C.textLight
+    }
+  }, filteredProps.length, "\u4EF6\u8868\u793A")), /*#__PURE__*/React.createElement(Btn, {
+    label: "\uFF0B \u7269\u4EF6\u3092\u8FFD\u52A0",
+    onClick: function onClick() {
+      return setShowUploadModal(true);
+    },
+    primary: true
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      overflow: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse"
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement(TH, {
+    w: 40
+  }, "No."), /*#__PURE__*/React.createElement(TH, null, "\u7269\u4EF6\u540D"), /*#__PURE__*/React.createElement(TH, null, "\u7528\u9014"), /*#__PURE__*/React.createElement(TH, {
+    w: 60
+  }, "\u968E\u6570"), /*#__PURE__*/React.createElement(TH, {
+    w: 70
+  }, "\u8A2D\u5099\u6570"), /*#__PURE__*/React.createElement(TH, {
+    w: 80
+  }, "\u53F0\u5E33\u72B6\u614B"), /*#__PURE__*/React.createElement(TH, {
+    w: 80
+  }, "\u30A2\u30E9\u30FC\u30C8"), /*#__PURE__*/React.createElement(TH, {
+    w: 110
+  }, "10\u5E74\u8CBB\u7528\u4E88\u6E2C"), /*#__PURE__*/React.createElement(TH, {
+    w: 140
+  }, "\u64CD\u4F5C"))), /*#__PURE__*/React.createElement("tbody", null, filteredProps.map(function (p, i) {
+    return /*#__PURE__*/React.createElement("tr", {
+      key: p.id,
+      style: {
+        background: i % 2 === 0 ? "#fff" : C.tableStripe
+      },
+      onMouseEnter: function onMouseEnter(e) {
+        return e.currentTarget.style.background = C.navyLight;
+      },
+      onMouseLeave: function onMouseLeave(e) {
+        return e.currentTarget.style.background = i % 2 === 0 ? "#fff" : C.tableStripe;
+      }
+    }, /*#__PURE__*/React.createElement(TD, {
+      center: true,
+      small: true
+    }, i + 1), /*#__PURE__*/React.createElement(TD, {
+      bold: true
+    }, p.name), /*#__PURE__*/React.createElement(TD, null, p.type), /*#__PURE__*/React.createElement(TD, {
+      center: true
+    }, p.floors, "F"), /*#__PURE__*/React.createElement(TD, {
+      center: true
+    }, p.equip > 0 ? "".concat(p.equip, "\u53F0") : "─"), /*#__PURE__*/React.createElement(TD, {
+      center: true
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: p.ledger === "完成" ? C.green : C.textLight,
+        fontWeight: 600,
+        fontSize: 12
+      }
+    }, p.ledger === "完成" ? "✅ 完成" : "─ 未作成")), /*#__PURE__*/React.createElement(TD, {
+      center: true
+    }, p.alertCount > 0 ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: p.alertLevel === "red" ? C.red : C.yellow,
+        fontWeight: 700,
+        fontSize: 12
+      }
+    }, p.alertCount, "\u4EF6") : /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.textLight,
+        fontSize: 12
+      }
+    }, "\u2500")), /*#__PURE__*/React.createElement(TD, {
+      center: true,
+      bold: true
+    }, p.cost), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "6px 10px",
+        borderBottom: "1px solid ".concat(C.borderLight)
+      }
+    }, p.ledger === "完成" ? /*#__PURE__*/React.createElement(Btn, {
+      label: "\u53F0\u5E33\u3092\u958B\u304F",
+      small: true,
+      onClick: function onClick() {
+        setScope(p.id);
+        handleNav("設備台帳");
+      }
+    }) : /*#__PURE__*/React.createElement(Btn, {
+      label: "\u53F0\u5E33\u3092\u4F5C\u6210",
+      small: true,
+      primary: true,
+      onClick: function onClick() {
+        return setShowUploadModal(true);
+      }
+    })));
+  }))))), screen === "ledger" && /*#__PURE__*/React.createElement(LedgerScreen, {
+    handleNav: handleNav,
+    showToast: showToast
+  }), screen === "forecast" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 14
+    }
+  }, "\u66F4\u65B0\u8CBB\u7528\u30B7\u30DF\u30E5\u30EC\u30FC\u30B7\u30E7\u30F3", activeProp && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 400,
+      color: C.textLight,
+      marginLeft: 8
+    }
+  }, "\u2014 ", activeProp.name))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 18,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textLight,
+      marginBottom: 3
+    }
+  }, "\u4ECA\u5F8C10\u5E74\u9593\u306E\u4FEE\u7E55\u8CBB\u7DCF\u984D\uFF08\u63A8\u5B9A\uFF09"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 28,
+      fontWeight: 700,
+      color: C.navy
+    }
+  }, "\xA568.6M")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.redBg,
+      border: "1px solid ".concat(C.redBorder),
+      padding: "8px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.red,
+      fontWeight: 700
+    }
+  }, "\u26A0 2027\u5E74\u306B\u5927\u578B\u66F4\u65B0\u30D4\u30FC\u30AF"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.red
+    }
+  }, "\u53D7\u5909\u96FB\u30FB\u7D66\u6392\u6C34\u30FB\u8A98\u5C0E\u706F \u8A08\xA519.7M"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 6,
+      height: 140
+    }
+  }, YEARS.map(function (year, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: year,
+      style: {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 3
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: C.textLight
+      }
+    }, COSTS[i], "M"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: "100%",
+        height: "".concat(COSTS[i] / maxCost * 100, "px"),
+        background: COSTS[i] >= 10 ? C.red : COSTS[i] >= 5 ? C.yellow : C.accent,
+        opacity: 0.75,
+        borderRadius: "2px 2px 0 0"
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        fontWeight: year === 2027 ? 700 : 400,
+        color: year === 2027 ? C.red : C.textLight
+      }
+    }, year));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 14,
+      marginTop: 8
+    }
+  }, [{
+    color: C.red,
+    label: "大型更新（10M+）"
+  }, {
+    color: C.yellow,
+    label: "中規模（5M+）"
+  }, {
+    color: C.accent,
+    label: "通常更新"
+  }].map(function (l) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: l.label,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        background: l.color,
+        opacity: 0.75
+      }
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, l.label));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 13,
+      marginBottom: 12,
+      paddingBottom: 8,
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, "\u8A2D\u5099\u5225 \u66F4\u65B0\u30B9\u30B1\u30B8\u30E5\u30FC\u30EB"), EQ_BASE.filter(function (e) {
+    return e.st !== "green";
+  }).map(function (e) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "7px 0",
+        borderBottom: "1px solid ".concat(C.borderLight)
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.text
+      }
+    }, e.name), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, e.loc)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: e.st === "red" ? C.red : C.yellow
+      }
+    }, e.next), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textMid
+      }
+    }, e.cost)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 13,
+      marginBottom: 12,
+      paddingBottom: 8,
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, "\u4FEE\u7E55\u7A4D\u7ACB\u30D7\u30E9\u30F3"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.navyDark,
+      padding: 16,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#A0B4D4",
+      marginBottom: 3
+    }
+  }, "\u63A8\u5968\u6708\u6B21\u7A4D\u7ACB\u984D"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      fontWeight: 700,
+      color: "#fff"
+    }
+  }, "\xA5571,667", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 400
+    }
+  }, "/\u6708")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#A0B4D4",
+      marginTop: 3
+    }
+  }, "10\u5E74\u7D2F\u8A08 \xA568.6M \u306B\u5BFE\u5FDC")), /*#__PURE__*/React.createElement(Btn, {
+    label: "2027\u5E74\u5206\u306E\u898B\u7A4D\u3082\u308A\u3092\u53D6\u308B \u2192",
+    onClick: function onClick() {
+      return handleNav("見積依頼");
+    },
+    primary: true
+  })))), screen === "quote" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 680
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      fontSize: 14
+    }
+  }, "\u898B\u7A4D\u4F9D\u983C"), activeProp && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 400,
+      color: C.textLight,
+      marginLeft: 8
+    }
+  }, "\u2014 ", activeProp.name)), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: C.textLight,
+      marginBottom: 14
+    }
+  }, "\u53F0\u5E33\u30C7\u30FC\u30BF\u304C\u81EA\u52D5\u6DFB\u4ED8\u3055\u308C\u308B\u305F\u3081\u3001\u696D\u8005\u3078\u306E\u8AAC\u660E\u304C\u4E0D\u8981\u3067\u3059\u3002"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 18,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 12,
+      paddingBottom: 8,
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, "\u5BFE\u8C61\u8A2D\u5099\u3092\u9078\u629E"), EQ_BASE.filter(function (e) {
+    return e.st !== "green";
+  }).map(function (e) {
+    return /*#__PURE__*/React.createElement("label", {
+      key: e.id,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 0",
+        borderBottom: "1px solid ".concat(C.borderLight),
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      defaultChecked: e.st === "red",
+      style: {
+        width: 14,
+        height: 14,
+        accentColor: C.navy
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.text
+      }
+    }, e.name), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: C.textLight,
+        marginLeft: 8
+      }
+    }, e.loc)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: C.text,
+        marginRight: 10
+      }
+    }, e.cost), /*#__PURE__*/React.createElement(StatusCell, {
+      st: e.st
+    }));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 18,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 12,
+      paddingBottom: 8,
+      borderBottom: "1px solid ".concat(C.borderLight)
+    }
+  }, "\u4F9D\u983C\u5185\u5BB9"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      display: "block",
+      marginBottom: 4
+    }
+  }, "\u4F9D\u983C\u30BF\u30A4\u30D7"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16
+    }
+  }, ["更新工事の見積もり", "点検・診断のみ", "緊急対応"].map(function (t, i) {
+    return /*#__PURE__*/React.createElement("label", {
+      key: t,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 13,
+        color: C.text,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "radio",
+      name: "type",
+      defaultChecked: i === 0,
+      style: {
+        accentColor: C.navy
+      }
+    }), t);
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      display: "block",
+      marginBottom: 4
+    }
+  }, "\u5E0C\u671B\u6642\u671F"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("select", {
+    style: {
+      flex: 1,
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "6px 8px",
+      fontSize: 13,
+      color: C.text
+    }
+  }, ["2026年", "2027年"].map(function (y) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: y
+    }, y);
+  })), /*#__PURE__*/React.createElement("select", {
+    style: {
+      flex: 1,
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "6px 8px",
+      fontSize: 13,
+      color: C.text
+    }
+  }, ["9月", "10月", "11月", "12月"].map(function (m) {
+    return /*#__PURE__*/React.createElement("option", {
+      key: m
+    }, m);
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      display: "block",
+      marginBottom: 4
+    }
+  }, "\u5099\u8003\u30FB\u8981\u671B"), /*#__PURE__*/React.createElement("textarea", {
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(C.border),
+      borderRadius: 3,
+      padding: "6px 8px",
+      fontSize: 13,
+      height: 64,
+      resize: "none",
+      boxSizing: "border-box",
+      color: C.text
+    },
+    placeholder: "\u4F8B\uFF1A\u55B6\u696D\u6642\u9593\u5916\u3067\u306E\u65BD\u5DE5\u3092\u5E0C\u671B"
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.greenBg,
+      border: "1px solid ".concat(C.greenBorder),
+      padding: 12,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: C.green
+    }
+  }, "\uD83D\uDCCE \u81EA\u52D5\u6DFB\u4ED8\uFF1A"), ["設備仕様書", "修繕履歴", "設置図面", "台帳データ"].map(function (t) {
+    return /*#__PURE__*/React.createElement("span", {
+      key: t,
+      style: {
+        fontSize: 12,
+        color: C.green,
+        marginLeft: 8
+      }
+    }, "\u2705 ", t);
+  })), /*#__PURE__*/React.createElement(Btn, {
+    label: "\u898B\u7A4D\u3082\u308A\u3092\u4F9D\u983C\u3059\u308B \u2192",
+    onClick: function onClick() {
+      showToast("✅ 見積依頼を送信しました", C.green);
+      handleNav("ダッシュボード");
+    },
+    primary: true
+  }))), showUploadModal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.45)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 100
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "1px solid ".concat(C.border),
+      padding: 28,
+      width: 520,
+      maxWidth: "92vw"
+    }
+  }, uploadState === "idle" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.navy
+    }
+  }, "\u65B0\u898F\u53F0\u5E33\u3092\u4F5C\u6210"), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setShowUploadModal(false);
+    },
+    style: {
+      background: "none",
+      border: "none",
+      fontSize: 16,
+      cursor: "pointer",
+      color: C.textLight
+    }
+  }, "\u2715")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      color: C.textMid,
+      display: "block",
+      marginBottom: 4
+    }
+  }, "\u7269\u4EF6\u540D ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red
+    }
+  }, "*"), propNameError && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.red,
+      marginLeft: 8,
+      fontSize: 11
+    }
+  }, "\u203B \u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044")), /*#__PURE__*/React.createElement("input", {
+    value: propName,
+    onChange: function onChange(e) {
+      setPropName(e.target.value);
+      setPropNameError(false);
+    },
+    style: {
+      width: "100%",
+      border: "1px solid ".concat(propNameError ? C.red : C.border),
+      borderRadius: 3,
+      padding: "6px 8px",
+      fontSize: 13,
+      boxSizing: "border-box",
+      outline: "none",
+      background: propNameError ? "#FEF2F2" : "#fff"
+    },
+    placeholder: "\u4F8B\uFF1A\u6E0B\u8C37\u30D3\u30EB\u5357\u9928"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginBottom: 16
+    }
+  }, [{
+    key: "plan",
+    icon: "📐",
+    label: "図面ファイル",
+    sub: "PDF・DWG・画像",
+    required: true,
+    iref: planRef,
+    accept: ".pdf,.dwg,.png,.jpg"
+  }, {
+    key: "history",
+    icon: "📄",
+    label: "修繕履歴（任意）",
+    sub: "見積書・完了報告書",
+    required: false,
+    iref: histRef,
+    accept: ".pdf,.xlsx,.xls"
+  }].map(function (f) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: f.key,
+      onClick: function onClick() {
+        var _f$iref$current;
+        return (_f$iref$current = f.iref.current) === null || _f$iref$current === void 0 ? void 0 : _f$iref$current.click();
+      },
+      onDragOver: function onDragOver(e) {
+        e.preventDefault();
+        setDragOver(f.key);
+      },
+      onDragLeave: function onDragLeave() {
+        return setDragOver(null);
+      },
+      onDrop: function onDrop(e) {
+        e.preventDefault();
+        setDragOver(null);
+        var file = e.dataTransfer.files[0];
+        if (file) handleFileDrop(f.key, file);
+      },
+      style: {
+        border: "1px dashed ".concat(dragOver === f.key ? C.navy : uploadedFiles[f.key] ? C.green : C.border),
+        borderRadius: 3,
+        padding: "16px 10px",
+        textAlign: "center",
+        background: uploadedFiles[f.key] ? C.greenBg : C.bg,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      ref: f.iref,
+      type: "file",
+      accept: f.accept,
+      style: {
+        display: "none"
+      },
+      onChange: function onChange(e) {
+        if (e.target.files[0]) handleFileDrop(f.key, e.target.files[0]);
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 22,
+        marginBottom: 5
+      }
+    }, uploadedFiles[f.key] ? "✅" : f.icon), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: C.navy,
+        marginBottom: 2
+      }
+    }, f.label, f.required && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: C.red
+      }
+    }, "*")), uploadedFiles[f.key] ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.green,
+        fontWeight: 600,
+        wordBreak: "break-all"
+      }
+    }, uploadedFiles[f.key]) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, f.sub));
+  })), /*#__PURE__*/React.createElement(Btn, {
+    label: "AI\u89E3\u6790\u30B9\u30BF\u30FC\u30C8 \u2192",
+    onClick: handleAnalyzeStart,
+    primary: true
+  })), uploadState === "analyzing" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "8px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 12
+    }
+  }, "\uD83D\uDD0D"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 6
+    }
+  }, "AI\u304C\u56F3\u9762\u3092\u89E3\u6790\u4E2D..."), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: C.textLight,
+      marginBottom: 16
+    }
+  }, "\u305D\u306E\u307E\u307E\u304A\u5F85\u3061\u304F\u3060\u3055\u3044"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.bg,
+      border: "1px solid ".concat(C.borderLight),
+      padding: 12,
+      marginBottom: 16,
+      textAlign: "left"
+    }
+  }, analyzeSteps.map(function (step, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "4px 0",
+        fontSize: 13,
+        color: i < analyzeStep ? C.green : i === analyzeStep ? C.navy : C.textLight,
+        fontWeight: i === analyzeStep ? 700 : 400
+      }
+    }, /*#__PURE__*/React.createElement("span", null, i < analyzeStep ? "✅" : i === analyzeStep ? "⏳" : "○"), step);
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.borderLight,
+      height: 6,
+      borderRadius: 3,
+      overflow: "hidden",
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.navy,
+      height: "100%",
+      width: "".concat(analyzeProgress, "%"),
+      transition: "width 0.25s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.textLight
+    }
+  }, analyzeProgress, "%")), uploadState === "needsOverwrite" && !overwriteModal && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 8
+    }
+  }, "\u89E3\u6790\u5B8C\u4E86 \u2014 \u65E2\u5B58\u30C7\u30FC\u30BF\u306E\u4E0A\u66F8\u304D\u78BA\u8A8D"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.yellowBg,
+      border: "1px solid ".concat(C.yellowBorder),
+      padding: "10px 14px",
+      marginBottom: 16,
+      fontSize: 13,
+      color: C.yellow
+    }
+  }, "\u26A0 \u3053\u306E\u7269\u4EF6\u306E\u53F0\u5E33\u306B\u306F\u3059\u3067\u306B ", /*#__PURE__*/React.createElement("strong", null, "18\u4EF6"), " \u306E\u30C7\u30FC\u30BF\u304C\u767B\u9332\u3055\u308C\u3066\u3044\u307E\u3059\u3002", /*#__PURE__*/React.createElement("br", null), "\u65B0\u3057\u3044AI\u89E3\u6790\u7D50\u679C\uFF0818\u4EF6\u691C\u51FA\uFF09\u3068\u3069\u306E\u3088\u3046\u306B\u7D71\u5408\u3057\u307E\u3059\u304B\uFF1F"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10,
+      marginBottom: 18
+    }
+  }, [{
+    val: "all",
+    title: "すべて上書き",
+    desc: "AI解析結果で既存データをすべて置き換えます。元に戻せません。"
+  }, {
+    val: "step",
+    title: "1件ずつ確認しながら更新",
+    desc: "設備ごとにAI解析結果を確認し、更新するかどうか選択できます。"
+  }].map(function (opt) {
+    return /*#__PURE__*/React.createElement("label", {
+      key: opt.val,
+      onClick: function onClick() {
+        return setOverwriteMode(opt.val);
+      },
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        border: "1px solid ".concat(overwriteMode === opt.val ? C.navy : C.border),
+        borderRadius: 3,
+        padding: "12px 14px",
+        cursor: "pointer",
+        background: overwriteMode === opt.val ? C.navyLight : "#fff"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "radio",
+      name: "ow",
+      checked: overwriteMode === opt.val,
+      onChange: function onChange() {
+        return setOverwriteMode(opt.val);
+      },
+      style: {
+        marginTop: 2,
+        accentColor: C.navy
+      }
+    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        color: C.navy,
+        fontSize: 13
+      }
+    }, opt.title), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: C.textLight,
+        marginTop: 2
+      }
+    }, opt.desc)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    label: "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    onClick: function onClick() {
+      setShowUploadModal(false);
+      setUploadState("idle");
+    }
+  }), /*#__PURE__*/React.createElement(Btn, {
+    label: overwriteMode === "all" ? "すべて上書きして完了" : "1件ずつ確認を開始",
+    primary: true,
+    onClick: function onClick() {
+      if (overwriteMode) startOverwriteFlow(overwriteMode);
+    }
+  }))), uploadState === "needsOverwrite" && overwriteModal && currentItem && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 4
+    }
+  }, "\u8A2D\u5099\u306E\u78BA\u8A8D ", overwriteStep + 1, " / ", confirmItems.length, "\u4EF6"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.bg,
+      border: "1px solid ".concat(C.borderLight),
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse",
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement(TH, {
+    w: 80
+  }), /*#__PURE__*/React.createElement(TH, null, "\u73FE\u5728\u306E\u767B\u9332\u30C7\u30FC\u30BF"), /*#__PURE__*/React.createElement(TH, null, "AI\u89E3\u6790\u7D50\u679C\uFF08\u65B0\uFF09"))), /*#__PURE__*/React.createElement("tbody", null, [{
+    label: "設備名",
+    cur: currentItem.name,
+    nw: currentItem.name
+  }, {
+    label: "メーカー",
+    cur: currentItem.maker,
+    nw: currentItem.maker
+  }, {
+    label: "型番",
+    cur: currentItem.model,
+    nw: currentItem.model + " ※"
+  }, {
+    label: "設置年",
+    cur: "".concat(currentItem.year, "\u5E74"),
+    nw: "".concat(currentItem.year, "\u5E74")
+  }, {
+    label: "更新推奨",
+    cur: currentItem.next,
+    nw: currentItem.next
+  }, {
+    label: "推定費用",
+    cur: currentItem.cost,
+    nw: currentItem.cost
+  }].map(function (r) {
+    return /*#__PURE__*/React.createElement("tr", {
+      key: r.label
+    }, /*#__PURE__*/React.createElement(TD, {
+      bold: true,
+      small: true
+    }, r.label), /*#__PURE__*/React.createElement(TD, null, r.cur), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "6px 10px",
+        fontSize: 12,
+        background: r.cur !== r.nw ? "#FFFBEB" : "transparent",
+        fontWeight: r.cur !== r.nw ? 700 : 400,
+        color: r.cur !== r.nw ? C.yellow : C.textMid,
+        borderBottom: "1px solid ".concat(C.borderLight)
+      }
+    }, r.nw));
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: C.textLight,
+      marginBottom: 14
+    }
+  }, "\u203B AI\u89E3\u6790\u7D50\u679C\u3067\u5909\u66F4\u306E\u3042\u308B\u9805\u76EE\u306F\u30CF\u30A4\u30E9\u30A4\u30C8\u8868\u793A"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    label: "\u3053\u306E\u8A2D\u5099\u306F\u30B9\u30AD\u30C3\u30D7",
+    onClick: function onClick() {
+      return handleStepDecision("skip");
+    }
+  }), /*#__PURE__*/React.createElement(Btn, {
+    label: "\u3053\u306E\u8A2D\u5099\u3092\u66F4\u65B0\u3059\u308B",
+    onClick: function onClick() {
+      return handleStepDecision("update");
+    },
+    primary: true
+  }))), uploadState === "done" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "8px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: C.navy,
+      marginBottom: 6
+    }
+  }, "\u53F0\u5E33\u304C\u5B8C\u6210\u3057\u307E\u3057\u305F"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: C.textMid,
+      marginBottom: 16
+    }
+  }, "18\u4EF6\u306E\u8A2D\u5099\u3092\u691C\u51FA\u3057\u3001\u53F0\u5E33\u3092\u751F\u6210\u3057\u307E\u3057\u305F\u3002"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 8,
+      marginBottom: 20
+    }
+  }, [{
+    label: "検出設備",
+    val: "18台"
+  }, {
+    label: "AI推定",
+    val: "6台"
+  }, {
+    label: "要確認",
+    val: "2台"
+  }].map(function (s) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: s.label,
+      style: {
+        background: C.bg,
+        border: "1px solid ".concat(C.borderLight),
+        padding: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: C.navy
+      }
+    }, s.val), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: C.textLight
+      }
+    }, s.label));
+  })), /*#__PURE__*/React.createElement(Btn, {
+    label: "\u53F0\u5E33\u3092\u78BA\u8A8D\u3059\u308B \u2192",
+    onClick: function onClick() {
+      setShowUploadModal(false);
+      setUploadState("idle");
+      setOverwriteMode(null);
+      setOverwriteModal(false);
+      handleNav("設備台帳");
+    },
+    primary: true
+  })))));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));
+
+</script>
+</body>
+</html>
