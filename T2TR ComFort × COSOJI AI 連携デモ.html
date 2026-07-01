@@ -1,0 +1,3610 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T2TR ComFort × COSOJI AI 連携デモ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: #0f1f45;
+            color: white;
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo-divider {
+            color: #f59e0b;
+            font-weight: 300;
+        }
+        
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: #f59e0b;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #0f1f45 0%, #1e3a8a 100%);
+            color: white;
+            padding: 8rem 2rem 6rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(to top, rgba(15,31,69,0.3) 0%, transparent 100%);
+            background-image: 
+                repeating-linear-gradient(90deg, transparent 0, transparent 49px, rgba(255,255,255,0.03) 49px, rgba(255,255,255,0.03) 50px),
+                repeating-linear-gradient(0deg, transparent 0, transparent 49px, rgba(255,255,255,0.03) 49px, rgba(255,255,255,0.03) 50px);
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: #f59e0b;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+        
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .badge-t2tr {
+            background: rgba(30, 58, 138, 0.9);
+            border: 2px solid #3b82f6;
+        }
+        
+        .badge-cosoji {
+            background: rgba(16, 185, 129, 0.9);
+            border: 2px solid #10b981;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #f59e0b;
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .cta-button:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(245, 158, 11, 0.6);
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #f59e0b;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #0f1f45;
+        }
+        
+        .section-subtitle {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #64748b;
+        }
+        
+        .dashboard-kpi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #1d4ed8;
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #0f1f45;
+        }
+        
+        .kpi-subvalue {
+            font-size: 0.9rem;
+            color: #10b981;
+            margin-top: 0.25rem;
+        }
+        
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: #f1f5f9;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #0f1f45;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f8fafc;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-dd {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-contract {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-negotiation {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+        
+        .status-acquired {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-complete {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-missing {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
+        }
+        
+        .tab:hover {
+            color: #1d4ed8;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 40% 60%;
+            gap: 2rem;
+        }
+        
+        .property-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .property-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .property-card:hover {
+            border-color: #1d4ed8;
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1);
+        }
+        
+        .property-card.selected {
+            border-color: #1d4ed8;
+            background: #eff6ff;
+        }
+        
+        .property-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #0f1f45;
+        }
+        
+        .property-info {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+        
+        .document-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .document-category {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #0f1f45;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 3px solid #cbd5e1;
+        }
+        
+        .document-item.complete {
+            border-left-color: #10b981;
+        }
+        
+        .document-item.pending {
+            border-left-color: #f59e0b;
+        }
+        
+        .document-item.missing {
+            border-left-color: #ef4444;
+        }
+        
+        .document-item.error {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+        
+        .document-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .document-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .document-comment {
+            font-size: 0.85rem;
+            color: #ef4444;
+            margin-top: 0.5rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .progress-container {
+            margin: 2rem 0;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            transition: width 1s ease;
+        }
+        
+        .ai-summary {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        
+        .ai-summary-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 2rem;
+        }
+        
+        .upload-area:hover {
+            border-color: #1d4ed8;
+            background: #eff6ff;
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .demo-button {
+            padding: 0.75rem 1.5rem;
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .demo-button:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+        }
+        
+        .extraction-result {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e2e8f0;
+            border-top-color: #1d4ed8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .extraction-table {
+            margin: 2rem 0;
+        }
+        
+        .mapping-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        
+        .mapping-box {
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 700;
+        }
+        
+        .mapping-arrow {
+            font-size: 2rem;
+            color: #1d4ed8;
+            animation: slideRight 2s infinite;
+        }
+        
+        @keyframes slideRight {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+        }
+        
+        .efficiency-stat {
+            background: #d1fae5;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .efficiency-stat strong {
+            font-size: 1.3rem;
+            color: #065f46;
+        }
+        
+        .alert-banner {
+            background: #fed7aa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #f97316;
+        }
+        
+        .alert-banner-title {
+            font-weight: 700;
+            color: #9a3412;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chart-container {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+        }
+        
+        .chart-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0f1f45;
+        }
+        
+        .two-column-equal {
+            display: grid;
+            grid-template-columns: 70% 30%;
+            gap: 2rem;
+        }
+        
+        .ai-chat {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .chat-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0f1f45;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+        
+        .chat-message.ai {
+            background: #eff6ff;
+            border-left: 3px solid #1d4ed8;
+        }
+        
+        .chat-message.user {
+            background: #f1f5f9;
+            border-left: 3px solid #64748b;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .chat-input button {
+            padding: 0.75rem 1.5rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .preset-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .preset-question {
+            padding: 0.75rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        
+        .preset-question:hover {
+            background: #eff6ff;
+            border-color: #1d4ed8;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0f1f45;
+        }
+        
+        .feature-description {
+            color: #64748b;
+            line-height: 1.8;
+        }
+        
+        .value-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .value-stat {
+            text-align: center;
+        }
+        
+        .value-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #1d4ed8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .value-label {
+            font-size: 1.1rem;
+            color: #0f1f45;
+            font-weight: 600;
+        }
+        
+        .simulation-table {
+            margin: 3rem 0;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #0f1f45 0%, #1e3a8a 100%);
+            color: white;
+            padding: 5rem 2rem;
+            text-align: center;
+            margin-top: 5rem;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .cta-primary {
+            padding: 1.2rem 3rem;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cta-primary:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+        
+        .cta-secondary {
+            padding: 1.2rem 3rem;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cta-secondary:hover {
+            background: white;
+            color: #0f1f45;
+        }
+        
+        footer {
+            background: #0f1f45;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f1f45;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .approval-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .approval-step {
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .approval-role {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f1f45;
+        }
+        
+        .approval-arrow {
+            font-size: 2rem;
+            color: #1d4ed8;
+        }
+        
+        .button-primary {
+            padding: 1rem 2rem;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .button-primary:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+        
+        .button-secondary {
+            padding: 1rem 2rem;
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .button-secondary:hover {
+            background: #1e40af;
+        }
+        
+        .risk-high {
+            color: #dc2626;
+            font-weight: 700;
+        }
+        
+        .risk-medium {
+            color: #f97316;
+            font-weight: 700;
+        }
+        
+        .risk-low {
+            color: #10b981;
+            font-weight: 700;
+        }
+        
+        .confidence-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .report-preview {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem;
+            min-height: 600px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .report-page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .report-page.active {
+            display: block;
+        }
+        
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .page-indicator {
+            font-weight: 600;
+            color: #64748b;
+        }
+        
+        .nav-button {
+            padding: 0.5rem 1rem;
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-button:hover {
+            background: #1e40af;
+        }
+        
+        .nav-button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        
+        .report-chart {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 200px;
+        }
+        
+        .chart-bar {
+            width: 40px;
+            background: linear-gradient(180deg, #1d4ed8 0%, #3b82f6 100%);
+            border-radius: 4px 4px 0 0;
+            animation: growBar 1s ease-out;
+            position: relative;
+        }
+        
+        @keyframes growBar {
+            from { height: 0; }
+        }
+        
+        .chart-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .generating-animation {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .generating-animation.active {
+            display: block;
+        }
+        
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #cbd5e1;
+            transition: all 0.5s;
+        }
+        
+        .progress-step.active {
+            border-left-color: #10b981;
+            background: #d1fae5;
+        }
+        
+        .progress-step.completed {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+        
+        .progress-step-icon {
+            font-size: 1.5rem;
+        }
+        
+        .progress-step-text {
+            flex: 1;
+            font-weight: 600;
+        }
+        
+        .progress-step-status {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .two-column,
+            .two-column-equal {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                gap: 1.5rem;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <span>T2TR ComFort</span>
+                <span class="logo-divider">×</span>
+                <span>COSOJI AI</span>
+            </div>
+            <nav>
+                <a href="#overview">概要</a>
+                <a href="#usecases">ユースケース</a>
+                <a href="#value">価値提案</a>
+                <a href="#contact">お問い合わせ</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>不動産証券化業界のAI革命、ここから始まる。</h1>
+            <div class="hero-subtitle">T2TR ComFort × COSOJI AI</div>
+            <p class="hero-description">
+                業界シェア7割超のプラットフォームに、数千棟の現場データで鍛えたAIが融合。投資ファンド・AM会社の業務を根本から変革します。
+            </p>
+            <div class="badge-container">
+                <div class="badge badge-t2tr">T2TR ComFort：業界標準プラットフォーム</div>
+                <div class="badge badge-cosoji">COSOJI AI：業界特化AIソリューション</div>
+            </div>
+            <a href="#usecases" class="cta-button">デモを体験する ↓</a>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value">30社+</div>
+                    <div class="stat-label">導入社数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">70%超</div>
+                    <div class="stat-label">業界シェア</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">数千棟</div>
+                    <div class="stat-label">管理物件棟数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">ISO認証</div>
+                    <div class="stat-label">27001 / 27017</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="overview">
+        <h2 class="section-title">ポートフォリオ概要ダッシュボード</h2>
+        <p class="section-subtitle">T2TR ComFort メイン画面イメージ</p>
+        
+        <div class="dashboard-kpi">
+            <div class="kpi-card">
+                <div class="kpi-label">管理物件数</div>
+                <div class="kpi-value">5物件</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">総資産規模</div>
+                <div class="kpi-value">402億円</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">ポートフォリオ平均稼働率</div>
+                <div class="kpi-value">96.0%</div>
+                <div class="kpi-subvalue">加重平均</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">年間NOI合計</div>
+                <div class="kpi-value">14.7億円</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 1.5rem; font-weight: 700;">管理物件一覧</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>物件名</th>
+                            <th>所在地</th>
+                            <th>用途</th>
+                            <th>取得金額</th>
+                            <th>稼働率</th>
+                            <th>年間NOI</th>
+                            <th>Cap Rate</th>
+                            <th>フェーズ</th>
+                            <th>担当AM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>汐留プレミアムタワー</strong></td>
+                            <td>東京都港区東新橋</td>
+                            <td>オフィス</td>
+                            <td>98億円</td>
+                            <td>97.2%</td>
+                            <td>3.1億円</td>
+                            <td>3.16%</td>
+                            <td><span class="status-badge status-dd">DD中</span></td>
+                            <td>山田 健一</td>
+                        </tr>
+                        <tr>
+                            <td><strong>大阪梅田ロジスティクスセンター</strong></td>
+                            <td>大阪府大阪市淀川区</td>
+                            <td>物流施設</td>
+                            <td>54億円</td>
+                            <td>100%</td>
+                            <td>2.15億円</td>
+                            <td>3.98%</td>
+                            <td><span class="status-badge status-contract">契約済</span></td>
+                            <td>鈴木 美咲</td>
+                        </tr>
+                        <tr>
+                            <td><strong>渋谷クロスタワー</strong></td>
+                            <td>東京都渋谷区渋谷</td>
+                            <td>オフィス・複合</td>
+                            <td>142億円</td>
+                            <td>94.3%</td>
+                            <td>4.58億円</td>
+                            <td>3.23%</td>
+                            <td><span class="status-badge status-negotiation">交渉中</span></td>
+                            <td>中村 拓也</td>
+                        </tr>
+                        <tr>
+                            <td><strong>品川ゲートウェイビル</strong></td>
+                            <td>東京都港区港南</td>
+                            <td>オフィス</td>
+                            <td>76億円</td>
+                            <td>100%</td>
+                            <td>3.52億円</td>
+                            <td>4.63%</td>
+                            <td><span class="status-badge status-acquired">運用中</span></td>
+                            <td>高橋 裕子</td>
+                        </tr>
+                        <tr>
+                            <td><strong>福岡天神南ビジネスセンター</strong></td>
+                            <td>福岡県福岡市中央区</td>
+                            <td>オフィス</td>
+                            <td>32億円</td>
+                            <td>88.5%</td>
+                            <td>1.12億円</td>
+                            <td>3.50%</td>
+                            <td><span class="status-badge status-dd">DD中</span></td>
+                            <td>田中 誠司</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="chart-title">ポートフォリオ内訳（取得金額比率）</h3>
+            <canvas id="portfolioChart" style="max-height: 300px;"></canvas>
+        </div>
+    </section>
+
+    <section class="section" id="usecases">
+        <h2 class="section-title">6つの連携ユースケースデモ</h2>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📂 売買契約AI書類管理</button>
+            <button class="tab" onclick="switchTab(1)">📄 書類アップロード→AI自動入力</button>
+            <button class="tab" onclick="switchTab(2)">💰 請求書・エビデンス自動処理</button>
+            <button class="tab" onclick="switchTab(3)">🔧 法定点検AIダッシュボード</button>
+            <button class="tab" onclick="switchTab(4)">📊 AMポートフォリオAIアシスタント</button>
+            <button class="tab" onclick="switchTab(5)">📈 運用レポート自動作成</button>
+        </div>
+
+        <div id="tab0" class="tab-content active">
+            <div class="two-column">
+                <div>
+                    <h3 style="margin-bottom: 1.5rem; font-weight: 700;">物件選択</h3>
+                    <div class="property-list">
+                        <div class="property-card" onclick="selectProperty(0)">
+                            <div class="property-name">汐留プレミアムタワー</div>
+                            <div class="property-info"><span class="status-badge status-dd">DD中</span> 担当：山田 健一</div>
+                            <div class="property-info">取得予定：98億円</div>
+                        </div>
+                        <div class="property-card selected" onclick="selectProperty(1)">
+                            <div class="property-name">大阪梅田ロジスティクスセンター</div>
+                            <div class="property-info"><span class="status-badge status-contract">契約済・書類収集中</span> 担当：鈴木 美咲</div>
+                            <div class="property-info">取得予定：54億円</div>
+                        </div>
+                        <div class="property-card" onclick="selectProperty(2)">
+                            <div class="property-name">渋谷クロスタワー</div>
+                            <div class="property-info"><span class="status-badge status-negotiation">交渉中</span> 担当：中村 拓也</div>
+                            <div class="property-info">取得予定：142億円</div>
+                        </div>
+                        <div class="property-card" onclick="selectProperty(3)">
+                            <div class="property-name">品川ゲートウェイビル</div>
+                            <div class="property-info"><span class="status-badge status-acquired">運用中</span> 担当：高橋 裕子</div>
+                            <div class="property-info">取得完了：76億円</div>
+                        </div>
+                        <div class="property-card" onclick="selectProperty(4)">
+                            <div class="property-name">福岡天神南ビジネスセンター</div>
+                            <div class="property-info"><span class="status-badge status-dd">DD中</span> 担当：田中 誠司</div>
+                            <div class="property-info">取得予定：32億円</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem; font-weight: 700;">COSOJI AI 書類管理チェックリスト</h3>
+                    <h4 style="color: #1d4ed8; margin-bottom: 1rem;">大阪梅田ロジスティクスセンター</h4>
+                    
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>書類取得進捗</span>
+                            <span>19/26 完了（73%）</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 73%;">73%</div>
+                        </div>
+                    </div>
+
+                    <div class="ai-summary">
+                        <div class="ai-summary-title">🤖 COSOJI AI サマリー</div>
+                        <p><strong>⚠️ アスベスト調査報告書に不備があります。</strong>修正依頼中（2026/05/10送付）。土地境界確認書・固定資産税証明書が未取得です。取得期限まで最短5日です。全書類揃い次第、T2TR稟議フローへ自動連携します。</p>
+                    </div>
+
+                    <div class="document-list" style="max-height: 600px; overflow-y: auto;">
+                        <div class="document-category">【権利関係】</div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">1. 不動産登記事項証明書（土地・建物）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">2. 公図・地積測量図</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">3. 建物図面（各階平面図・立面図）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">4. 越境確認書・越境解消覚書</div>
+                                <div class="document-status">🟡 確認中 期限：2026/05/20</div>
+                                <div class="document-comment">AIコメント：越境箇所の詳細図面の追加提出を確認中</div>
+                            </div>
+                        </div>
+                        <div class="document-item missing">
+                            <div>
+                                <div class="document-name">5. 土地境界確認書</div>
+                                <div class="document-status">🔴 未取得 期限：2026/05/25</div>
+                            </div>
+                        </div>
+
+                        <div class="document-category">【建物・技術関係】</div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">6. 建築確認済証・検査済証</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">7. エンジニアリングレポート（ER）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">8. 建物状況調査報告書（インスペクション）</div>
+                                <div class="document-status">🟡 確認中 期限：2026/05/15</div>
+                                <div class="document-comment">AIコメント：屋根防水シート劣化（推定修繕費：¥12,000,000）の記載あり。要確認</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">9. 地盤調査報告書</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item error">
+                            <div>
+                                <div class="document-name">10. アスベスト調査報告書</div>
+                                <div class="document-status">⚠️ 不備あり</div>
+                                <div class="document-comment">AIコメント：報告書の調査範囲が建物1棟のみ。附属棟分が欠落。再提出要請済み（2026/05/10送付済み）</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">11. 耐震診断報告書（Is値：0.92）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">12. 物流施設荷重計算書</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+
+                        <div class="document-category">【法的調査】</div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">13. 不動産鑑定評価書</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">14. 重要事項説明書（宅建士記名・押印済み）</div>
+                                <div class="document-status">🟡 確認中 期限：2026/05/18</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">15. 都市計画・用途地域確認書</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">16. 道路・接道調査書</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+
+                        <div class="document-category">【テナント・収益関係】</div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">17. テナントリスト（3テナント一覧）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">18. 賃貸借契約書（全3テナント分）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">19. 賃料支払状況・延滞履歴</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">20. テナント信用情報・財務資料</div>
+                                <div class="document-status">🟡 確認中 期限：2026/05/20</div>
+                                <div class="document-comment">AIコメント：楽天グループ社分は入手済み。残り2社の提出待ち</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">21. 敷金・保証金預り明細</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+
+                        <div class="document-category">【設備・維持管理】</div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">22. 設備機器台帳（空調・電気・消防等）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">23. 修繕履歴・修繕計画書（過去5年）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">24. 管理委託契約書</div>
+                                <div class="document-status">🟡 確認中 期限：2026/05/22</div>
+                            </div>
+                        </div>
+                        <div class="document-item complete">
+                            <div>
+                                <div class="document-name">25. 環境・エネルギー管理データ（CASBEE評価）</div>
+                                <div class="document-status">✅ 取得済</div>
+                            </div>
+                        </div>
+
+                        <div class="document-category">【クロージング】</div>
+                        <div class="document-item missing">
+                            <div>
+                                <div class="document-name">26. 固定資産税・都市計画税納税証明書</div>
+                                <div class="document-status">🔴 未取得 期限：2026/05/30</div>
+                            </div>
+                        </div>
+                        <div class="document-item pending">
+                            <div>
+                                <div class="document-name">（内部）AM稟議書</div>
+                                <div class="document-status">🟡 承認申請中 期限：2026/05/12</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button class="button-primary" onclick="openRingiModal()">📋 T2TR稟議フローへ連携</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab1" class="tab-content">
+            <div class="card">
+                <div class="upload-area" onclick="startUploadDemo()">
+                    <div class="upload-icon">📄</div>
+                    <h3>PDFまたは画像ファイルをここにドロップ</h3>
+                    <p>対応形式：PDF / JPEG / PNG / TIFF</p>
+                </div>
+
+                <div class="demo-buttons">
+                    <button class="demo-button" onclick="startContractDemo()">賃貸借契約書をデモ読み取り（物件②・佐川急便分）</button>
+                    <button class="demo-button" onclick="alert('請求書デモは賃貸借契約書と同様の流れで動作します')">請求書をデモ読み取り（修繕工事）</button>
+                    <button class="demo-button" onclick="alert('ERデモは賃貸借契約書と同様の流れで動作します')">エンジニアリングレポートをデモ読み取り</button>
+                </div>
+
+                <div class="loading" id="uploadLoading">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem; font-weight: 600;">COSOJI AI が読み取り中...</p>
+                    <div class="progress-bar" style="width: 300px; margin: 1rem auto;">
+                        <div class="progress-fill" id="uploadProgress" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+
+                <div class="extraction-result" id="extractionResult">
+                    <h3 style="margin: 2rem 0 1rem; font-weight: 700;">AI抽出結果（賃貸借契約書 - 大阪梅田ロジスティクスセンター）</h3>
+                    
+                    <div class="table-container extraction-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>項目</th>
+                                    <th>抽出値</th>
+                                    <th>信頼度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>物件名</td>
+                                    <td>大阪梅田ロジスティクスセンター</td>
+                                    <td><span class="confidence-badge">99%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>テナント名</td>
+                                    <td>佐川急便株式会社</td>
+                                    <td><span class="confidence-badge">99%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>賃貸面積</td>
+                                    <td>8,200㎡</td>
+                                    <td><span class="confidence-badge">98%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>月額賃料</td>
+                                    <td>6,970,000円（税別）</td>
+                                    <td><span class="confidence-badge">99%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>共益費</td>
+                                    <td>820,000円/月</td>
+                                    <td><span class="confidence-badge">97%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>保証金</td>
+                                    <td>34,850,000円（5か月分）</td>
+                                    <td><span class="confidence-badge">98%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>契約開始日</td>
+                                    <td>2024年4月1日</td>
+                                    <td><span class="confidence-badge">99%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>契約終了日</td>
+                                    <td>2029年3月31日（5年契約）</td>
+                                    <td><span class="confidence-badge">99%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>自動更新</td>
+                                    <td>あり（1年毎・3か月前通知）</td>
+                                    <td><span class="confidence-badge">96%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>賃料改定条項</td>
+                                    <td>2年毎協議改定</td>
+                                    <td><span class="confidence-badge">94%</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mapping-visual">
+                        <div class="mapping-box" style="background: #d1fae5; color: #065f46;">
+                            🤖 COSOJI AI<br>抽出完了
+                        </div>
+                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-box" style="background: #dbeafe; color: #1e40af;">
+                            📊 T2TR ComFort<br>テナント契約管理
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin: 2rem 0;">
+                        <button class="button-primary" onclick="completeAutoInput()">✅ T2TRテナント契約管理に自動入力する</button>
+                    </div>
+
+                    <div class="efficiency-stat" id="efficiencyStat" style="display: none;">
+                        <p><strong>入力完了しました！</strong></p>
+                        <p>T2TRのテナント契約管理画面に10項目が自動入力されました。担当AM（鈴木 美咲）に確認通知を送信済みです。</p>
+                        <p style="margin-top: 1rem;"><strong>従来の手入力作業時間：約45分 → COSOJI AI活用：約2分（96%削減）</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab2" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 2rem; font-weight: 700; text-align: center;">💰 T2TR支払登録 × COSOJI AI 自動化デモ</h3>
+                
+                <div class="alert-banner">
+                    <div class="alert-banner-title">🚀 請求書PDFから支払登録を完全自動化</div>
+                    <p>従来30分かかっていた支払登録作業を、COSOJI AIが請求書を読み取り、T2TRの支払登録画面に自動入力。物件選択・支払先・金額・勘定科目・支払期日まで、一括自動化します。</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <div class="card" style="background: #fef2f2; border-left: 4px solid #ef4444;">
+                            <h4 style="color: #991b1b; font-weight: 700; margin-bottom: 1rem;">❌ 従来の手作業フロー</h4>
+                            <ol style="line-height: 2; padding-left: 1.5rem; color: #7f1d1d;">
+                                <li>請求書PDFを開いて内容確認（5分）</li>
+                                <li>T2TRにログイン→支払管理メニュー</li>
+                                <li>物件を手動選択（2分）</li>
+                                <li>支払先を手入力またはマスタ検索（3分）</li>
+                                <li>金額・税額を手入力（2分）</li>
+                                <li>勘定科目・支払区分を選択（3分）</li>
+                                <li>支払期日を入力（1分）</li>
+                                <li>請求書PDFを添付（2分）</li>
+                                <li>内容確認・登録ボタン（2分）</li>
+                                <li>承認者へ通知送信（1分）</li>
+                            </ol>
+                            <p style="font-weight: 700; color: #991b1b; margin-top: 1rem; font-size: 1.1rem;">⏱️ 合計：約21分/件</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="card" style="background: #ecfdf5; border-left: 4px solid: #10b981;">
+                            <h4 style="color: #065f46; font-weight: 700; margin-bottom: 1rem;">✅ COSOJI AI 自動化フロー</h4>
+                            <ol style="line-height: 2; padding-left: 1.5rem; color: #064e3b;">
+                                <li>請求書PDFをドロップ（10秒）</li>
+                                <li>COSOJI AIが自動読取・分析（30秒）
+                                    <ul style="list-style: circle; padding-left: 1.5rem; font-size: 0.9rem;">
+                                        <li>物件名から物件ID特定</li>
+                                        <li>支払先情報抽出・マスタ照合</li>
+                                        <li>金額・税額・税率判定</li>
+                                        <li>請求内容から勘定科目推定</li>
+                                        <li>支払期日抽出</li>
+                                    </ul>
+                                </li>
+                                <li>T2TR支払登録画面に自動入力（5秒）</li>
+                                <li>担当者が内容確認（30秒）</li>
+                                <li>登録ボタンクリック（5秒）</li>
+                            </ol>
+                            <p style="font-weight: 700; color: #065f46; margin-top: 1rem; font-size: 1.1rem;">⏱️ 合計：約80秒/件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="efficiency-stat" style="background: #dbeafe; border-left: 4px solid #1d4ed8;">
+                    <p style="color: #1e40af;"><strong>🚀 効率化効果</strong></p>
+                    <p style="font-size: 1.5rem; color: #1e40af; font-weight: 700; margin: 1rem 0;">21分 → 80秒（94%削減）</p>
+                    <p style="color: #1e3a8a;">月間100件の支払登録で、<strong>約33時間の工数削減</strong>を実現</p>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-weight: 700;">📤 請求書アップロード</h3>
+                        <div class="upload-area" onclick="document.getElementById('invoiceFileInput').click()" style="cursor: pointer;">
+                            <div class="upload-icon">📄</div>
+                            <h3>請求書PDFをドロップ</h3>
+                            <p>または、クリックしてファイル選択</p>
+                            <input type="file" id="invoiceFileInput" accept=".pdf" style="display: none;" onchange="startInvoiceAI()">
+                        </div>
+                        
+                        <div class="demo-buttons">
+                            <button class="demo-button" onclick="startInvoiceAI()">
+                                📄 デモ請求書で自動化を体験<br>
+                                <small style="font-size: 0.8rem;">（排煙口修理工事・¥220,000）</small>
+                            </button>
+                        </div>
+
+                        <div class="loading" id="invoiceLoading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <p style="margin-top: 1rem; font-weight: 600; color: #1d4ed8;">🤖 COSOJI AI 処理中...</p>
+                            <div class="progress-steps" style="margin-top: 1.5rem; text-align: left;">
+                                <div class="progress-step" id="aiStep1">
+                                    <div class="progress-step-icon">📄</div>
+                                    <div class="progress-step-text">請求書PDF読み取り</div>
+                                </div>
+                                <div class="progress-step" id="aiStep2">
+                                    <div class="progress-step-icon">🔍</div>
+                                    <div class="progress-step-text">OCR文字認識・データ抽出</div>
+                                </div>
+                                <div class="progress-step" id="aiStep3">
+                                    <div class="progress-step-icon">🏢</div>
+                                    <div class="progress-step-text">物件マスタ照合</div>
+                                </div>
+                                <div class="progress-step" id="aiStep4">
+                                    <div class="progress-step-icon">💼</div>
+                                    <div class="progress-step-text">支払先マスタ照合</div>
+                                </div>
+                                <div class="progress-step" id="aiStep5">
+                                    <div class="progress-step-icon">📊</div>
+                                    <div class="progress-step-text">勘定科目AI推定</div>
+                                </div>
+                                <div class="progress-step" id="aiStep6">
+                                    <div class="progress-step-icon">✅</div>
+                                    <div class="progress-step-text">T2TR自動入力準備完了</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card" id="t2trSimulator" style="display: none; background: #f8fafc; border: 3px solid #1d4ed8;">
+                        <div style="background: #1d4ed8; color: white; padding: 0.75rem 1rem; margin: -2rem -2rem 1.5rem -2rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="font-size: 1.2rem;">🏢</div>
+                                <div style="font-weight: 700;">T2TR ComFort - 支払登録</div>
+                            </div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">ユーザー：山田太郎</div>
+                        </div>
+
+                        <div style="background: #e0f2fe; padding: 0.5rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem; color: #0c4a6e;">
+                            📍 TOP &gt; 支払管理 &gt; 支払登録（物件費等）
+                        </div>
+
+                        <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">✨ COSOJI AIが自動入力しました</h4>
+
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">対象物件 <span style="color: #ef4444;">*</span></label>
+                                <select style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600;">
+                                    <option>品川ゲートウェイビル</option>
+                                </select>
+                                <div style="font-size: 0.85rem; color: #10b981; margin-top: 0.25rem;">✓ AI自動選択</div>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">支払先 <span style="color: #ef4444;">*</span></label>
+                                <input type="text" value="株式会社大成建設 東京支店" readonly style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600;">
+                                <div style="font-size: 0.85rem; color: #10b981; margin-top: 0.25rem;">✓ マスタから自動照合</div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">税抜金額 <span style="color: #ef4444;">*</span></label>
+                                    <input type="text" value="¥200,000" readonly style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600; text-align: right;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">消費税</label>
+                                    <input type="text" value="¥20,000 (10%)" readonly style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600; text-align: right;">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">請求金額合計 <span style="color: #ef4444;">*</span></label>
+                                <input type="text" value="¥220,000" readonly style="width: 100%; padding: 0.75rem; border: 2px solid #1d4ed8; border-radius: 6px; background: #dbeafe; font-weight: 700; font-size: 1.2rem; text-align: right;">
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">勘定科目 <span style="color: #ef4444;">*</span></label>
+                                <select style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600;">
+                                    <option>修繕費（工事費）</option>
+                                </select>
+                                <div style="font-size: 0.85rem; color: #10b981; margin-top: 0.25rem;">✓ AI推定（工事内容から判定）</div>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">支払期日 <span style="color: #ef4444;">*</span></label>
+                                <input type="date" value="2026-03-31" readonly style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600;">
+                                <div style="font-size: 0.85rem; color: #10b981; margin-top: 0.25rem;">✓ 請求書から自動抽出</div>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">摘要・備考</label>
+                                <textarea readonly style="width: 100%; padding: 0.75rem; border: 2px solid #10b981; border-radius: 6px; background: #ecfdf5; font-weight: 600; min-height: 60px;">排煙設備排煙口修理工事（2F東側）
+工事実施日：2026年2月28日〜3月2日</textarea>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">添付ファイル</label>
+                                <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 6px; padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.5rem;">📎</span>
+                                    <span style="font-weight: 600;">請求書_大成建設_20260305.pdf</span>
+                                    <span style="margin-left: auto; color: #10b981; font-weight: 600;">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0; display: flex; gap: 1rem;">
+                            <button class="button-primary" style="flex: 1;" onclick="completeT2TREntry()">
+                                ✅ 内容確認完了 - T2TRに登録
+                            </button>
+                            <button class="button-secondary" onclick="alert('修正画面を開きます')">
+                                ✏️ 手動修正
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card" id="completionMessage" style="display: none; background: #d1fae5; border-left: 4px solid #10b981;">
+                        <h3 style="color: #065f46; font-weight: 700; margin-bottom: 1rem;">✅ T2TR支払登録が完了しました！</h3>
+                        <p style="line-height: 1.8; color: #064e3b;">
+                            支払登録ID：<strong>#PAY-2026-03-001</strong><br>
+                            承認者（高橋 裕子）に通知を送信しました。<br><br>
+                            <strong>処理時間：</strong>約80秒<br>
+                            <strong>削減時間：</strong>約19分（従来21分 → AI活用80秒）
+                        </p>
+                        <button class="button-secondary" style="margin-top: 1rem;" onclick="resetInvoiceDemo()">🔄 もう一度デモを見る</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem; font-weight: 700;">📊 今月の支払登録状況（2026年3月）</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>請求番号</th>
+                                <th>支払区分</th>
+                                <th>支払先</th>
+                                <th>請求内容</th>
+                                <th>請求金額</th>
+                                <th>AI読取</th>
+                                <th>T2TR連携</th>
+                                <th>エビデンス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>#2026-03-001</strong></td>
+                                <td>工事費</td>
+                                <td>株式会社大成建設</td>
+                                <td>排煙口修理工事（2F東側）</td>
+                                <td>¥220,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="showEvidence(1)">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-002</strong></td>
+                                <td>水道光熱費</td>
+                                <td>東京電力エナジーパートナー</td>
+                                <td>電気料金（3月分）</td>
+                                <td>¥1,240,800</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-003</strong></td>
+                                <td>水道光熱費</td>
+                                <td>東京ガス株式会社</td>
+                                <td>ガス料金（3月分）</td>
+                                <td>¥385,600</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-004</strong></td>
+                                <td>水道光熱費</td>
+                                <td>東京都水道局</td>
+                                <td>上下水道料金（3月分）</td>
+                                <td>¥156,200</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-005</strong></td>
+                                <td>保守管理費</td>
+                                <td>株式会社三菱地所プロパティマネジメント</td>
+                                <td>PM業務委託料（3月分）</td>
+                                <td>¥2,850,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-006</strong></td>
+                                <td>保守管理費</td>
+                                <td>株式会社日立ビルシステム</td>
+                                <td>エレベーター保守点検費（3台分）</td>
+                                <td>¥180,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-007</strong></td>
+                                <td>保守管理費</td>
+                                <td>ダイキン工業株式会社</td>
+                                <td>空調設備保守点検費（AHU12台）</td>
+                                <td>¥420,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-008</strong></td>
+                                <td>修繕費</td>
+                                <td>株式会社タカラ塗装</td>
+                                <td>外壁タイル補修工事（精密調査）</td>
+                                <td>¥680,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-009</strong></td>
+                                <td>修繕費</td>
+                                <td>パナソニック株式会社</td>
+                                <td>非常用発電機バッテリー交換</td>
+                                <td>¥2,800,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-010</strong></td>
+                                <td>保険料</td>
+                                <td>東京海上日動火災保険株式会社</td>
+                                <td>建物総合保険（3月分）</td>
+                                <td>¥950,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-011</strong></td>
+                                <td>租税公課</td>
+                                <td>港区都市計画税事務所</td>
+                                <td>固定資産税・都市計画税（3月分）</td>
+                                <td>¥3,280,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-012</strong></td>
+                                <td>清掃費</td>
+                                <td>株式会社ダスキン</td>
+                                <td>共用部清掃業務委託（3月分）</td>
+                                <td>¥320,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-013</strong></td>
+                                <td>警備費</td>
+                                <td>綜警警備保障株式会社</td>
+                                <td>警備業務委託（3月分）</td>
+                                <td>¥480,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-014</strong></td>
+                                <td>事務費</td>
+                                <td>三菱UFJ信託銀行株式会社</td>
+                                <td>資産保管業務手数料（3月分）</td>
+                                <td>¥850,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2026-03-015</strong></td>
+                                <td>事務費</td>
+                                <td>EY新日本有限責任監査法人</td>
+                                <td>監査費用（Q1分）</td>
+                                <td>¥2,500,000</td>
+                                <td><span class="status-badge status-complete">✅ 完了</span></td>
+                                <td><span class="status-badge status-complete">入力済</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td><strong>#2026-03-016</strong></td>
+                                <td>保守管理費</td>
+                                <td>株式会社クリーンテック</td>
+                                <td>給水設備清掃・水質検査（貯水槽）</td>
+                                <td>¥280,000</td>
+                                <td><span class="status-badge status-pending">⏳ 確認中</span></td>
+                                <td><span class="status-badge status-pending">待機</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td><strong>#2026-03-017</strong></td>
+                                <td>修繕費</td>
+                                <td>株式会社天空設備</td>
+                                <td>屋上防水シート部分補修</td>
+                                <td>¥450,000</td>
+                                <td><span class="status-badge status-pending">⏳ 確認中</span></td>
+                                <td><span class="status-badge status-pending">待機</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td><strong>#2026-03-018</strong></td>
+                                <td>事務費</td>
+                                <td>森・濱田松本法律事務所</td>
+                                <td>法律顧問料（3月分）</td>
+                                <td>¥380,000</td>
+                                <td><span class="status-badge status-pending">⏳ 確認中</span></td>
+                                <td><span class="status-badge status-pending">待機</span></td>
+                                <td><button class="demo-button" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="alert('エビデンスデモは請求書#001を参照')">表示</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="background: #f8fafc; border-left: 4px solid #10b981;">
+                <h3 style="margin-bottom: 1rem; font-weight: 700; color: #10b981;">🤖 COSOJI AI自動処理フロー</h3>
+                <div class="mapping-visual" style="flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #eff6ff; color: #1e40af;">
+                            📧 請求書PDF受領<br>（メール・T2TRアップロード）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #d1fae5; color: #065f46;">
+                            🤖 COSOJI AIがOCR読み取り<br>（請求先・請求内容・金額・期限抜出）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #fef3c7; color: #92400e;">
+                            🔍 AIがエビデンス検証<br>（契約書・見積書と照合・金額違いチェック）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #dbeafe; color: #1e40af;">
+                            ✅ T2TR支払管理に自動入力<br>（支払先・金額・支払区分・期限）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="efficiency-stat" style="margin-top: 2rem;">
+                <p><strong>🚀 効率化効果（月間）</strong></p>
+                <p style="margin-top: 1rem;">従来の手作業：請求書18件 × 20分/件 = <strong>360分（6時間）</strong></p>
+                <p>COSOJI AI活用：<strong>30分（確認作業のみ）</strong></p>
+                <p style="font-size: 1.3rem; color: #10b981; font-weight: 700; margin-top: 1rem;">→ 月間330分削減（削減率92%）</p>
+            </div>
+        </div>
+
+        <div id="tab3" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem; font-weight: 700;">物件選択</h3>
+                <select style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" onchange="alert('デモでは品川ゲートウェイビルの内容が表示されます')">
+                    <option>品川ゲートウェイビル（取得完了・運用中）</option>
+                    <option>汐留プレミアムタワー</option>
+                    <option>大阪梅田ロジスティクスセンター</option>
+                    <option>渋谷クロスタワー</option>
+                    <option>福岡天神南ビジネスセンター</option>
+                </select>
+            </div>
+
+            <div class="dashboard-kpi">
+                <div class="kpi-card">
+                    <div class="kpi-label">管理設備機器数</div>
+                    <div class="kpi-value">142台</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">今月実施予定点検</div>
+                    <div class="kpi-value">8件</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">是正事項（未対応）</div>
+                    <div class="kpi-value" style="color: #ef4444;">3件</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">次回法定点検まで</div>
+                    <div class="kpi-value">14日</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem; font-weight: 700;">法定点検一覧（品川ゲートウェイビル）</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>設備名</th>
+                                <th>点検種別</th>
+                                <th>頻度</th>
+                                <th>前回実施日</th>
+                                <th>次回予定</th>
+                                <th>実施状況</th>
+                                <th>不具合・是正事項</th>
+                                <th>改善状況</th>
+                                <th>AIリスク</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>消防設備（スプリンクラー）</td>
+                                <td>総合点検</td>
+                                <td>年1回</td>
+                                <td>2025/10/15</td>
+                                <td>2026/10/15</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>なし</td>
+                                <td>-</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr>
+                                <td>消防設備（自動火災報知設備）</td>
+                                <td>機能点検</td>
+                                <td>半年</td>
+                                <td>2026/01/20</td>
+                                <td>2026/07/20</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>感知器1個交換済み</td>
+                                <td>対応済</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr>
+                                <td>エレベーター（3台）</td>
+                                <td>法定定期検査</td>
+                                <td>年1回</td>
+                                <td>2025/09/01</td>
+                                <td>2026/09/01</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>なし</td>
+                                <td>-</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr style="background: #fff7ed;">
+                                <td>特定建築物定期調査</td>
+                                <td>定期調査</td>
+                                <td>3年</td>
+                                <td>2024/06/10</td>
+                                <td>2027/06/10</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>外壁タイル部分浮き（3箇所）要経過観察</td>
+                                <td>対応中</td>
+                                <td><span class="risk-medium">中</span></td>
+                            </tr>
+                            <tr>
+                                <td>電気設備（受変電設備）</td>
+                                <td>電気主任技術者点検</td>
+                                <td>月次</td>
+                                <td>2026/02/28</td>
+                                <td>2026/03/31</td>
+                                <td><span class="status-badge status-pending">予定</span></td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr>
+                                <td>給排水設備（貯水槽）</td>
+                                <td>清掃・水質検査</td>
+                                <td>年1回</td>
+                                <td>2025/08/20</td>
+                                <td>2026/08/20</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>なし</td>
+                                <td>-</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr style="background: #fff7ed;">
+                                <td>空調設備（AHU×12台）</td>
+                                <td>定期保守</td>
+                                <td>半年</td>
+                                <td>2025/12/05</td>
+                                <td>2026/06/05</td>
+                                <td><span class="status-badge status-pending">予定</span></td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td><span class="risk-medium">中</span></td>
+                            </tr>
+                            <tr>
+                                <td>防火設備（防火シャッター）</td>
+                                <td>定期検査</td>
+                                <td>年1回</td>
+                                <td>2025/11/30</td>
+                                <td>2026/11/30</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>なし</td>
+                                <td>-</td>
+                                <td><span class="risk-low">低</span></td>
+                            </tr>
+                            <tr style="background: #fee2e2;">
+                                <td><strong>排煙設備</strong></td>
+                                <td>機能確認</td>
+                                <td>半年</td>
+                                <td>2026/01/15</td>
+                                <td>2026/07/15</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td><strong>排煙口固着（2F東側）</strong></td>
+                                <td><span class="status-badge status-error">未着手</span></td>
+                                <td><span class="risk-high">高</span></td>
+                            </tr>
+                            <tr style="background: #fff7ed;">
+                                <td>非常用発電機</td>
+                                <td>負荷試験</td>
+                                <td>年1回</td>
+                                <td>2025/10/01</td>
+                                <td>2026/10/01</td>
+                                <td><span class="status-badge status-complete">完了</span></td>
+                                <td>バッテリー劣化（交換推奨）</td>
+                                <td>対応中</td>
+                                <td><span class="risk-medium">中</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="background: #f8fafc; border-left: 4px solid #1d4ed8;">
+                <h3 style="margin-bottom: 1rem; font-weight: 700; color: #1d4ed8;">🤖 COSOJI AI 分析レポート（品川ゲートウェイビル）</h3>
+                <p style="line-height: 1.8;">
+                    <strong>【緊急対応推奨】</strong>排煙設備（2F東側）の排煙口固着は、建築基準法12条に基づく是正義務事項です。現状未着手のため、法定期限（2026/04/30）までの対応が必要です。COSOJI作業員への発注をお勧めします。
+                </p>
+                <p style="line-height: 1.8; margin-top: 1rem;">
+                    <strong>【要経過観察】</strong>外壁タイルの浮きについては、次回大規模修繕（2028年予定）前に精密調査が必要です。現在の修繕積立金計画（年間¥15,000,000）で対応可能な範囲内です。
+                </p>
+                <p style="line-height: 1.8; margin-top: 1rem;">
+                    <strong>【計画的対応】</strong>非常用発電機のバッテリー交換は、次回負荷試験（2026/10）までに完了推奨。概算費用：¥2,800,000
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="button-secondary" onclick="openOrderModal()">COSOJI 現場へ発注</button>
+                <button class="button-secondary" onclick="alert('T2TRの工事管理画面に登録されました')">T2TR 工事管理へ登録</button>
+            </div>
+        </div>
+
+        <div id="tab5" class="tab-content">
+            <div class="two-column-equal">
+                <div>
+                    <div class="alert-banner">
+                        <div class="alert-banner-title">⚠️ AI検知アラート</div>
+                        <p>福岡天神南ビジネスセンターの稼働率が88.5%（目標95%比▲6.5%）。空室（2区画・670㎡）のリーシング強化が必要です。現在のNOI乖離額：年間▲9,200,000円。</p>
+                    </div>
+
+                    <div class="dashboard-kpi">
+                        <div class="kpi-card">
+                            <div class="kpi-label">ポートフォリオ総資産</div>
+                            <div class="kpi-value">402億円</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">年間NOI合計</div>
+                            <div class="kpi-value">14.7億円</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">平均稼働率</div>
+                            <div class="kpi-value">96.0%</div>
+                            <div class="kpi-subvalue">福岡除く：98.1%</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">平均Cap Rate</div>
+                            <div class="kpi-value">3.70%</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3 class="chart-title">NOI推移（月次・過去6ヶ月）</h3>
+                        <canvas id="noiChart"></canvas>
+                        <p style="margin-top: 1rem; color: #10b981; font-weight: 600;">📈 AIが3月NOIを127百万円と予測（前月比+2.4%）</p>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3 class="chart-title">物件別稼働率</h3>
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-weight: 700;">物件別収益サマリー</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>物件名</th>
+                                        <th>年間NOI</th>
+                                        <th>稼働率</th>
+                                        <th>予算比</th>
+                                        <th>前年比</th>
+                                        <th>AIコメント</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>汐留プレミアム</td>
+                                        <td>¥310M</td>
+                                        <td>97.2%</td>
+                                        <td style="color: #10b981;">+1.2%</td>
+                                        <td style="color: #10b981;">+3.1%</td>
+                                        <td>良好</td>
+                                    </tr>
+                                    <tr>
+                                        <td>大阪梅田物流</td>
+                                        <td>¥215M</td>
+                                        <td>100%</td>
+                                        <td style="color: #10b981;">+0.5%</td>
+                                        <td style="color: #10b981;">+2.8%</td>
+                                        <td>優秀</td>
+                                    </tr>
+                                    <tr>
+                                        <td>渋谷クロスタワー</td>
+                                        <td>¥458M</td>
+                                        <td>94.3%</td>
+                                        <td style="color: #ef4444;">-2.1%</td>
+                                        <td style="color: #10b981;">+1.5%</td>
+                                        <td>⚠️空室対策検討</td>
+                                    </tr>
+                                    <tr>
+                                        <td>品川ゲートウェイ</td>
+                                        <td>¥352M</td>
+                                        <td>100%</td>
+                                        <td style="color: #10b981;">+0.8%</td>
+                                        <td style="color: #10b981;">+2.2%</td>
+                                        <td>良好</td>
+                                    </tr>
+                                    <tr style="background: #fee2e2;">
+                                        <td><strong>福岡天神南</strong></td>
+                                        <td>¥112M</td>
+                                        <td>88.5%</td>
+                                        <td style="color: #ef4444;">-8.3%</td>
+                                        <td style="color: #ef4444;">-4.2%</td>
+                                        <td><strong>🔴要対応</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-chat">
+                    <div class="chat-title">🤖 COSOJI AI アシスタント</div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message ai">
+                            <p>こんにちは！COSOJI AI アシスタントです。現在管理中の5物件についてお気軽にご質問ください。</p>
+                        </div>
+                        <div class="chat-message user">
+                            <p>福岡天神南の稼働率改善のためにできることは？</p>
+                        </div>
+                        <div class="chat-message ai">
+                            <p><strong>福岡天神南ビジネスセンター（88.5%稼働）の空室は以下の対策を推奨します：</strong></p>
+                            <p>①現在の空室2区画（計670㎡）は分割貸しに対応可能なレイアウト。50〜100㎡での小区画募集が効果的。</p>
+                            <p>②賃料設定：現在坪単価¥12,500は周辺相場（¥11,800〜¥13,200）の中央値。フリーレント1〜2ヶ月の提供で競争力向上可。</p>
+                            <p>③T2TRの物件収支管理では、フリーレント1ヶ月提供の場合、年間NOI影響額は▲¥1,700,000で、空室埋め効果（年間+¥9,200,000）を大幅に上回ります。→ T2TRのシミュレーション画面で詳細確認できます。</p>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" placeholder="AIに質問する..." id="chatInput">
+                        <button onclick="sendChat()">送信</button>
+                    </div>
+                    <div class="preset-questions">
+                        <div class="preset-question" onclick="sendPresetQuestion('NOI予測')">📊 NOI予測を見る</div>
+                        <div class="preset-question" onclick="sendPresetQuestion('売却シミュレーション')">🔍 売却シミュレーション</div>
+                        <div class="preset-question" onclick="sendPresetQuestion('稟議書作成')">📋 稟議書を作成</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab5" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 2rem; font-weight: 700; text-align: center;">📈 運用レポート自動作成（2026年Q1レポート）</h3>
+                
+                <div class="alert-banner">
+                    <div class="alert-banner-title">🚀 T2TRのデータからAIが運用レポートを自動生成</div>
+                    <p>金融機関・投資家向けの四半期運用レポート、月次PMレポート、年次運用報告書をCOSOJI AIが自動作成。T2TRの物件収支・稼働率・修繕履歴・法定点検記録などのデータを統合し、プロフェッショナルなレポートを数分で完成させます。</p>
+                </div>
+
+                <div class="dashboard-kpi">
+                    <div class="kpi-card">
+                        <div class="kpi-label">レポート種別</div>
+                        <div class="kpi-value" style="font-size: 1.3rem;">Q1運用報告</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">対象期間</div>
+                        <div class="kpi-value" style="font-size: 1.3rem;">2026年1-3月</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">AI生成時間</div>
+                        <div class="kpi-value" style="color: #10b981;">3分</div>
+                        <div class="kpi-subvalue">従来：3日間</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">参照データソース</div>
+                        <div class="kpi-value" style="font-size: 1.3rem;">T2TR×18</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-weight: 700;">📊 レポート自動生成メニュー</h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="property-card" style="cursor: pointer; border-color: #1d4ed8; background: #eff6ff;" onclick="selectReport(0)">
+                                <div class="property-name">📈 四半期運用レポート（Q1/2026）</div>
+                                <div class="property-info">提出先：金融機関・投資家</div>
+                                <div class="property-info">ページ数：35ページ（自動生成）</div>
+                                <div class="property-info" style="color: #10b981; font-weight: 600;">✅ 生成完了（2026/04/05）</div>
+                            </div>
+                            
+                            <div class="property-card" onclick="selectReport(1)">
+                                <div class="property-name">📋 月次PMレポート（3月分）</div>
+                                <div class="property-info">提出先：AM会社</div>
+                                <div class="property-info">ページ数：各物件8ページ × 5物件</div>
+                                <div class="property-info" style="color: #10b981; font-weight: 600;">✅ 生成完了（2026/04/02）</div>
+                            </div>
+                            
+                            <div class="property-card" onclick="selectReport(2)">
+                                <div class="property-name">📊 年次運用報告書（FY2025）</div>
+                                <div class="property-info">提出先：投資法人・投資家</div>
+                                <div class="property-info">ページ数：120ページ（自動生成）</div>
+                                <div class="property-info" style="color: #64748b; font-weight: 600;">⏳ 生成中（進捗85%）</div>
+                            </div>
+                            
+                            <div class="property-card" onclick="selectReport(3)">
+                                <div class="property-name">🔍 デューデリジェンス資料（物件②）</div>
+                                <div class="property-info">提出先：買主候補</div>
+                                <div class="property-info">ページ数：45ページ（自動生成）</div>
+                                <div class="property-info" style="color: #f59e0b; font-weight: 600;">📅 生成予約（2026/04/10）</div>
+                            </div>
+                            
+                            <div class="property-card" onclick="selectReport(4)">
+                                <div class="property-name">⚙️ 法定点検実施報告書</div>
+                                <div class="property-info">提出先：建築基準法・消防法対応</div>
+                                <div class="property-info">ページ数：各物件12ページ × 5物件</div>
+                                <div class="property-info" style="color: #10b981; font-weight: 600;">✅ 生成完了（2026/03/31）</div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="button-primary" onclick="alert('新しいレポート生成画面が開きます')">➕ 新規レポートを生成</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="font-weight: 700; margin: 0;">📄 レポートプレビュー</h3>
+                            <button class="demo-button" onclick="startReportGeneration()">🚀 レポート生成デモ</button>
+                        </div>
+                        
+                        <div class="generating-animation" id="reportGenerating">
+                            <div class="loading-spinner"></div>
+                            <h3 style="margin: 1.5rem 0; color: #1d4ed8;">COSOJI AI がレポートを生成中...</h3>
+                            <p style="color: #64748b;">T2TRから18種類のデータを取得し、分析・レポート化しています</p>
+                            
+                            <div class="progress-steps">
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">📊</div>
+                                    <div class="progress-step-text">T2TRからデータ取得中</div>
+                                    <div class="progress-step-status">物件収支・稼働率・修繕履歴...</div>
+                                </div>
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">🤖</div>
+                                    <div class="progress-step-text">AIデータ分析</div>
+                                    <div class="progress-step-status">トレンド分析・異常値検知</div>
+                                </div>
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">📈</div>
+                                    <div class="progress-step-text">グラフ・チャート生成</div>
+                                    <div class="progress-step-status">15種類のビジュアル作成中</div>
+                                </div>
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">📝</div>
+                                    <div class="progress-step-text">テキスト自動生成</div>
+                                    <div class="progress-step-status">サマリー・考察文作成</div>
+                                </div>
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">🔍</div>
+                                    <div class="progress-step-text">品質チェック</div>
+                                    <div class="progress-step-status">データ整合性確認</div>
+                                </div>
+                                <div class="progress-step">
+                                    <div class="progress-step-icon">✅</div>
+                                    <div class="progress-step-text">レポート完成</div>
+                                    <div class="progress-step-status">PDF生成完了</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="report-preview" id="reportPreview">
+                            <div style="text-align: center; margin-bottom: 1.5rem;">
+                                <h3 style="font-weight: 700; color: #0f1f45;" id="reportTitle">Q1運用レポート（2026年1-3月）</h3>
+                                <p style="color: #64748b; margin-top: 0.5rem;">対象期間：2026年1月1日〜2026年3月31日</p>
+                            </div>
+                            
+                            <div class="report-page active">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">📋 エグゼクティブサマリー</h4>
+                                <p style="line-height: 1.8; margin-bottom: 1rem;">
+                                    2026年第1四半期において、ポートフォリオ全体は安定的な運用を継続しました。総資産規模402億円、平均稼働率96.0%、年間NOI14.7億円を達成しています。
+                                </p>
+                                <p style="line-height: 1.8; margin-bottom: 1rem;">
+                                    <strong>主要トピックス：</strong><br>
+                                    ✅ 大阪梅田ロジスティクスセンターが満室稼働を維持<br>
+                                    ✅ 品川ゲートウェイビルの排煙設備是正完了<br>
+                                    ⚠️ 福岡天神南の稼働率88.5%（目標未達、対策実施中）
+                                </p>
+                                <p style="line-height: 1.8; color: #10b981; font-weight: 600;">
+                                    🤖 AI分析：前四半期比でNOI+2.4%の成長を記録。福岡物件の空室対策により、次四半期は96.5%の稼働率を予測。
+                                </p>
+                            </div>
+                            
+                            <div class="report-page">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">📊 ポートフォリオ概要</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="background: #eff6ff; padding: 1rem; border-radius: 8px;">
+                                        <div style="font-size: 0.9rem; color: #64748b;">総資産規模</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #1d4ed8;">402億円</div>
+                                    </div>
+                                    <div style="background: #d1fae5; padding: 1rem; border-radius: 8px;">
+                                        <div style="font-size: 0.9rem; color: #64748b;">平均稼働率</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">96.0%</div>
+                                    </div>
+                                    <div style="background: #fef3c7; padding: 1rem; border-radius: 8px;">
+                                        <div style="font-size: 0.9rem; color: #64748b;">年間NOI</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #d97706;">14.7億円</div>
+                                    </div>
+                                    <div style="background: #fce7f3; padding: 1rem; border-radius: 8px;">
+                                        <div style="font-size: 0.9rem; color: #64748b;">物件数</div>
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #be185d;">5物件</div>
+                                    </div>
+                                </div>
+                                <div class="report-chart">
+                                    <div class="chart-bars">
+                                        <div class="chart-bar" style="height: 150px;" data-value="98億"></div>
+                                        <div class="chart-bar" style="height: 110px;" data-value="54億"></div>
+                                        <div class="chart-bar" style="height: 200px;" data-value="142億"></div>
+                                        <div class="chart-bar" style="height: 130px;" data-value="76億"></div>
+                                        <div class="chart-bar" style="height: 70px;" data-value="32億"></div>
+                                    </div>
+                                </div>
+                                <p style="text-align: center; color: #64748b; font-size: 0.9rem;">物件別取得金額（左から：汐留/大阪/渋谷/品川/福岡）</p>
+                            </div>
+                            
+                            <div class="report-page">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">💼 物件別運用状況</h4>
+                                <table style="width: 100%; font-size: 0.9rem;">
+                                    <thead>
+                                        <tr style="background: #f8fafc;">
+                                            <th style="padding: 0.75rem; text-align: left;">物件名</th>
+                                            <th style="padding: 0.75rem; text-align: right;">稼働率</th>
+                                            <th style="padding: 0.75rem; text-align: right;">NOI</th>
+                                            <th style="padding: 0.75rem; text-align: right;">前期比</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding: 0.75rem;">汐留プレミアムタワー</td>
+                                            <td style="padding: 0.75rem; text-align: right;">97.2%</td>
+                                            <td style="padding: 0.75rem; text-align: right;">¥310M</td>
+                                            <td style="padding: 0.75rem; text-align: right; color: #10b981;">+3.1%</td>
+                                        </tr>
+                                        <tr style="background: #f8fafc;">
+                                            <td style="padding: 0.75rem;">大阪梅田物流</td>
+                                            <td style="padding: 0.75rem; text-align: right;">100%</td>
+                                            <td style="padding: 0.75rem; text-align: right;">¥215M</td>
+                                            <td style="padding: 0.75rem; text-align: right; color: #10b981;">+2.8%</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 0.75rem;">渋谷クロスタワー</td>
+                                            <td style="padding: 0.75rem; text-align: right;">94.3%</td>
+                                            <td style="padding: 0.75rem; text-align: right;">¥458M</td>
+                                            <td style="padding: 0.75rem; text-align: right; color: #10b981;">+1.5%</td>
+                                        </tr>
+                                        <tr style="background: #f8fafc;">
+                                            <td style="padding: 0.75rem;">品川ゲートウェイ</td>
+                                            <td style="padding: 0.75rem; text-align: right;">100%</td>
+                                            <td style="padding: 0.75rem; text-align: right;">¥352M</td>
+                                            <td style="padding: 0.75rem; text-align: right; color: #10b981;">+2.2%</td>
+                                        </tr>
+                                        <tr style="background: #fee2e2;">
+                                            <td style="padding: 0.75rem;"><strong>福岡天神南</strong></td>
+                                            <td style="padding: 0.75rem; text-align: right;"><strong>88.5%</strong></td>
+                                            <td style="padding: 0.75rem; text-align: right;">¥112M</td>
+                                            <td style="padding: 0.75rem; text-align: right; color: #ef4444;">-4.2%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; font-size: 0.9rem;">
+                                    <strong>🤖 AI考察：</strong>福岡天神南の稼働率低下が全体パフォーマンスに影響。ただし、他4物件が堅調に推移しており、ポートフォリオ全体のリスク分散は機能。
+                                </p>
+                            </div>
+                            
+                            <div class="report-page">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">💰 財務ハイライト</h4>
+                                <p style="line-height: 1.8; margin-bottom: 1rem;">
+                                    <strong>収益実績（Q1実績 vs 予算）</strong>
+                                </p>
+                                <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <span>賃料収入</span>
+                                        <span><strong>¥1,320M</strong> <span style="color: #10b981;">(予算比+1.2%)</span></span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <span>水道光熱費</span>
+                                        <span><strong>¥158M</strong> <span style="color: #10b981;">(予算比-3.2%)</span></span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <span>修繕費</span>
+                                        <span><strong>¥85M</strong> <span style="color: #ef4444;">(予算比+8.5%)</span></span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <span>保守管理費</span>
+                                        <span><strong>¥142M</strong> <span style="color: #10b981;">(予算比-1.5%)</span></span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; border-top: 2px solid #e2e8f0; font-weight: 700;">
+                                        <span>NOI合計</span>
+                                        <span style="color: #10b981;">¥367M <span style="font-weight: 400;">(予算比+2.1%)</span></span>
+                                    </div>
+                                </div>
+                                <p style="padding: 1rem; background: #d1fae5; border-radius: 8px; font-size: 0.9rem;">
+                                    <strong>🤖 AI分析：</strong>修繕費が予算超過しているものの、品川ゲートウェイの非常用発電機交換（¥2.8M）は予防保全として妥当。水道光熱費の削減はエネルギー効率化の成果。
+                                </p>
+                            </div>
+                            
+                            <div class="report-page">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">⚠️ リスク管理・法定対応</h4>
+                                <p style="line-height: 1.8; margin-bottom: 1rem;">
+                                    <strong>法定点検実施状況（Q1実績）</strong>
+                                </p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                                    <div style="background: #d1fae5; padding: 0.75rem; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">42件</div>
+                                        <div style="color: #064e3b;">実施完了</div>
+                                    </div>
+                                    <div style="background: #fef3c7; padding: 0.75rem; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #d97706;">3件</div>
+                                        <div style="color: #78350f;">是正対応中</div>
+                                    </div>
+                                    <div style="background: #fee2e2; padding: 0.75rem; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 1.5rem; font-weight: 700; color: #ef4444;">0件</div>
+                                        <div style="color: #991b1b;">期限超過</div>
+                                    </div>
+                                </div>
+                                <p style="padding: 1rem; background: #eff6ff; border-radius: 8px; font-size: 0.9rem; margin-bottom: 1rem;">
+                                    <strong>主要是正事項：</strong><br>
+                                    • 品川ゲートウェイ：排煙設備固着 → <span style="color: #10b981;">✅ 対応完了（2026/03/02）</span><br>
+                                    • 品川ゲートウェイ：外壁タイル浮き → 🟡 経過観察中<br>
+                                    • 品川ゲートウェイ：非常用発電機バッテリー劣化 → <span style="color: #10b981;">✅ 交換完了（2026/03/15）</span>
+                                </p>
+                                <p style="padding: 1rem; background: #d1fae5; border-radius: 8px; font-size: 0.9rem;">
+                                    <strong>🤖 AI評価：</strong>法定点検の実施率100%、是正対応も迅速。期限超過ゼロの実績は高く評価できる。外壁タイルは次回大規模修繕（2028年）で対応予定。
+                                </p>
+                            </div>
+                            
+                            <div class="report-page">
+                                <h4 style="font-weight: 700; margin-bottom: 1rem; color: #1d4ed8;">📈 次四半期見通し（Q2/2026）</h4>
+                                <p style="line-height: 1.8; margin-bottom: 1rem;">
+                                    <strong>🤖 COSOJI AI 予測分析</strong>
+                                </p>
+                                <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <h5 style="font-weight: 700; margin-bottom: 0.75rem;">稼働率予測</h5>
+                                    <p style="line-height: 1.8; font-size: 0.95rem;">
+                                        福岡天神南の空室2区画（670㎡）について、フリーレント施策により<strong style="color: #10b981;">Q2中に1区画（350㎡）の成約確度70%</strong>。ポートフォリオ全体の予測稼働率は<strong>96.5%</strong>（Q1: 96.0%、+0.5pt）。
+                                    </p>
+                                    
+                                    <h5 style="font-weight: 700; margin: 1rem 0 0.75rem 0;">NOI予測</h5>
+                                    <p style="line-height: 1.8; font-size: 0.95rem;">
+                                        Q2予測NOI：<strong style="color: #10b981;">¥375M</strong>（Q1実績: ¥367M、前期比+2.2%）<br>
+                                        主要増加要因：福岡空室改善（+¥2.3M）、汐留賃料改定（+¥4.5M）、水道光熱費削減継続（+¥1.2M）
+                                    </p>
+                                    
+                                    <h5 style="font-weight: 700; margin: 1rem 0 0.75rem 0;">推奨アクション</h5>
+                                    <ul style="line-height: 2; padding-left: 1.5rem; font-size: 0.95rem;">
+                                        <li>福岡天神南：フリーレント2ヶ月施策の継続実施</li>
+                                        <li>渋谷クロスタワー：空室区画（5.7%）の早期リーシング強化</li>
+                                        <li>大阪梅田物流：満室継続のため既存テナント満足度向上施策</li>
+                                        <li>全物件：エネルギーコスト削減施策の横展開</li>
+                                    </ul>
+                                </div>
+                                <p style="padding: 1rem; background: #eff6ff; border-radius: 8px; font-size: 0.9rem; text-align: center; font-weight: 600; color: #1e40af;">
+                                    ✅ AI信頼度スコア：<strong>87%</strong>（過去データとの整合性・外部市況分析より算出）
+                                </p>
+                            </div>
+                            
+                            <div class="page-navigation">
+                                <button class="nav-button" id="prevPageBtn" onclick="prevReportPage()" disabled>← 前ページ</button>
+                                <div class="page-indicator" id="pageIndicator">1 / 6</div>
+                                <button class="nav-button" id="nextPageBtn" onclick="nextReportPage()">次ページ →</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+                            <button class="button-primary" onclick="downloadReport()">📥 PDFダウンロード</button>
+                            <button class="button-secondary" onclick="alert('PowerPoint形式でダウンロードします')">📊 PPT形式</button>
+                            <button class="button-secondary" onclick="alert('Excel形式でダウンロードします')">📑 Excel形式</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="background: #f8fafc; border-left: 4px solid #1d4ed8; margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem; font-weight: 700; color: #1d4ed8;">🎯 レポート自動生成の流れ</h3>
+                <div class="mapping-visual" style="flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #dbeafe; color: #1e40af; min-width: 200px;">
+                            📊 T2TR ComFortから<br>18種類のデータ自動取得
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #d1fae5; color: #065f46; min-width: 200px;">
+                            🤖 COSOJI AIがデータ分析<br>（異常値検知・トレンド分析）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #fef3c7; color: #92400e; min-width: 200px;">
+                            📝 グラフ・表・テキスト<br>自動生成（15種類のチャート）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #fce7f3; color: #9f1239; min-width: 200px;">
+                            🔍 担当AM確認・修正<br>（必要に応じて手動調整）
+                        </div>
+                        <div style="font-size: 2rem;">↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; width: 100%; justify-content: center;">
+                        <div class="mapping-box" style="background: #e0e7ff; color: #3730a3; min-width: 200px;">
+                            ✅ 最終レポート完成<br>（PDF/PPT/Excel出力）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="efficiency-stat" style="margin-top: 2rem;">
+                <p><strong>🚀 効率化効果（四半期レポート作成）</strong></p>
+                <p style="margin-top: 1rem;">従来の手作業：データ収集2日 + レポート作成1日 = <strong>3営業日</strong></p>
+                <p>COSOJI AI活用：データ自動取得1分 + AI生成2分 + 確認作業30分 = <strong>33分</strong></p>
+                <p style="font-size: 1.3rem; color: #10b981; font-weight: 700; margin-top: 1rem;">→ 約99%削減（3日 → 33分）</p>
+                <p style="margin-top: 1rem; color: #64748b;">※ 年4回のレポート作成で、年間約12営業日の工数削減を実現</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="background: white;">
+        <h2 class="section-title">COSOJIだからこそできること</h2>
+        <p class="section-subtitle">汎用AIとの決定的な差</p>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">業界特化データ（数千棟の実務蓄積）</div>
+                <div class="feature-description">
+                    汎用AIは不動産業界の商習慣・専門用語・書類フォーマットを理解しません。COSOJIはAM/PM/BM/FMの実業務で蓄積した数千棟分のデータで学習。T2TRとのAPIデータ連携で、業界特有の入力ルールを完全に理解しています。
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">再学習サイクル（使えば使うほど精度向上）</div>
+                <div class="feature-description">
+                    「現場→AI→実行→再学習」の独自サイクル。T2TRに入力されたデータ・修正履歴がAIの学習データになり、各社・各物件の特性を学習していきます。導入から3か月で精度が30%向上した事例あり。
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏗️</div>
+                <div class="feature-title">BPO×AI（判断から現場実行まで一気通貫）</div>
+                <div class="feature-description">
+                    AIが「排煙口の交換が必要」と判断したら、そのままCOSOJIの全国3万名の作業員ネットワークに発注できます。AI-to-Human（AI→現場実行）の仕組みは業界で他に類を見ません。
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">二重セキュリティ（金融機関レベルの安全性）</div>
+                <div class="feature-description">
+                    T2TR（ISO27001 + ISO27017クラウドセキュリティ）× COSOJI AIのセキュリティ体制。機密性の高いJ-REIT・私募ファンドのデータを安全に処理します。Microsoft Azure + AWS の冗長構成。
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">ゼロ入力・ゼロ見落とし（完全自動化）</div>
+                <div class="feature-description">
+                    書類をアップロードするだけでT2TRに自動入力。法定点検の期限超過をAIが事前アラート。人的ミス・見落としをゼロに近づけます。投資ファンド・AM会社の担当者は、入力作業ではなく判断業務に集中できます。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="value">
+        <h2 class="section-title">投資ファンド/AM会社への価値提案</h2>
+        
+        <div class="value-stats">
+            <div class="value-stat">
+                <div class="value-number">80%削減</div>
+                <div class="value-label">書類確認・管理作業</div>
+            </div>
+            <div class="value-stat">
+                <div class="value-number">96%削減</div>
+                <div class="value-label">データ手入力工数</div>
+            </div>
+            <div class="value-stat">
+                <div class="value-number">ゼロ</div>
+                <div class="value-label">法定点検見落とし</div>
+            </div>
+            <div class="value-stat">
+                <div class="value-number">2倍速</div>
+                <div class="value-label">稟議・承認スピード</div>
+            </div>
+            <div class="value-stat">
+                <div class="value-number">24時間</div>
+                <div class="value-label">ポートフォリオAI監視</div>
+            </div>
+        </div>
+
+        <div class="card simulation-table">
+            <h3 style="margin-bottom: 1.5rem; font-weight: 700; text-align: center;">導入効果シミュレーション</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>業務</th>
+                            <th>現在（月間）</th>
+                            <th>AI導入後（月間）</th>
+                            <th>削減時間</th>
+                            <th>年間コスト削減（概算）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>売買書類管理・確認</td>
+                            <td>80時間</td>
+                            <td>15時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲65時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲¥3,900,000</td>
+                        </tr>
+                        <tr>
+                            <td>T2TRへのデータ入力</td>
+                            <td>50時間</td>
+                            <td>2時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲48時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲¥2,880,000</td>
+                        </tr>
+                        <tr>
+                            <td>法定点検・是正管理</td>
+                            <td>30時間</td>
+                            <td>5時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲25時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲¥1,500,000</td>
+                        </tr>
+                        <tr>
+                            <td>ポートフォリオ監視・報告</td>
+                            <td>40時間</td>
+                            <td>10時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲30時間</td>
+                            <td style="color: #10b981; font-weight: 700;">▲¥1,800,000</td>
+                        </tr>
+                        <tr style="background: #f1f5f9; font-weight: 700;">
+                            <td>合計</td>
+                            <td>200時間</td>
+                            <td>32時間</td>
+                            <td style="color: #10b981;">▲168時間</td>
+                            <td style="color: #10b981;">▲¥10,080,000/年</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="feature-grid" style="margin-top: 5rem;">
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <div class="feature-title">データ品質向上</div>
+                <div class="feature-description">不動産証券化業界全体のデータ品質向上に貢献</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <div class="feature-title">人手不足対応</div>
+                <div class="feature-description">少子化・人手不足時代の不動産管理インフラ</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏛️</div>
+                <div class="feature-title">透明性向上</div>
+                <div class="feature-description">J-REITの透明性・開示品質向上</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌱</div>
+                <div class="feature-title">ESG対応</div>
+                <div class="feature-description">ESG・脱炭素対応の設備管理高度化</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section" id="contact">
+        <h2>T2TR × COSOJI AI で業務変革を、今すぐ始めませんか？</h2>
+        <div class="cta-buttons">
+            <button class="cta-primary" onclick="alert('デモのお申し込みありがとうございます。担当者よりご連絡させていただきます。')">デモを申し込む</button>
+            <button class="cta-secondary" onclick="alert('詳細資料をダウンロードします')">詳細資料をダウンロード</button>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 T2TR ComFort × COSOJI AI. All rights reserved.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">Prop Tech plus株式会社 × COSOJI株式会社</p>
+    </footer>
+
+    <div class="modal" id="ringiModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">T2TR ComFort 稟議フロー連携</div>
+                <button class="modal-close" onclick="closeModal('ringiModal')">&times;</button>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 1rem;">物件取得稟議書</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <tr>
+                        <th style="width: 30%; background: #f8fafc;">物件名</th>
+                        <td>大阪梅田ロジスティクスセンター</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">取得金額</th>
+                        <td>5,400,000,000円（54億円）</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">担当AM</th>
+                        <td>鈴木 美咲</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">書類完了状況</th>
+                        <td>19/26 完了（73%）<br><small style="color: #ef4444;">※一部不備・未取得あり</small></td>
+                    </tr>
+                </table>
+
+                <h3 style="margin: 2rem 0 1rem;">承認フロー</h3>
+                <div class="approval-flow">
+                    <div class="approval-step">
+                        <div class="approval-role">担当AM</div>
+                        <div style="color: #10b981;">✓ 承認済</div>
+                    </div>
+                    <div class="approval-arrow">→</div>
+                    <div class="approval-step">
+                        <div class="approval-role">AM部長</div>
+                        <div style="color: #f59e0b;">⏳ 承認待ち</div>
+                    </div>
+                    <div class="approval-arrow">→</div>
+                    <div class="approval-step">
+                        <div class="approval-role">CIO</div>
+                        <div style="color: #94a3b8;">未着手</div>
+                    </div>
+                    <div class="approval-arrow">→</div>
+                    <div class="approval-step">
+                        <div class="approval-role">投資委員会</div>
+                        <div style="color: #94a3b8;">未着手</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="button-primary" onclick="alert('稟議申請を送信しました'); closeModal('ringiModal')">稟議申請を送信</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">COSOJI 現場作業員へ発注</div>
+                <button class="modal-close" onclick="closeModal('orderModal')">&times;</button>
+            </div>
+            <div>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <tr>
+                        <th style="width: 30%; background: #f8fafc;">物件名</th>
+                        <td>品川ゲートウェイビル</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">設備名</th>
+                        <td>排煙設備（2F東側）</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">作業内容</th>
+                        <td>排煙口固着の修理・動作確認</td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">希望作業日</th>
+                        <td><input type="date" value="2026-03-25" style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 4px;"></td>
+                    </tr>
+                    <tr>
+                        <th style="background: #f8fafc;">概算費用</th>
+                        <td>¥180,000〜¥250,000（部品代・工賃込み）</td>
+                    </tr>
+                </table>
+
+                <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <p><strong>📍 近隣の対応可能作業員：</strong>5名<br>
+                    <strong>⏰ 最短対応可能日：</strong>2026/03/25（3日後）</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="button-primary" onclick="alert('発注完了しました。COSOJI作業員から連絡があります。'); closeModal('orderModal')">発注する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="evidenceModal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <div class="modal-title">エビデンス詳細 - 請求書 #2026-03-001</div>
+                <button class="modal-close" onclick="closeModal('evidenceModal')">&times;</button>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 1rem;">🤖 COSOJI AI 読取結果</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%; background: #f8fafc;">項目</th>
+                            <th>AI抽出値</th>
+                            <th>信頼度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>請求番号</td>
+                            <td>#2026-03-001</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>請求日</td>
+                            <td>2026年3月5日</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>請求先</td>
+                            <td>品川ゲートウェイビル管理組合 御中</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>請求元</td>
+                            <td>株式会社大成建設 東京支店</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>工事名</td>
+                            <td>排煙設備排煙口修理工事（2F東側）</td>
+                            <td><span class="confidence-badge">98%</span></td>
+                        </tr>
+                        <tr>
+                            <td>工事実施日</td>
+                            <td>2026年2月28日〜3月2日</td>
+                            <td><span class="confidence-badge">98%</span></td>
+                        </tr>
+                        <tr>
+                            <td>工事金額（税抜）</td>
+                            <td>¥200,000</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>消費税</td>
+                            <td>¥20,000（10%）</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>請求金額合計</td>
+                            <td>¥220,000</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>支払期限</td>
+                            <td>2026年3月31日</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                        <tr>
+                            <td>振込先</td>
+                            <td>三菱UFJ銀行 東京支店 普通 1234567</td>
+                            <td><span class="confidence-badge">99%</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin: 2rem 0 1rem;">📋 エビデンス検証結果</h3>
+                <div style="background: #d1fae5; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <p><strong>✅ 見積書との照合：</strong>一致（見積書 #EST-2026-0215 と金額・工事内容が完全一致）</p>
+                    <p style="margin-top: 0.5rem;"><strong>✅ 契約書との照合：</strong>一致（工事請負契約書と工事内容・期日が一致）</p>
+                    <p style="margin-top: 0.5rem;"><strong>✅ 工事完了報告書：</strong>添付あり（2026/03/02 完了報告・写真3枚添付）</p>
+                    <p style="margin-top: 0.5rem;"><strong>✅ 法定点検記録との連携：</strong>排煙設備点検記録に是正完了として記録済み</p>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">🔄 T2TR自動連携内容</h3>
+                <table style="width: 100%; margin: 1rem 0;">
+                    <thead>
+                        <tr>
+                            <th style="background: #f8fafc;">T2TR入力項目</th>
+                            <th>自動入力値</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>支払先</td>
+                            <td>株式会社大成建設</td>
+                        </tr>
+                        <tr>
+                            <td>支払区分</td>
+                            <td>工事費（修繕費）</td>
+                        </tr>
+                        <tr>
+                            <td>支払金額</td>
+                            <td>¥220,000</td>
+                        </tr>
+                        <tr>
+                            <td>支払期限</td>
+                            <td>2026年3月31日</td>
+                        </tr>
+                        <tr>
+                            <td>物件名</td>
+                            <td>品川ゲートウェイビル</td>
+                        </tr>
+                        <tr>
+                            <td>勘定科目</td>
+                            <td>修繕費</td>
+                        </tr>
+                        <tr>
+                            <td>添付ファイル</td>
+                            <td>請求書PDF、見積書PDF、工事完了報告書PDF、現場写真3枚</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="button-secondary" onclick="alert('T2TRの支払管理画面が開きます'); closeModal('evidenceModal')">T2TRで詳細を確認</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentReportType = 0;
+        let currentPage = 0;
+        const reportPages = 6;
+
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            tabs[index].classList.add('active');
+            contents[index].classList.add('active');
+        }
+
+        function selectProperty(index) {
+            const cards = document.querySelectorAll('.property-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            cards[index].classList.add('selected');
+            
+            if (index !== 1) {
+                alert('デモでは大阪梅田ロジスティクスセンターの詳細書類が表示されます');
+            }
+        }
+
+        function openRingiModal() {
+            document.getElementById('ringiModal').classList.add('active');
+        }
+
+        function openOrderModal() {
+            document.getElementById('orderModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showEvidence(invoiceId) {
+            document.getElementById('evidenceModal').classList.add('active');
+        }
+
+        function startInvoiceAI() {
+            document.getElementById('invoiceLoading').style.display = 'block';
+            document.getElementById('t2trSimulator').style.display = 'none';
+            document.getElementById('completionMessage').style.display = 'none';
+            
+            const steps = ['aiStep1', 'aiStep2', 'aiStep3', 'aiStep4', 'aiStep5', 'aiStep6'];
+            let currentStep = 0;
+            
+            const interval = setInterval(() => {
+                if (currentStep > 0) {
+                    document.getElementById(steps[currentStep - 1]).classList.remove('active');
+                    document.getElementById(steps[currentStep - 1]).classList.add('completed');
+                }
+                
+                if (currentStep < steps.length) {
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('invoiceLoading').style.display = 'none';
+                        document.getElementById('t2trSimulator').style.display = 'block';
+                        steps.forEach(step => {
+                            document.getElementById(step).classList.remove('active', 'completed');
+                        });
+                        
+                        window.scrollTo({
+                            top: document.getElementById('t2trSimulator').offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }, 500);
+                }
+            }, 800);
+        }
+
+        function completeT2TREntry() {
+            document.getElementById('t2trSimulator').style.display = 'none';
+            document.getElementById('completionMessage').style.display = 'block';
+            
+            window.scrollTo({
+                top: document.getElementById('completionMessage').offsetTop - 100,
+                behavior: 'smooth'
+            });
+        }
+
+        function resetInvoiceDemo() {
+            document.getElementById('completionMessage').style.display = 'none';
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function selectReport(index) {
+            currentReportType = index;
+            const cards = document.querySelectorAll('.property-card');
+            cards.forEach((card, i) => {
+                if (i === index) {
+                    card.style.borderColor = '#1d4ed8';
+                    card.style.background = '#eff6ff';
+                } else {
+                    card.style.borderColor = '#e2e8f0';
+                    card.style.background = 'white';
+                }
+            });
+            
+            updateReportPreview();
+        }
+
+        function updateReportPreview() {
+            const reportTitles = [
+                'Q1運用レポート（2026年1-3月）',
+                '月次PMレポート（3月分）',
+                '年次運用報告書（FY2025）',
+                'デューデリジェンス資料',
+                '法定点検実施報告書'
+            ];
+            
+            document.getElementById('reportTitle').textContent = reportTitles[currentReportType];
+            currentPage = 0;
+            showReportPage(0);
+        }
+
+        function showReportPage(pageIndex) {
+            const pages = document.querySelectorAll('.report-page');
+            pages.forEach((page, i) => {
+                page.classList.remove('active');
+                if (i === pageIndex) {
+                    page.classList.add('active');
+                }
+            });
+            
+            currentPage = pageIndex;
+            document.getElementById('pageIndicator').textContent = `${pageIndex + 1} / ${reportPages}`;
+            document.getElementById('prevPageBtn').disabled = pageIndex === 0;
+            document.getElementById('nextPageBtn').disabled = pageIndex === reportPages - 1;
+        }
+
+        function nextReportPage() {
+            if (currentPage < reportPages - 1) {
+                showReportPage(currentPage + 1);
+            }
+        }
+
+        function prevReportPage() {
+            if (currentPage > 0) {
+                showReportPage(currentPage - 1);
+            }
+        }
+
+        function startReportGeneration() {
+            document.getElementById('reportGenerating').classList.add('active');
+            document.getElementById('reportPreview').style.display = 'none';
+            
+            const steps = document.querySelectorAll('.progress-step');
+            let currentStep = 0;
+            
+            const interval = setInterval(() => {
+                if (currentStep > 0) {
+                    steps[currentStep - 1].classList.remove('active');
+                    steps[currentStep - 1].classList.add('completed');
+                }
+                
+                if (currentStep < steps.length) {
+                    steps[currentStep].classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('reportGenerating').classList.remove('active');
+                        document.getElementById('reportPreview').style.display = 'block';
+                        steps.forEach(step => {
+                            step.classList.remove('active', 'completed');
+                        });
+                        alert('✅ レポート生成が完了しました！プレビューをご確認ください。');
+                    }, 500);
+                }
+            }, 1500);
+        }
+
+        function downloadReport() {
+            alert('Q1運用レポート（2026年1-3月）.pdf をダウンロードします。\n\n📄 35ページ\n📊 グラフ・チャート15種類\n📈 T2TRデータ18種類を統合\n🤖 COSOJI AIによる自動分析・考察含む');
+        }
+
+        function startUploadDemo() {
+            alert('デモでは「賃貸借契約書をデモ読み取り」ボタンをクリックしてください');
+        }
+
+        function startContractDemo() {
+            document.getElementById('uploadLoading').style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                document.getElementById('uploadProgress').style.width = progress + '%';
+                document.getElementById('uploadProgress').textContent = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('uploadLoading').style.display = 'none';
+                        document.getElementById('extractionResult').style.display = 'block';
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        function completeAutoInput() {
+            document.getElementById('efficiencyStat').style.display = 'block';
+            window.scrollTo({ top: document.getElementById('efficiencyStat').offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                const messagesDiv = document.getElementById('chatMessages');
+                messagesDiv.innerHTML += `<div class="chat-message user"><p>${message}</p></div>`;
+                input.value = '';
+                
+                setTimeout(() => {
+                    messagesDiv.innerHTML += `<div class="chat-message ai"><p>ご質問ありがとうございます。T2TRのデータと連携して分析を行っています...</p></div>`;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }, 500);
+            }
+        }
+
+        function sendPresetQuestion(type) {
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.innerHTML += `<div class="chat-message user"><p>${type}について教えてください</p></div>`;
+            
+            setTimeout(() => {
+                let response = '';
+                if (type === 'NOI予測') {
+                    response = 'ポートフォリオ全体のNOI予測：2026年3月は127M円と予測しています。前月比+2.4%の増加見込みです。主要因は大阪梅田物流の満室稼働継続と、汐留プレミアムの賃料改定です。';
+                } else if (type === '売却シミュレーション') {
+                    response = '現在の市況とポートフォリオを分析すると、品川ゲートウェイビルの売却が最も高いNOI利回りを期待できます。想定売却価格：約82億円（Cap Rate 4.3%）、売却益：約6億円の見込みです。';
+                } else {
+                    response = '稟議書のドラフトを作成しました。T2TRの稟議管理画面で詳細を確認できます。';
+                }
+                messagesDiv.innerHTML += `<div class="chat-message ai"><p>${response}</p></div>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 500);
+        }
+
+        const portfolioCtx = document.getElementById('portfolioChart');
+        if (portfolioCtx) {
+            new Chart(portfolioCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['渋谷クロスタワー', '汐留プレミアムタワー', '品川ゲートウェイビル', '大阪梅田物流', '福岡天神南'],
+                    datasets: [{
+                        data: [142, 98, 76, 54, 32],
+                        backgroundColor: ['#1d4ed8', '#3b82f6', '#60a5fa', '#10b981', '#f59e0b'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { family: 'Noto Sans JP', size: 12 },
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const noiCtx = document.getElementById('noiChart');
+        if (noiCtx) {
+            new Chart(noiCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2025年10月', '11月', '12月', '2026年1月', '2月', '3月（予測）'],
+                    datasets: [{
+                        label: 'NOI（百万円）',
+                        data: [119, 122, 120, 123, 124, 127],
+                        borderColor: '#1d4ed8',
+                        backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `NOI: ¥${context.parsed.y}M`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 115,
+                            ticks: {
+                                callback: (value) => '¥' + value + 'M'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const occupancyCtx = document.getElementById('occupancyChart');
+        if (occupancyCtx) {
+            new Chart(occupancyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['汐留', '大阪物流', '渋谷', '品川', '福岡'],
+                    datasets: [{
+                        label: '稼働率（%）',
+                        data: [97.2, 100, 94.3, 100, 88.5],
+                        backgroundColor: ['#3b82f6', '#10b981', '#3b82f6', '#10b981', '#f97316'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: (value) => value + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChat();
+            }
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
