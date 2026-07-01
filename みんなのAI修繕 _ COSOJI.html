@@ -1,0 +1,2673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>みんなのAI修繕 | COSOJI</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1A4FA0;--bd:#0F3276;--bm:#3B6FD4;--bl:#EBF2FF;
+  --green:#16A34A;--gl:#DCFCE7;
+  --amber:#D97706;--al:#FEF3C7;
+  --red:#DC2626;--rl:#FEE2E2;
+  --g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;
+  --g400:#94A3B8;--g500:#64748B;--g600:#475569;--g800:#1E293B;
+  --w:#fff;--r:14px;--rs:10px;--sw:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--g50);color:var(--g800);min-height:100vh;}
+
+/* ── LAYOUT ── */
+@media(min-width:768px){
+  .app-shell{display:flex;min-height:100vh;}
+  .content-area{margin-left:var(--sw);flex:1;}
+  .mobile-nav{display:none!important;}
+  .mobile-top{display:none!important;}
+  .pc-top{display:flex!important;}
+}
+
+/* ── SIDEBAR ── */
+.sidebar{display:none;flex-direction:column;width:var(--sw);background:var(--w);border-right:1px solid var(--g200);position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;}
+@media(min-width:768px){.sidebar{display:flex;}}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--g200);}
+.sb-logo-t{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;color:var(--blue);}
+.sb-logo-s{font-size:11px;color:var(--g400);margin-top:2px;}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;}
+.sni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);cursor:pointer;color:var(--g600);font-size:14px;font-weight:500;transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:'Noto Sans JP',sans-serif;}
+.sni:hover{background:var(--g50);}
+.sni.on{background:var(--bl);color:var(--blue);font-weight:700;}
+.sni.danger{color:var(--red);}
+.sni svg{width:18px;height:18px;flex-shrink:0;}
+.sni .nbadge{font-size:10px;font-weight:700;background:var(--red);color:#fff;border-radius:100px;padding:1px 6px;margin-left:auto;display:none;}
+.sb-bottom{padding:10px 8px;border-top:1px solid var(--g200);}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);cursor:pointer;transition:background .15s;margin-bottom:4px;}
+.sb-user:hover{background:var(--g50);}
+/* COSOJIシリーズ（サイドバー下部） */
+.sb-series{padding:8px;border-top:1px solid var(--g200);}
+.sb-series-lbl{font-size:10px;font-weight:700;color:var(--g400);letter-spacing:.06em;text-transform:uppercase;padding:4px 4px 6px;}
+.sb-series-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;transition:background .15s;}
+.sb-series-item:hover{background:var(--g50);}
+.sb-series-ico{font-size:14px;flex-shrink:0;}
+.sb-series-name{font-size:12px;font-weight:500;color:var(--g800);}
+.sb-series-sub{font-size:10px;color:var(--g400);}
+.sb-custom{margin:8px;padding:9px 12px;background:var(--blue);border-radius:var(--rs);text-align:center;cursor:pointer;}
+.sb-custom-t{font-size:12px;font-weight:700;color:#fff;}
+
+/* ── AVATAR ── */
+.ava{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Sans',sans-serif;}
+.ava-lg{width:64px;height:64px;font-size:24px;}
+.su-name{font-size:13px;font-weight:700;color:var(--g800);}
+.su-co{font-size:11px;color:var(--g400);}
+
+/* ── TOPBARS ── */
+.mobile-top{background:var(--w);border-bottom:1px solid var(--g200);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:150;}
+.logo{font-family:'DM Sans',sans-serif;font-weight:700;font-size:17px;color:var(--blue);}
+.logo em{font-size:11px;color:var(--g400);font-weight:400;font-style:normal;margin-left:3px;}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g600);transition:background .15s;}
+.icon-btn:hover{background:var(--g100);}
+.icon-btn svg{width:20px;height:20px;}
+.usage-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--gl);color:var(--green);white-space:nowrap;}
+.usage-pill.warn{background:var(--al);color:var(--amber);}
+.usage-pill.limit{background:var(--rl);color:var(--red);}
+.pc-top{display:none;background:var(--w);border-bottom:1px solid var(--g200);height:52px;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:99;}
+.pc-top-title{font-size:16px;font-weight:700;color:var(--g800);}
+/* ログイン状態インジケータ */
+.login-dot{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;}
+.login-dot-circle{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.login-dot.out .login-dot-circle{background:var(--g400);}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.on{display:block;}
+
+/* ── AUTH ── */
+.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0F3276 0%,#1A4FA0 60%,#2563EB 100%);padding:20px;}
+.auth-card{background:var(--w);border-radius:var(--r);width:100%;max-width:400px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.auth-logo{font-family:'DM Sans',sans-serif;font-weight:700;font-size:20px;color:var(--blue);text-align:center;margin-bottom:2px;}
+.auth-by{font-size:12px;color:var(--g400);text-align:center;margin-bottom:24px;}
+.auth-h{font-size:18px;font-weight:700;color:var(--g800);margin-bottom:18px;text-align:center;}
+.fg{margin-bottom:13px;}
+.fl{font-size:12px;font-weight:700;color:var(--g600);margin-bottom:5px;display:block;}
+.fi{width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:11px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;transition:border-color .15s;}
+.fi:focus{border-color:var(--blue);}
+.fb{width:100%;padding:13px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .15s;margin-top:4px;}
+.fb:hover{background:var(--bd);}
+.fg-s{display:flex;align-items:center;gap:10px;margin:14px 0;}
+.fg-sl{flex:1;height:1px;background:var(--g200);}
+.fg-st{font-size:12px;color:var(--g400);}
+.fb-g{width:100%;padding:11px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;}
+.fb-g:hover{background:var(--g50);}
+.auth-link{text-align:center;font-size:13px;color:var(--g400);margin-top:14px;}
+.auth-link a{color:var(--blue);cursor:pointer;font-weight:500;}
+.auth-forgot{text-align:right;font-size:12px;color:var(--blue);cursor:pointer;margin-top:-6px;margin-bottom:12px;}
+.auth-skip{text-align:center;margin-top:12px;}
+.auth-skip a{font-size:12px;color:var(--g400);cursor:pointer;}
+
+/* ── MAIN CONTENT ── */
+.mw{max-width:640px;margin:0 auto;padding:0 0 110px;}
+@media(min-width:768px){.mw{padding:0 0 60px;max-width:none;}}
+
+/* ── COUNTER BAR ── */
+.counter-bar{display:flex;align-items:center;justify-content:space-between;background:var(--g50);border-radius:var(--rs);padding:8px 12px;margin-bottom:10px;}
+.cb-item{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.cb-num{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap;}
+.cb-lbl{font-size:9px;color:var(--bm);white-space:nowrap;}
+.cb-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:blink 1.4s ease-in-out infinite;}
+.cb-sep{width:1px;height:28px;background:var(--g200);flex-shrink:0;}
+
+/* ── ASSIST FIRST VIEW ── */
+.assist-fv{padding:10px 12px 0;max-width:640px;margin:0 auto;}
+@media(min-width:768px){.assist-fv{padding:20px 28px 0;max-width:none;}}
+.tab-desc{font-size:12px;color:var(--g500);margin:4px 0 8px;}
+.disc{text-align:center;padding:10px 14px 100px;font-size:11px;color:var(--g400);line-height:1.5;}
+@media(min-width:768px){.disc{padding-bottom:60px;}}
+/* サンプルサムネイル */
+/* ── サンプルボタン ── */
+.sample-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:2px 0 6px;}
+
+.sample-btn{width:100%;cursor:pointer;border-radius:10px;border:1.5px solid var(--g200);background:var(--w);overflow:hidden;transition:all .15s;user-select:none;}
+.sample-btn:active{transform:scale(.96);}
+.sample-btn.active{border-color:var(--blue);box-shadow:0 0 0 2px var(--bl);}
+.sample-btn-ico{height:48px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;}
+.sample-btn-lbl{padding:4px 3px;font-size:9px;font-weight:600;color:var(--g700);text-align:center;line-height:1.3;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#0F3276 0%,#1A4FA0 55%,#2563EB 100%);color:#fff;padding:20px 16px 18px;text-align:center;}
+@media(min-width:768px){.hero{padding:28px 32px 22px;text-align:left;}}
+.hero-inner{max-width:640px;}
+@media(min-width:768px){.hero-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:none;}}
+.hero-text{}
+.hero-eye{font-size:10px;font-weight:700;letter-spacing:.1em;color:#93C5FD;margin-bottom:6px;text-transform:uppercase;}
+.hero-h1{font-size:clamp(18px,4vw,24px);font-weight:700;line-height:1.3;margin-bottom:6px;}
+.hero-h1 em{font-style:normal;color:#60A5FA;}
+.hero-sub{font-size:12px;color:#BFDBFE;line-height:1.6;margin-bottom:14px;}
+@media(min-width:768px){.hero-sub{margin-bottom:0;}}
+.hero-stats{display:flex;gap:6px;justify-content:center;}
+@media(min-width:768px){.hero-stats{flex-direction:column;gap:4px;flex-shrink:0;}}
+.sp{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:5px 12px;text-align:center;flex:1;}
+@media(min-width:768px){.sp{display:flex;align-items:center;gap:6px;flex:none;border-radius:var(--rs);padding:6px 12px;}}
+.sn{font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.sl{font-size:9px;color:#BFDBFE;}
+.dot{width:5px;height:5px;border-radius:50%;background:#4ADE80;display:inline-block;animation:blink 1.4s ease-in-out infinite;vertical-align:middle;margin-right:2px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+/* 未ログイン保存案内 */
+.save-hint{background:rgba(255,255,255,.1);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.save-hint-txt{font-size:12px;color:#BFDBFE;}
+.save-hint-btn{font-size:12px;font-weight:700;color:#A5F3FC;cursor:pointer;white-space:nowrap;text-decoration:underline;background:none;border:none;font-family:'Noto Sans JP',sans-serif;}
+
+/* ── CASES HERO ── */
+.cases-hero{background:linear-gradient(135deg,#0F3276 0%,#1A4FA0 60%,#1d4ed8 100%);color:#fff;padding:20px 16px 16px;}
+@media(min-width:768px){.cases-hero{padding:24px 28px 20px;}}
+.ch-title{font-size:18px;font-weight:700;margin-bottom:3px;}
+.ch-sub{font-size:12px;color:#BFDBFE;}
+.ch-stats{display:flex;gap:8px;margin-top:12px;}
+.ch-stat{background:rgba(255,255,255,.12);border-radius:var(--rs);padding:8px 12px;flex:1;text-align:center;}
+.ch-sn{font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+.ch-sl{font-size:10px;color:#BFDBFE;}
+
+/* ── INNER CONTENT ── */
+.inner{padding:16px 14px 0;}
+@media(min-width:768px){.inner{padding:20px 28px 0;}}
+
+/* ── TABS（スマホ2×2グリッド、PC横並び） ── */
+.tabs-wrap{margin-bottom:8px;}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+@media(min-width:768px){.tabs{display:flex;gap:6px;}}
+.tab{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:10px 8px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);cursor:pointer;font-size:12px;font-weight:700;color:var(--g600);transition:all .15s;text-align:center;line-height:1.3;}
+@media(min-width:768px){.tab{border-radius:100px;padding:9px 18px;font-size:13px;white-space:nowrap;}}
+.tab.on{border-color:var(--blue);background:var(--bl);color:var(--blue);}
+.tab-ico{font-size:14px;flex-shrink:0;}
+/* 見積書タブは文字が長いので改行許可 */
+.tab:nth-child(3){font-size:11px;}
+@media(min-width:768px){.tab:nth-child(3){font-size:13px;}}
+
+/* ── アップロードエリア全体 ── */
+.upload-area{background:var(--w);border-radius:var(--r);border:1px solid var(--g200);overflow:hidden;}
+
+/* できること（アップロード前に見せる） */
+.can-do{padding:14px 14px 0;}
+.can-do-lbl{font-size:11px;font-weight:700;color:var(--g400);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;}
+.can-do-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.can-do-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--g50);border-radius:var(--rs);border:1px solid var(--g200);}
+.can-do-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Sans',sans-serif;}
+.can-do-body{flex:1;}
+.can-do-title{font-size:13px;font-weight:700;color:var(--g800);}
+.can-do-sub{font-size:11px;color:var(--g500);margin-top:1px;}
+
+/* サンプル画像 */
+.samples-wrap{padding:0 14px 12px;}
+.samples-lbl{font-size:11px;color:var(--g400);margin-bottom:8px;}
+.samples{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.samples::-webkit-scrollbar{display:none;}
+.sample-item{flex-shrink:0;cursor:pointer;text-align:center;transition:all .15s;}
+.sample-item:hover{transform:scale(1.05);}
+.sample-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;display:block;border:2px solid var(--g200);transition:border-color .15s;}
+.sample-item.active .sample-thumb{border-color:var(--blue);}
+.sample-label{font-size:10px;color:var(--g500);margin-top:4px;line-height:1.3;max-width:64px;}
+
+/* ドロップゾーン */
+.dz-wrap{padding:0 14px 14px;}
+.dz{border:2px dashed var(--g200);border-radius:var(--rs);background:var(--g50);padding:14px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;user-select:none;}
+@media(min-width:768px){.dz{padding:20px;}}
+.dz:hover,.dz.drag{border-color:var(--blue);background:var(--bl);}
+.dz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-ico{font-size:26px;margin-bottom:5px;display:block;pointer-events:none;}
+@media(min-width:768px){.dz-ico{font-size:28px;margin-bottom:6px;}}
+.dz-main{font-size:15px;font-weight:700;color:var(--g800);margin-bottom:3px;pointer-events:none;}
+.dz-sub{font-size:12px;color:var(--g400);pointer-events:none;}
+.pv{display:none;margin-top:8px;position:relative;}
+.pv-img{width:100%;max-height:160px;object-fit:cover;border-radius:var(--rs);display:block;}
+.pv-file{background:var(--g100);border-radius:var(--rs);padding:10px 12px;display:flex;align-items:center;gap:8px;}
+.pv-fn{font-size:13px;font-weight:500;color:var(--g800);}
+.pv-fs{font-size:11px;color:var(--g400);}
+.pv-clr{position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--g600);border:none;color:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2;}
+
+/* 補足 */
+.sup-area{padding:0 14px 14px;}
+.sup-tog{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 0;border:none;background:none;font-family:'Noto Sans JP',sans-serif;color:var(--g400);font-size:12px;}
+.sup-tog svg{width:13px;height:13px;transition:transform .2s;}
+.sup-tog.on svg{transform:rotate(180deg);}
+.sup-in{display:none;margin-top:6px;}
+.sup-in.on{display:block;}
+textarea{width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:10px 12px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;resize:none;min-height:60px;transition:border-color .15s;}
+textarea:focus{border-color:var(--blue);}
+
+/* 実行ボタン */
+.run-wrap{padding:0 14px 14px;}
+.btn-ai{width:100%;padding:15px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;}
+@media(min-width:768px){.btn-ai{padding:13px;font-size:14px;}}
+.btn-ai:hover:not(:disabled){background:#1244A0;transform:translateY(-1px);}
+.btn-ai:disabled{background:var(--g400);cursor:not-allowed;transform:none;}
+
+/* ── LOADING ── */
+.ld{display:none;text-align:center;padding:28px 14px;}
+.ld.on{display:block;}
+.spin{width:30px;height:30px;border:3px solid var(--g200);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ld-msg{font-size:13px;color:var(--g400);}
+
+/* ── RESULT ── */
+.rc{display:none;border-top:1px solid var(--g200);}
+.rc.on{display:block;}
+
+/* 金額結果 */
+.res-cost{padding:20px;text-align:center;background:var(--bl);}
+.res-cost-lbl{font-size:11px;font-weight:700;color:var(--bm);letter-spacing:.05em;margin-bottom:5px;}
+.res-cost-num{font-family:'DM Sans',sans-serif;font-size:42px;font-weight:700;color:var(--blue);line-height:1;}
+.res-cost-range{font-size:13px;color:var(--bm);margin-top:5px;}
+.res-cost-pri{margin-top:8px;}
+.pri{display:inline-flex;align-items:center;gap:4px;padding:4px 13px;border-radius:100px;font-size:12px;font-weight:700;}
+.pr-r{background:#FEE2E2;color:#B91C1C;}
+.pr-a{background:#FEF3C7;color:#92400E;}
+.pr-g{background:#ECFDF5;color:#065F46;}
+
+/* 査定スコア */
+.res-score{padding:20px;text-align:center;}
+.res-score-num{font-family:'DM Sans',sans-serif;font-size:56px;font-weight:700;line-height:1;margin-bottom:4px;}
+.rs-ok{color:var(--green);}
+.rs-warn{color:var(--amber);}
+.rs-ng{color:var(--red);}
+.res-score-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 16px;border-radius:100px;font-size:14px;font-weight:700;margin-bottom:10px;}
+.rb-ok{background:var(--gl);color:var(--green);}
+.rb-warn{background:var(--al);color:var(--amber);}
+.rb-ng{background:var(--rl);color:var(--red);}
+.res-compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.rc-card{background:var(--g100);border-radius:var(--rs);padding:10px;}
+.rc-lbl{font-size:11px;color:var(--g600);margin-bottom:2px;}
+.rc-val{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:var(--g800);}
+
+/* 報告書結果 */
+.res-report{padding:16px 14px;}
+.rpt-kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.rpt-k{background:var(--g50);border-radius:var(--rs);padding:12px;text-align:center;}
+.rpt-k.urg{background:var(--rl);}
+.rpt-k-lbl{font-size:11px;color:var(--g600);margin-bottom:4px;}
+.rpt-k.urg .rpt-k-lbl{color:var(--red);}
+.rpt-k-val{font-family:'DM Sans',sans-serif;font-size:28px;font-weight:700;color:var(--g800);}
+.rpt-k.urg .rpt-k-val{color:var(--red);}
+.rpt-k-sub{font-size:11px;color:var(--g400);margin-top:2px;}
+.rpt-cost-bar{background:var(--bl);border-radius:var(--rs);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
+.rpt-cost-lbl{font-size:12px;font-weight:700;color:var(--blue);}
+.rpt-cost-val{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;color:var(--blue);}
+.issue-list{margin-top:12px;}
+.issue-glbl{font-size:11px;font-weight:700;color:var(--g400);letter-spacing:.05em;text-transform:uppercase;margin:8px 0 6px;}
+.issue-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);margin-bottom:6px;}
+.issue-ico{flex-shrink:0;font-size:14px;}
+.issue-body{flex:1;}
+.issue-name{font-size:13px;font-weight:500;color:var(--g800);}
+.issue-loc{font-size:11px;color:var(--g400);margin-top:1px;}
+.issue-cost{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0;}
+
+/* 詳細折りたたみ */
+.det-tog{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;cursor:pointer;font-size:12px;color:var(--g400);border:none;background:none;width:100%;font-family:'Noto Sans JP',sans-serif;border-top:1px solid var(--g100);}
+.det-tog svg{width:13px;height:13px;transition:transform .2s;}
+.det-tog.on svg{transform:rotate(180deg);}
+.det-body{display:none;padding:12px 14px;border-top:1px solid var(--g100);}
+.det-body.on{display:block;}
+.det-txt{font-size:13px;line-height:1.8;color:var(--g800);white-space:pre-wrap;}
+
+/* アクションバー */
+.abar{padding:14px;border-top:1px solid var(--g100);display:flex;flex-direction:column;gap:8px;}
+.btn-cosoji{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:14px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,var(--bd),var(--bm));color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;box-shadow:0 4px 14px rgba(26,79,160,.2);}
+.btn-cosoji:hover{opacity:.9;transform:translateY(-1px);}
+.btn-sub{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);color:var(--g700);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;}
+.btn-sub:hover{background:var(--g50);}
+.share-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.btn-share{display:flex;align-items:center;justify-content:center;gap:4px;padding:9px;border-radius:var(--rs);border:1px solid var(--g200);background:var(--w);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--g500);}
+.btn-line{border-color:var(--g400);color:var(--g400);}
+
+/* 見積変換 */
+.conv-panel{border-top:1px solid var(--g200);}
+.conv-inner{padding:14px;}
+.conv-header{font-size:13px;font-weight:700;color:var(--g800);margin-bottom:10px;}
+.conv-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--g50);border-radius:var(--rs);margin-bottom:6px;}
+.conv-lbl{font-size:12px;color:var(--g600);}
+.conv-val{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--g800);}
+.conv-rate-row{display:flex;align-items:center;gap:8px;margin:10px 0;}
+.conv-rate-lbl{font-size:13px;font-weight:700;color:var(--g800);}
+.conv-rate-input{width:72px;border:1.5px solid var(--g200);border-radius:var(--rs);padding:8px 10px;font-size:16px;font-family:'DM Sans',sans-serif;font-weight:700;color:var(--blue);text-align:center;outline:none;}
+.conv-rate-input:focus{border-color:var(--blue);}
+.conv-total{background:var(--bl);border-radius:var(--rs);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin:10px 0;}
+.conv-total-lbl{font-size:13px;font-weight:700;color:var(--blue);}
+.conv-total-val{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:700;color:var(--blue);}
+.conv-btns{display:flex;flex-direction:column;gap:8px;}
+.btn-pdf{width:100%;padding:13px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-inv{width:100%;padding:12px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--g800);}
+
+/* ── CASES ── */
+.hint-card{background:var(--bl);border:1.5px dashed var(--blue);border-radius:var(--rs);padding:14px;display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;transition:background .15s;}
+.hint-card:hover{background:#dbeafe;}
+.hint-ico{font-size:24px;flex-shrink:0;}
+.hint-t{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:2px;}
+.hint-s{font-size:12px;color:var(--bm);}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sec-t{font-size:14px;font-weight:700;color:var(--g800);}
+.sec-l{font-size:12px;color:var(--blue);cursor:pointer;}
+.task-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);overflow:hidden;margin-bottom:8px;}
+.task-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:.5px solid var(--g100);cursor:pointer;transition:background .15s;}
+.task-row:hover{background:var(--g50);}
+.task-row:last-child{border-bottom:none;}
+.t-ico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.ti-r{background:var(--rl);}
+.ti-a{background:var(--al);}
+.ti-g{background:var(--gl);}
+.t-body{flex:1;}
+.t-name{font-size:13px;font-weight:500;color:var(--g800);}
+.t-sub{font-size:11px;color:var(--g400);margin-top:1px;}
+.t-arr{font-size:16px;color:var(--g400);}
+.case-act-wrap{padding:10px 14px;border-top:1px solid #EFF6FF;background:#F8FAFF;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.case-act-hint{font-size:11px;color:var(--g500);}
+.case-next-btn{flex-shrink:0;padding:7px 14px;background:var(--blue);color:#fff;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;border:none;font-family:'Noto Sans JP',sans-serif;transition:opacity .15s;}
+.case-next-btn:active{opacity:.8;}
+.case-card:hover{border-color:var(--blue);}
+.case-body{padding:12px 14px;cursor:pointer;}
+.case-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;}
+.case-name{font-size:13px;font-weight:700;color:var(--g800);}
+.cs{font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.cs-u{background:var(--rl);color:var(--red);}
+.cs-n{background:var(--al);color:var(--amber);}
+.cs-w{background:var(--bl);color:var(--blue);}
+.cs-d{background:var(--gl);color:var(--green);}
+.case-meta{font-size:11px;color:var(--g400);display:flex;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+.case-bot{display:flex;align-items:center;justify-content:space-between;}
+.case-amt{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--g800);}
+.case-next{font-size:11px;color:var(--blue);font-weight:500;}
+.case-inv-bar{border-top:1px solid var(--g100);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--g50);}
+.case-inv-lbl{font-size:12px;color:var(--g500);}
+.case-inv-btn{font-size:12px;font-weight:700;color:var(--blue);background:none;border:1px solid var(--blue);border-radius:100px;padding:4px 12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.new-case{border-color:var(--blue) !important;animation:fadeSlide .4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ソフトゲート */
+.sg-banner{background:linear-gradient(135deg,var(--bd),var(--blue));border-radius:var(--r);padding:20px;margin-bottom:18px;color:#fff;}
+.sg-title{font-size:15px;font-weight:700;margin-bottom:6px;}
+.sg-sub{font-size:13px;color:#BFDBFE;line-height:1.65;margin-bottom:12px;}
+.sg-feats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
+.sg-feat-item{background:rgba(255,255,255,.12);border-radius:var(--rs);padding:8px 10px;font-size:12px;color:#fff;font-weight:500;}
+.sg-btn-login{width:100%;padding:12px;border-radius:var(--rs);border:none;background:#fff;color:var(--blue);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px;}
+.sg-btn-skip{width:100%;padding:8px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.3);background:transparent;color:#BFDBFE;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+
+/* 業者カード */
+.vcard{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);padding:12px 14px;margin-bottom:8px;}
+.vc-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.vc-name{font-size:14px;font-weight:700;color:var(--g800);}
+.vc-star{font-size:12px;color:var(--amber);}
+.vc-area{font-size:12px;color:var(--g500);margin-top:1px;}
+.vc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.vc-tag{font-size:11px;background:var(--bl);color:var(--blue);padding:2px 8px;border-radius:100px;}
+.vc-acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.vc-btn{padding:10px 8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;}
+.vc-call{background:var(--blue);color:#fff;border:1px solid var(--blue);}
+.vc-web{background:var(--bl);color:var(--blue);border:1px solid var(--g200);}
+
+/* ── 設定 ── */
+.cfg-wrap{max-width:540px;margin:0 auto;padding:20px 14px 80px;}
+@media(min-width:768px){.cfg-wrap{padding:24px 32px 60px;}}
+.cfg-profile{text-align:center;padding-bottom:20px;border-bottom:1px solid var(--g200);margin-bottom:22px;}
+.cfg-pname{font-size:17px;font-weight:700;color:var(--g800);margin:10px 0 3px;}
+.cfg-pemail{font-size:13px;color:var(--g400);margin-bottom:10px;}
+.cfg-plan-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+.cfg-plan{display:inline-block;font-size:11px;font-weight:700;background:var(--g100);color:var(--g500);padding:4px 12px;border-radius:100px;}
+.cfg-grp{margin-bottom:20px;}
+.cfg-glbl{font-size:11px;font-weight:700;color:var(--g400);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.cfg-list{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);overflow:hidden;}
+.cfg-row{display:flex;align-items:center;gap:10px;padding:13px 14px;border-bottom:.5px solid var(--g100);cursor:pointer;transition:background .12s;}
+.cfg-row:last-child{border-bottom:none;}
+.cfg-row:hover{background:var(--g50);}
+.cfg-rl{display:flex;align-items:center;gap:10px;flex:1;}
+.cfg-ico{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.cfg-svg{width:18px;height:18px;flex-shrink:0;}
+.cfg-lbl{font-size:14px;color:var(--g800);}
+.cfg-val{font-size:13px;color:var(--g400);margin-right:4px;}
+.cfg-val--muted{font-size:13px;color:var(--g300);margin-right:4px;}
+.cfg-arr{font-size:16px;color:var(--g400);}
+.cfg-tgl{width:44px;height:26px;border-radius:13px;background:var(--g200);position:relative;flex-shrink:0;transition:background .2s;cursor:pointer;}
+.cfg-tgl.on{background:var(--green);}
+.cfg-tgl-k{width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.cfg-tgl.on .cfg-tgl-k{transform:translateX(18px);}
+.cosoji-services{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cs-svc{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);padding:12px;cursor:pointer;transition:border-color .15s;}
+.cs-svc:hover{border-color:var(--blue);}
+.cs-svc-ico{font-size:18px;margin-bottom:5px;}
+.cs-svc-name{font-size:12px;font-weight:700;color:var(--g800);margin-bottom:2px;}
+.cs-svc-sub{font-size:11px;color:var(--g400);line-height:1.4;}
+
+/* ── BOTTOM NAV ── */
+.mobile-nav{position:fixed;bottom:0;left:0;right:0;background:var(--w);border-top:1px solid var(--g200);display:flex;padding:8px 0 calc(env(safe-area-inset-bottom) + 4px);z-index:200;box-shadow:0 -2px 12px rgba(0,0,0,.06);}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:var(--g400);font-size:10px;font-weight:500;transition:color .15s;border:none;background:none;font-family:'Noto Sans JP',sans-serif;}
+.bni.on{color:var(--blue);}
+.bni svg{width:20px;height:20px;}
+
+/* ── MODALS ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center;}
+.modal-bg.on{display:flex;}
+@media(min-width:768px){.modal-bg{align-items:center;}}
+.modal-card{background:var(--w);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;padding:22px 18px 32px;max-height:90vh;overflow-y:auto;}
+@media(min-width:768px){.modal-card{border-radius:var(--r);padding:26px 22px;}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.modal-title{font-size:16px;font-weight:700;color:var(--g800);}
+.modal-close{border:none;background:var(--g100);border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+
+/* 請求書モーダル */
+.inv-preview{background:var(--g50);border-radius:var(--rs);padding:14px;margin-bottom:12px;border:1px solid var(--g200);}
+.inv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid var(--g200);}
+.inv-row:last-child{border-bottom:none;}
+.inv-lbl{font-size:12px;color:var(--g600);}
+.inv-val{font-size:13px;font-weight:700;color:var(--g800);}
+.inv-total{background:var(--bl);border-radius:var(--rs);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.inv-total-lbl{font-size:13px;font-weight:700;color:var(--blue);}
+.inv-total-val{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;color:var(--blue);}
+
+/* アップグレードモーダル */
+.fc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--g50);border-radius:var(--rs);margin-bottom:6px;}
+.fc-icon{font-size:18px;flex-shrink:0;}
+.fc-body{flex:1;}
+.fc-title{font-size:13px;font-weight:700;color:var(--g800);margin-bottom:1px;}
+.fc-sub{font-size:11px;color:var(--g500);}
+
+/* ── KPI ── */
+.kpi-card{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);padding:12px 14px;}
+.kpi-lbl{font-size:10px;color:var(--g400);margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.kpi-dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.kpi-num{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;}
+.kpi-sub{font-size:10px;color:var(--g400);margin-top:1px;}
+/* ── パイプラインタブ ── */
+.ptab{display:flex;align-items:center;gap:4px;padding:8px 10px;font-size:11px;font-weight:500;color:var(--g500);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.ptab:hover{color:var(--blue);}
+.ptab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--bl);font-weight:700;}
+.ptab-cnt{font-size:10px;font-weight:700;background:var(--g200);color:var(--g600);padding:1px 5px;border-radius:100px;min-width:16px;text-align:center;}
+.ptab.active .ptab-cnt{background:var(--blue);color:#fff;}
+/* ── 案件行 ── */
+.case-row{background:var(--w);border:1px solid var(--g200);border-radius:var(--rs);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.case-row:hover{border-color:var(--blue);box-shadow:0 1px 6px rgba(26,79,160,.08);}
+.case-row.stagnant{border-left:3px solid var(--amber);}
+.case-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.case-row-name{font-size:13px;font-weight:700;color:var(--g800);flex:1;line-height:1.4;}
+.case-row-amt{font-size:13px;font-weight:700;color:var(--g800);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.case-row-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sp-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.sp-mitsumori{background:var(--g100);color:var(--g600);}
+.sp-mitsumori_done{background:var(--bl);color:var(--blue);}
+.sp-hacchu{background:#EFF6FF;color:#1D4ED8;}
+.sp-kooji{background:#ECFDF5;color:#065F46;}
+.sp-seikyuu{background:#EFF6FF;color:#1D4ED8;}
+.sp-nyukin{background:#ECFDF5;color:#065F46;}
+.sp-kanryo{background:#ECFDF5;color:#065F46;}
+.sp-shissho{background:var(--rl);color:var(--red);}
+.cs-stage-btn.shissho{border-color:var(--red);background:var(--rl);}
+.csb-dot.sh{background:var(--red);border-color:var(--red);}
+.csb-lbl.sh{color:var(--red);}
+.case-row-days{font-size:10px;color:var(--g400);}
+.case-row-days.warn{color:var(--amber);font-weight:600;}
+.case-row-action{font-size:10px;color:var(--blue);font-weight:600;}
+/* ── 案件詳細モーダル ── */
+.case-sheet{background:var(--w);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:480px;padding:16px 18px 32px;max-height:90vh;overflow-y:auto;}
+@media(min-width:768px){.case-sheet{border-radius:var(--r);}}
+.cs-handle{width:36px;height:4px;background:var(--g200);border-radius:100px;margin:0 auto 16px;}
+.cs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.cs-title{font-size:16px;font-weight:700;color:var(--g800);}
+.cs-close{border:none;background:var(--g100);border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.cs-meta{font-size:11px;color:var(--g400);margin-bottom:14px;}
+.cs-status-section{background:var(--g50);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;}
+.cs-stage-flow{display:flex;flex-direction:column;gap:4px;}
+.cs-stage-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;width:100%;text-align:left;}
+.cs-stage-btn:hover{border-color:var(--blue);background:var(--bl);}
+.cs-stage-btn.cur{border-color:var(--blue);background:var(--bl);cursor:default;}
+.cs-stage-btn.done{border-color:var(--g200);background:var(--g50);opacity:.55;}
+.cs-stage-btn.nyukin{border-color:var(--green);background:var(--gl);}
+.csb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:2px solid var(--g300);background:var(--w);}
+.csb-dot.d{background:var(--blue);border-color:var(--blue);}
+.csb-dot.c{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,79,160,.2);}
+.csb-dot.ny{background:var(--green);border-color:var(--green);}
+.csb-lbl{flex:1;font-size:12px;font-weight:600;color:var(--g700);}
+.csb-lbl.c{color:var(--blue);}
+.csb-lbl.ny{color:var(--green);}
+.csb-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:var(--blue);color:#fff;}
+.csb-tag-done{background:var(--g300);color:var(--g600);}
+.csb-tag-next{background:var(--amber);color:#fff;}
+.csb-check{font-size:14px;color:var(--blue);}
+.cs-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.cs-stat{background:var(--g100);border-radius:var(--rs);padding:10px;}
+.cs-stat-lbl{font-size:11px;color:var(--g600);margin-bottom:3px;}
+.cs-stat-val{font-size:14px;font-weight:700;color:var(--g800);font-family:'DM Sans',sans-serif;}
+.cs-detail-title{font-size:12px;font-weight:700;color:var(--g600);margin-bottom:6px;}
+.cs-detail-text{font-size:13px;line-height:1.7;color:var(--g800);background:var(--g50);border-radius:var(--rs);padding:12px;margin-bottom:14px;white-space:pre-wrap;}
+.cs-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cs-btn-close{padding:11px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.cs-btn-cosoji{padding:11px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+
+/* COSOJI依頼フォーム */
+.mi-form{background:var(--g50);border:1px solid var(--g200);border-radius:var(--rs);padding:14px;margin-top:8px;}
+.mi-form-title{font-size:13px;font-weight:700;color:var(--g800);margin-bottom:4px;}
+.mi-form-sub{font-size:11px;color:var(--g600);line-height:1.6;margin-bottom:10px;}
+.mi-input{width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:10px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:8px;background:var(--w);}
+.mi-input:focus{border-color:var(--red);}
+.mi-submit{width:100%;padding:12px;border-radius:var(--rs);border:none;background:var(--red);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.mi-submit:disabled{background:var(--g400);cursor:not-allowed;}
+.mi-complete{background:var(--gl);border-radius:var(--rs);padding:12px;text-align:center;display:none;}
+.mi-complete-title{font-size:13px;font-weight:700;color:var(--green);}
+.mi-complete-sub{font-size:11px;color:var(--green);margin-top:3px;}
+/* COSOJIボタン（赤） */
+.btn-cosoji-red{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:14px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,#C62A6B,#E83E6C);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;box-shadow:0 4px 16px rgba(232,62,108,.3);}
+.btn-cosoji-red:hover{opacity:.9;transform:translateY(-1px);}
+.btn-cosoji-red.done{background:linear-gradient(135deg,#16a34a,#22c55e);box-shadow:0 4px 16px rgba(34,197,94,.25);cursor:default;transform:none;}
+/* サンプル横スクロール */
+.samples-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.samples-scroll::-webkit-scrollbar{display:none;}
+.sample-thumb-item{flex-shrink:0;cursor:pointer;text-align:center;transition:all .15s;}
+.sample-thumb-item:hover{transform:scale(1.05);}
+.sample-thumb-box{width:68px;height:68px;border-radius:8px;border:2px solid var(--g200);overflow:hidden;transition:border-color .15s;background:var(--g100);display:flex;align-items:center;justify-content:center;}
+.sample-thumb-item.active .sample-thumb-box{border-color:var(--blue);}
+.sample-thumb-label{font-size:10px;color:var(--g500);margin-top:4px;line-height:1.3;max-width:68px;}
+/* DISC */
+</style>
+</head>
+<body>
+
+<!-- ===== COSOJIとは ポップアップ ===== -->
+<div id="cosoji-trust-modal" style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:320px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+    <div style="padding:13px 16px 11px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #F8FAFC;">
+      <span style="font-size:11px;font-weight:700;color:#94A3B8;letter-spacing:.06em;">COSOJI とは</span>
+      <button onclick="document.getElementById('cosoji-trust-modal').style.display='none';" style="width:22px;height:22px;border-radius:50%;background:#F1F5F9;border:none;font-size:10px;color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Noto Sans JP',sans-serif;">✕</button>
+    </div>
+    <div style="padding:16px;">
+      <p style="font-size:13px;color:#475569;line-height:1.8;margin-bottom:14px;">累計<strong style="color:#1E293B;font-weight:700;">100万件超</strong>の修繕実績・国交省データ・最新相場を学習した、不動産修繕専門のAIです。</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#ECFDF5;color:#065F46;">AI診断無料</span>
+        <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#EBF2FF;color:#1d4ed8;">全国対応</span>
+        <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#EBF2FF;color:#1d4ed8;">最短1営業日</span>
+        <span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:#F1F5F9;color:#475569;">国交省データ準拠</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="pg-login" class="page">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">🏗 みんなのAI修繕</div>
+      <div class="auth-by">by COSOJI</div>
+      <div class="auth-h">ログイン</div>
+      <div class="fg"><label class="fl">メールアドレス</label><input class="fi" type="email" placeholder="tanaka@example.com"></div>
+      <div class="fg"><label class="fl">パスワード</label><input class="fi" type="password" placeholder="••••••••"></div>
+      <div class="auth-forgot" onclick="showPage('reset')">パスワードを忘れた場合</div>
+      <button class="fb" onclick="doLogin()">ログイン</button>
+      <div class="fg-s"><div class="fg-sl"></div><div class="fg-st">または</div><div class="fg-sl"></div></div>
+      <button class="fb-g" onclick="doLogin()"><svg width="17" height="17" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>Googleでログイン</button>
+      <div class="auth-link">アカウントをお持ちでない方は <a onclick="showPage('register')">新規登録</a></div>
+      <div class="auth-skip"><a onclick="doLogin()">→ デモとして試す（ログインスキップ）</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REGISTER ===== -->
+<div id="pg-register" class="page">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">🏗 みんなのAI修繕</div>
+      <div class="auth-by">by COSOJI</div>
+      <div class="auth-h">新規登録（無料）</div>
+      <div class="fg"><label class="fl">会社名</label><input class="fi" type="text" placeholder="株式会社コソジ不動産管理"></div>
+      <div class="fg"><label class="fl">お名前</label><input class="fi" type="text" placeholder="田中 洸輝"></div>
+      <div class="fg"><label class="fl">メールアドレス</label><input class="fi" type="email" placeholder="tanaka@example.com"></div>
+      <div class="fg"><label class="fl">パスワード</label><input class="fi" type="password" placeholder="8文字以上"></div>
+      <button class="fb" onclick="doLogin()">アカウントを作成</button>
+      <div class="fg-s"><div class="fg-sl"></div><div class="fg-st">または</div><div class="fg-sl"></div></div>
+      <button class="fb-g" onclick="doLogin()"><svg width="17" height="17" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>Googleで登録</button>
+      <div style="font-size:11px;color:var(--g400);text-align:center;margin-top:12px;line-height:1.6;">基本利用は無料。週10回まで無料でAI診断を利用できます。</div>
+      <div class="auth-link">既にアカウントをお持ちの方は <a onclick="showPage('login')">ログイン</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESET ===== -->
+<div id="pg-reset" class="page">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">🏗 みんなのAI修繕</div>
+      <div class="auth-by">by COSOJI</div>
+      <div class="auth-h">パスワードリセット</div>
+      <div style="font-size:13px;color:var(--g500);text-align:center;margin-bottom:20px;line-height:1.65;">登録済みのメールアドレスを入力してください。</div>
+      <div class="fg"><label class="fl">メールアドレス</label><input class="fi" type="email" placeholder="tanaka@example.com"></div>
+      <button class="fb" onclick="alert('デモ版：リセットメールを送信しました')">リセットメールを送る</button>
+      <div class="auth-link"><a onclick="showPage('login')">← ログインに戻る</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="pg-app" class="page on">
+  <div class="app-shell">
+
+    <!-- PC サイドバー -->
+    <div class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-logo-t">🏗 みんなのAI修繕</div>
+        <div class="sb-logo-s">by COSOJI</div>
+      </div>
+      <div class="sb-nav">
+        <button class="sni on" id="sni-assist" onclick="goPage('assist');if(currentTab==='vendor')swt('photo');">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/></svg>
+          AI診断
+        </button>
+        <button class="sni" id="sni-vendor" onclick="goPage('assist');setTimeout(()=>swt('vendor'),80);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          業者を探す
+        </button>
+        <button class="sni" id="sni-cases" onclick="guardLogin('cases')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          案件管理
+          <span class="nbadge" id="sb-badge"></span>
+        </button>
+      </div>
+      <div class="sb-bottom">
+        <button class="sni" onclick="goPage('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          設定
+        </button>
+        <div class="sb-user" onclick="goPage('settings')">
+          <div class="ava">田</div>
+          <div><div class="su-name">田中 洸輝</div><div class="su-co">コソジ不動産管理</div></div>
+        </div>
+        <button class="sni danger" onclick="doLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          ログアウト
+        </button>
+      </div>
+      <!-- COSOJIシリーズ -->
+      <div class="sb-series">
+        <div class="sb-series-lbl">COSOJIシリーズ</div>
+        <div class="sb-series-item" onclick="window.open('https://cosoji.com/','_blank')"><span class="sb-series-ico">🚨</span><div><div class="sb-series-name">共用部駆けつけ</div><div class="sb-series-sub">COSOJIレスキュー</div></div></div>
+        <div class="sb-series-item" onclick="window.open('https://cosoji.com/','_blank')"><span class="sb-series-ico">🔧</span><div><div class="sb-series-name">施設メンテナンス</div><div class="sb-series-sub">COSOJI BM</div></div></div>
+        <div class="sb-series-item" onclick="window.open('https://cosoji.com/','_blank')"><span class="sb-series-ico">🏢</span><div><div class="sb-series-name">業務支援ツール</div><div class="sb-series-sub">COSOJI Hub</div></div></div>
+        <div class="sb-series-item" onclick="window.open('https://cosoji.com/','_blank')" style="margin-bottom:8px;"><span class="sb-series-ico">👥</span><div><div class="sb-series-name">採用・育成支援</div><div class="sb-series-sub">COSOJI HR</div></div></div>
+      </div>
+      <div class="sb-custom" onclick="showUpgradeModal()">
+        <div class="sb-custom-t">個社カスタマイズ・プラン →</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- モバイルトップバー -->
+      <div class="mobile-top">
+        <div class="logo">🏗 みんなのAI修繕<em onclick="document.getElementById('cosoji-trust-modal').style.display='flex';" style="cursor:pointer;color:#E83E6C;text-decoration:underline;text-underline-offset:2px;font-style:normal;">by COSOJI ›</em></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="usage-pill" id="usage-badge">週10回無料</div>
+          <button class="icon-btn" onclick="goPage('settings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- PCトップバー -->
+      <div class="pc-top" id="pc-top">
+        <div class="pc-top-title" id="pc-title">AI診断</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="login-dot" id="pc-login-dot">
+            <div class="login-dot-circle"></div>
+            <span id="pc-login-txt">ログイン中</span>
+          </div>
+          <div class="usage-pill" id="pc-usage-badge">週10回無料 7/10</div>
+          <div class="ava" style="cursor:pointer;" onclick="goPage('settings')">田</div>
+        </div>
+      </div>
+
+      <!-- ── AI診断 ── -->
+      <div id="sub-assist">
+        <div class="assist-fv">
+
+          <!-- ライブカウンター -->
+          <div class="counter-bar">
+            <div class="cb-item">
+              <span class="cb-num"><span id="su">1,582</span>名</span>
+              <span class="cb-lbl">ユーザー数</span>
+            </div>
+            <div class="cb-sep"></div>
+            <div class="cb-item">
+              <span class="cb-num">¥<span id="sa">2.4</span>億</span>
+              <span class="cb-lbl">見積累計</span>
+            </div>
+            <div class="cb-sep"></div>
+            <div class="cb-item">
+              <span class="cb-num"><span id="sc">8,247</span>回</span>
+              <span class="cb-lbl">AI利用回数</span>
+            </div>
+          </div>
+
+          <!-- 4タブ -->
+          <div class="tabs-wrap">
+            <div class="tabs">
+              <div class="tab on" id="tab-photo" onclick="swt('photo')"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0;"><circle cx="10" cy="11" r="3.5"/><path d="M2 7h2l1.5-2h9L16 7h2a1 1 0 011 1v8a1 1 0 01-1 1H2a1 1 0 01-1-1V8a1 1 0 011-1z"/></svg>写真で診断</div>
+              <div class="tab" id="tab-report" onclick="swt('report')"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0;"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 8h6M7 11h6M7 14h4"/></svg>報告書を診断</div>
+              <div class="tab" id="tab-estimate" onclick="swt('estimate')"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0;"><rect x="4" y="2" width="12" height="16" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h3"/><path d="M13 13l2 2"/></svg>見積書を査定・変換</div>
+              <div class="tab" id="tab-vendor" onclick="swt('vendor')"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0;"><path d="M2 10l8-7 8 7"/><path d="M4 10v7h4v-4h4v4h4v-7"/></svg>業者を探す</div>
+            </div>
+          </div>
+          <div class="tab-desc" id="tab-desc">写真を撮るだけで修繕費用をAIが即算出します</div>
+
+          <!-- アップロードエリア -->
+          <div class="upload-area">
+
+            <!-- 見積書タブ：モード選択（セグメントコントロール） -->
+            <div id="est-mode-select" style="display:none;padding:10px 12px 6px;">
+              <div style="display:flex;background:var(--g100);border-radius:var(--rs);padding:3px;gap:3px;">
+                <div id="est-mode-btn-assess" onclick="setEstMode('assess')" style="flex:1;padding:8px 6px;border-radius:7px;cursor:pointer;text-align:center;transition:all .15s;background:var(--w);box-shadow:0 1px 3px rgba(0,0,0,.1);">
+                  <div style="font-size:12px;font-weight:700;color:var(--blue);">相場を確認する</div>
+                  <div style="font-size:10px;color:var(--g500);margin-top:1px;">高いか確認したい</div>
+                </div>
+                <div id="est-mode-btn-convert" onclick="setEstMode('convert')" style="flex:1;padding:8px 6px;border-radius:7px;cursor:pointer;text-align:center;transition:all .15s;background:transparent;">
+                  <div style="font-size:12px;font-weight:700;color:var(--g600);">📄 自社用に変換する</div>
+                  <div style="font-size:10px;color:var(--g400);margin-top:1px;">そのまま変換したい</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 業者タブ：写真・状況を投げて業者を探す -->
+            <div id="vendor-tab-content" style="display:none;">
+              <!-- サンプル（業者） -->
+              <div style="padding:8px 12px 4px;">
+                <div class="samples-lbl" style="font-size:10px;color:var(--g400);margin-bottom:6px;">サンプルで試す</div>
+                <div class="sample-grid">
+                  <div class="sample-btn" onclick="selectSampleVendor('crack')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><path d="M6 26h20M8 26V14M24 26V14M4 14l12-10 12 10"/><rect x="13" y="18" width="6" height="8"/></svg></div><div class="sample-btn-lbl">外壁補修</div></div>
+                  <div class="sample-btn" onclick="selectSampleVendor('waterproof')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><path d="M6 26h20M8 26V14M24 26V14M4 14l12-10 12 10"/><path d="M10 20h12M10 23h12"/></svg></div><div class="sample-btn-lbl">防水工事</div></div>
+                  <div class="sample-btn" onclick="selectSampleVendor('plumbing')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><path d="M8 10h16M8 22h16"/><path d="M12 10v12M20 10v12"/><circle cx="12" cy="16" r="2" fill="#F1F5F9" stroke="#64748B"/><circle cx="20" cy="16" r="2" fill="#F1F5F9" stroke="#64748B"/></svg></div><div class="sample-btn-lbl">設備工事</div></div>
+                </div>
+              </div>
+              <!-- 業者リスト結果（DZの上・サンプルの下） -->
+              <div id="vendor-tab-results" style="display:none;padding:12px 14px 4px;"></div>
+            </div>
+
+            <!-- サンプル（写真） -->
+            <div id="samples-wrap" style="padding:8px 12px 4px;">
+              <div class="samples-lbl" style="font-size:10px;color:var(--g400);margin-bottom:6px;">サンプルで試す</div>
+              <div class="sample-grid">
+                <div class="sample-btn" onclick="selectSample('grass')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="26" height="26"><path d="M16 28V16"/><path d="M16 16c0 0-6-4-6-10a6 6 0 0112 0c0 6-6 10-6 10z"/><path d="M16 20c0 0-4-2-6-6"/><path d="M16 20c0 0 4-2 6-6"/></svg></div><div class="sample-btn-lbl">除草</div></div>
+                <div class="sample-btn" onclick="selectSample('crack')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="26" height="26"><rect x="3" y="3" width="26" height="26" rx="2"/><path d="M10 16l4-6 3 4 2-3 5 8"/><path d="M14 10l-3 5 2 1" stroke-dasharray="2 1"/></svg></div><div class="sample-btn-lbl">外壁ひび割れ</div></div>
+                <div class="sample-btn" onclick="selectSample('waterproof')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="26" height="26"><path d="M4 18h24M4 18l4-10h16l4 10"/><rect x="4" y="18" width="24" height="8" rx="1"/><path d="M13 18v8M19 18v8"/><path d="M8 14h16"/></svg></div><div class="sample-btn-lbl">屋上防水劣化</div></div>
+                <div class="sample-btn" onclick="selectSample('rust')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="26" height="26"><rect x="8" y="6" width="16" height="22" rx="1"/><path d="M12 10h8M12 14h8M12 18h5"/><circle cx="22" cy="22" r="4" fill="#F1F5F9" stroke="#64748B"/><path d="M20 22h4M22 20v4"/></svg></div><div class="sample-btn-lbl">鉄部サビ</div></div>
+              </div>
+            </div>
+            <!-- サンプル（報告書） -->
+            <div id="samples-wrap-report" style="display:none;padding:8px 12px 4px;">
+              <div class="samples-lbl" style="font-size:10px;color:var(--g400);margin-bottom:6px;">サンプルで試す</div>
+              <div class="sample-grid">
+                <div class="sample-btn" onclick="selectSampleReport('regular')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><rect x="6" y="3" width="20" height="26" rx="2"/><path d="M10 10h12M10 15h12M10 20h8"/><path d="M6 8h3M6 16h3M6 24h3" stroke-width="1.2"/></svg></div><div class="sample-btn-lbl">定期巡回報告書</div></div>
+                <div class="sample-btn" onclick="selectSampleReport('large')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><rect x="4" y="10" width="24" height="18" rx="1"/><path d="M4 16h24"/><path d="M11 10V7a5 5 0 0110 0v3"/><path d="M10 20h4M18 20h4M10 24h4M18 24h4"/></svg></div><div class="sample-btn-lbl">大規模修繕前調査</div></div>
+                <div class="sample-btn" onclick="selectSampleReport('emergency')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><path d="M16 4l12 22H4L16 4z"/><path d="M16 13v6"/><circle cx="16" cy="23" r="1" fill="#64748B"/></svg></div><div class="sample-btn-lbl">緊急対応報告書</div></div>
+              </div>
+            </div>
+            <!-- サンプル（見積書） -->
+            <div id="samples-wrap-estimate" style="display:none;padding:8px 12px 4px;">
+              <div class="samples-lbl" style="font-size:10px;color:var(--g400);margin-bottom:6px;">サンプルで試す</div>
+              <div class="sample-grid">
+                <div class="sample-btn" onclick="selectSampleEstimate('highwall')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><rect x="6" y="3" width="20" height="26" rx="2"/><path d="M10 10h12M10 15h12M10 20h8"/><path d="M20 22l3-3-3-3" stroke="#94A3B8"/></svg></div><div class="sample-btn-lbl">外壁塗装（高め）</div></div>
+                <div class="sample-btn" onclick="selectSampleEstimate('fairplumbing')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><rect x="6" y="3" width="20" height="26" rx="2"/><path d="M10 10h12M10 15h12M10 20h8"/><path d="M19 20l2 2 4-4" stroke="#64748B" stroke-width="1.6"/></svg></div><div class="sample-btn-lbl">給排水（適正）</div></div>
+                <div class="sample-btn" onclick="selectSampleEstimate('fairroof')"><div class="sample-btn-ico"><svg viewBox="0 0 32 32" fill="none" stroke="#64748B" stroke-width="1.8" width="28" height="28"><rect x="6" y="3" width="20" height="26" rx="2"/><path d="M10 10h12M10 15h12M10 20h8"/><path d="M19 20l2 2 4-4" stroke="#64748B" stroke-width="1.6"/></svg></div><div class="sample-btn-lbl">屋上防水（適正）</div></div>
+              </div>
+            </div>
+
+            <!-- ドロップゾーン -->
+            <div class="dz-wrap" id="dz-wrap-main">
+              <div class="dz" id="dz-main" ondragover="dg(event)" ondragleave="udg()" ondrop="dp(event)">
+                <input type="file" id="f-main" accept="image/*,.pdf" onchange="sl(this)">
+                <span class="dz-ico" id="dz-ico">📷</span>
+                <div class="dz-main" id="dz-main-txt">写真を撮る・選ぶ</div>
+                <div class="dz-sub" id="dz-sub-txt">損傷箇所をパシャっと撮るだけ</div>
+              </div>
+              <div class="pv" id="pv-main">
+                <img class="pv-img" id="pvimg-main" style="display:none">
+                <div class="pv-file" id="pvf-main" style="display:none">
+                  <span style="font-size:22px">📄</span>
+                  <div><div class="pv-fn" id="pvn-main"></div><div class="pv-fs" id="pvs-main"></div></div>
+                </div>
+                <button class="pv-clr" onclick="clr()">✕</button>
+              </div>
+            </div>
+
+            <!-- 補足入力 -->
+            <div class="sup-area" id="sup-area-main">
+              <button class="sup-tog" id="sup-tog-btn" onclick="toggleSup()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                補足を追加（任意）
+              </button>
+              <div class="sup-in" id="sup-in">
+                <textarea id="note-main" placeholder="例：外壁南側のひび割れ。築18年。"></textarea>
+              </div>
+            </div>
+
+            <!-- 実行ボタン -->
+            <div class="run-wrap" id="run-wrap-main">
+              <button class="btn-ai" id="btn-main" onclick="runAI()">
+                <span id="btn-main-txt">AIで修繕費用を診断する</span>
+              </button>
+            </div>
+
+            <!-- ローディング -->
+            <div class="ld" id="ld-main">
+              <div class="spin"></div>
+              <div class="ld-msg" id="ld-msg">解析中...</div>
+            </div>
+
+            <!-- 結果エリア -->
+            <div class="rc" id="rc-main">
+
+              <!-- 写真結果 -->
+              <div id="res-photo" style="display:none;">
+                <div class="res-cost">
+                  <div class="res-cost-lbl">概算修繕費用</div>
+                  <div class="res-cost-num" id="cost-num">—</div>
+                  <div class="res-cost-range" id="cost-range"></div>
+                  <div class="res-cost-pri" id="cost-pri"></div>
+                </div>
+                <button class="det-tog" id="det-tog-p" onclick="tdp('p')"><svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>詳細・工法を見る</button>
+                <div class="det-body" id="det-body-p"><div class="det-txt" id="det-txt-p"></div></div>
+                <div class="abar">
+                  <button class="btn-cosoji-red" id="cosoji-btn-photo" onclick="submitCosoji('photo')">COSOJIに無料見積を依頼する →</button>
+                  <div id="cosoji-trust-photo" style="text-align:center;font-size:11px;color:var(--g400);margin-top:6px;">無料・1営業日以内に担当者がご連絡します</div>
+                  <div class="mi-complete" id="cosoji-complete-photo" style="display:none;"><div style="text-align:center;padding:4px 0;">
+                    <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px;">✅ 依頼しました</div>
+                    <div style="font-size:12px;color:var(--g500);margin-bottom:10px;">1営業日以内に担当者からご連絡します</div>
+                    <button onclick="swt('cases')" style="padding:7px 20px;border-radius:100px;border:1.5px solid var(--blue);background:var(--w);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">案件管理で確認する</button>
+                  </div></div>
+                  <div style="background:var(--g50);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--g500);line-height:1.7;">
+                    <strong style="color:var(--g700);">他の機能も使えます：</strong>「業者を探す」タブから現場写真を送ると対応業者を直接紹介できます。見積書をお持ちの場合は「見積書を査定・変換」タブで相場との比較もできます。
+                  </div>
+                  <div style="text-align:center;font-size:11px;color:var(--g400);">上司・オーナーに結果を共有する</div>
+                  <div class="share-row">
+                    <button class="btn-share btn-line" onclick="shareResult('line')">LINEで共有</button>
+                    <button class="btn-share" onclick="shareResult('mail')">メールで共有</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 報告書結果 -->
+              <div id="res-report" style="display:none;">
+                <div class="res-report">
+                  <div class="rpt-kpi">
+                    <div class="rpt-k urg">
+                      <div class="rpt-k-lbl">🔴 緊急対応</div>
+                      <div class="rpt-k-val" id="rpt-urg">—</div>
+                      <div class="rpt-k-sub">件</div>
+                    </div>
+                    <div class="rpt-k">
+                      <div class="rpt-k-lbl">⚠️ 不具合合計</div>
+                      <div class="rpt-k-val" id="rpt-total">—</div>
+                      <div class="rpt-k-sub">件</div>
+                    </div>
+                  </div>
+                  <div class="rpt-cost-bar">
+                    <div class="rpt-cost-lbl">修繕費用の概算</div>
+                    <div class="rpt-cost-val" id="rpt-cost">—</div>
+                  </div>
+                  <div class="issue-list" id="rpt-issues"></div>
+                </div>
+                <button class="det-tog" id="det-tog-r" onclick="tdp('r')"><svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>オーナーへの報告ポイントを見る</button>
+                <div class="det-body" id="det-body-r"><div class="det-txt" id="det-txt-r"></div></div>
+                <div class="abar">
+                  <button class="btn-cosoji-red" id="cosoji-btn-report" onclick="submitCosoji('report')">COSOJIに無料見積を依頼する →</button>
+                  <div id="cosoji-trust-report" style="text-align:center;font-size:11px;color:var(--g400);margin-top:6px;">無料・1営業日以内に担当者がご連絡します</div>
+                  <div class="mi-complete" id="cosoji-complete-report" style="display:none;"><div style="text-align:center;padding:4px 0;">
+                    <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px;">✅ 依頼しました</div>
+                    <div style="font-size:12px;color:var(--g500);margin-bottom:10px;">1営業日以内に担当者からご連絡します</div>
+                    <button onclick="swt('cases')" style="padding:7px 20px;border-radius:100px;border:1.5px solid var(--blue);background:var(--w);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">案件管理で確認する</button>
+                  </div></div>
+                  <div style="background:var(--g50);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--g500);line-height:1.7;">
+                    <strong style="color:var(--g700);">他の機能も使えます：</strong>業者の見積書をお持ちの場合は「見積書を査定・変換」タブで相場との比較ができます。「業者を探す」タブからは対応業者を直接探すこともできます。
+                  </div>
+                  <div class="share-row">
+                    <button class="btn-share btn-line" onclick="shareResult('line')">LINEで共有</button>
+                    <button class="btn-share" onclick="shareResult('mail')">メールで共有</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 見積書結果 -->
+              <div id="res-estimate" style="display:none;">
+                <div class="res-score">
+                  <div id="est-verdict-bar" style="display:none;padding:10px 14px;border-radius:var(--rs);margin-bottom:10px;text-align:center;font-size:13px;font-weight:700;"></div>
+                  <div class="res-compare">
+                    <div class="rc-card"><div class="rc-lbl">この見積書</div><div class="rc-val" id="est-price">—</div></div>
+                    <div class="rc-card"><div class="rc-lbl">相場目安</div><div class="rc-val" id="est-market">—</div></div>
+                  </div>
+                </div>
+                <button class="det-tog" id="det-tog-e" onclick="tdp('e')"><svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>詳細・交渉ポイントを見る</button>
+                <div class="det-body" id="det-body-e"><div class="det-txt" id="det-txt-e"></div></div>
+                <div class="abar">
+                  <button class="btn-cosoji-red" id="cosoji-btn-est" style="display:none;" onclick="submitCosoji('est')">COSOJIに無料見積を依頼する →</button>
+                  <div id="cosoji-trust-est" style="text-align:center;font-size:11px;color:var(--g400);margin-top:6px;">無料・1営業日以内に担当者がご連絡します</div>
+                  <div class="mi-complete" id="cosoji-complete-est" style="display:none;"><div style="text-align:center;padding:4px 0;">
+                    <div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:4px;">✅ 依頼しました</div>
+                    <div style="font-size:12px;color:var(--g500);margin-bottom:10px;">1営業日以内に担当者からご連絡します</div>
+                    <button onclick="swt('cases')" style="padding:7px 20px;border-radius:100px;border:1.5px solid var(--blue);background:var(--w);color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">案件管理で確認する</button>
+                  </div></div>
+                  <button class="btn-ai" id="convert-btn" style="display:none;margin-top:0;" onclick="showConvert()">自社用見積書に変換する</button>
+                  <div style="background:var(--g50);border-radius:var(--rs);padding:10px 12px;font-size:11px;color:var(--g500);line-height:1.7;">
+                    <strong style="color:var(--g700);">他の機能も使えます：</strong>「業者を探す」タブから別の業者を探すか、「自社用に変換」で見積書をそのまま自社フォーマットに変換できます。
+                  </div>
+                  <div class="share-row">
+                    <button class="btn-share btn-line" onclick="shareResult('line')">LINEで共有</button>
+                    <button class="btn-share" onclick="shareResult('mail')">メールで共有</button>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /rc-main -->
+
+            <!-- 見積変換パネル -->
+            <div class="conv-panel" id="conv-panel" style="display:none;">
+              <div class="conv-inner">
+                <div class="conv-header">自社用見積書に変換</div>
+                <div class="conv-row"><div class="conv-lbl">原価合計</div><div class="conv-val" id="conv-base">—</div></div>
+                <button class="btn-inv" style="color:var(--g400);border-color:var(--g200);margin:8px 0;" onclick="showToast('明細編集機能は現在開発中です。正式版でご利用いただけます。');">明細を編集する（準備中）</button>
+                <div class="conv-rate-row">
+                  <div class="conv-rate-lbl">粗利率</div>
+                  <input class="conv-rate-input" type="number" id="profit-rate" value="20" min="0" max="99" oninput="calcConv()">
+                  <div style="font-size:14px;font-weight:700;color:var(--g800);">%</div>
+                  <div style="font-size:10px;color:var(--g400);margin-left:4px;">原価80：売価100</div>
+                </div>
+                <div class="conv-row" style="margin:4px 0 10px;">
+                  <div class="conv-lbl" style="color:var(--g500);">粗利額</div>
+                  <div class="conv-val" id="conv-profit" style="color:var(--g600);">—</div>
+                </div>
+                <div class="conv-total">
+                  <div class="conv-total-lbl">自社見積合計（税込）</div>
+                  <div class="conv-total-val" id="conv-total">—</div>
+                </div>
+                <div class="conv-btns">
+                  <button class="btn-pdf" onclick="guardDownload()">PDF / Excel 出力・保存</button>
+                  <button class="btn-inv" onclick="addCase({verdict:'変換済み',price_raw:lastEstimateBase,price:'¥'+fmtAmt(lastEstimateBase),detail:'見積書変換済み'});showToast('✅ 案件管理に保存しました。案件管理タブから請求書を発行できます。');">案件として保存する</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /upload-area -->
+        </div><!-- /assist-fv -->
+        <div class="disc">AIの回答には誤りが含まれる場合があります。内容は必ずご確認ください。</div>
+      </div>
+
+      <!-- ── 案件管理 ── -->
+      <div id="sub-cases" style="display:none;">
+        <!-- ヘッダー -->
+        <div style="background:var(--w);border-bottom:1px solid var(--g200);padding:14px 20px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:var(--g800);">案件ダッシュボード</div>
+              <div style="font-size:11px;color:var(--g400);margin-top:1px;">2024年11月 · 担当：田中 洸輝</div>
+            </div>
+            <button onclick="goPage('assist')" style="background:var(--blue);color:#fff;border:none;border-radius:var(--rs);padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">＋ 新規診断</button>
+            <button onclick="openManualCase()" style="background:var(--w);color:var(--g600);border:1.5px solid var(--g200);border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">＋ 手動追加</button>
+          </div>
+          <!-- パイプラインタブ -->
+          <div style="display:flex;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:1px;border-bottom:1px solid var(--g200);" id="pipe-tabs">
+            <div class="ptab active" onclick="filterPipe('all')" data-s="all">すべて <span class="ptab-cnt" id="ptc-all">8</span></div>
+            <div class="ptab" onclick="filterPipe('mitsumori')" data-s="mitsumori">見積依頼 <span class="ptab-cnt" id="ptc-mitsumori">2</span></div>
+            <div class="ptab" onclick="filterPipe('mitsumori_done')" data-s="mitsumori_done">見積完了 <span class="ptab-cnt" id="ptc-mitsumori_done">2</span></div>
+            <div class="ptab" onclick="filterPipe('hacchu')" data-s="hacchu">発注完了 <span class="ptab-cnt" id="ptc-hacchu">1</span></div>
+            <div class="ptab" onclick="filterPipe('kooji')" data-s="kooji">施工完了 <span class="ptab-cnt" id="ptc-kooji">1</span></div>
+            <div class="ptab" onclick="filterPipe('seikyuu')" data-s="seikyuu">請求書済 <span class="ptab-cnt" id="ptc-seikyuu">1</span></div>
+            <div class="ptab" onclick="filterPipe('nyukin')" data-s="nyukin">入金完了 <span class="ptab-cnt" id="ptc-nyukin">1</span></div>
+            <div class="ptab" onclick="filterPipe('shissho')" data-s="shissho">失注 <span class="ptab-cnt" id="ptc-shissho">0</span></div>
+          </div>
+        </div>
+
+        <div style="padding:14px 16px 110px;">
+          <!-- ソフトゲート -->
+          <div id="soft-gate" style="display:none;">
+            <div style="background:var(--bl);border-radius:var(--rs);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+              <div style="font-size:28px;flex-shrink:0;">🔓</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:2px;">無料登録で案件を保存・管理できます</div>
+                <div style="font-size:11px;color:var(--bm);">進捗管理・PDF/Excel出力・請求書発行が使えます</div>
+              </div>
+              <button onclick="closeGate();showPage('register');" style="background:var(--blue);color:#fff;border:none;border-radius:var(--rs);padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;flex-shrink:0;">無料登録 →</button>
+            </div>
+          </div>
+
+          <!-- KPI 4つ -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+            <div class="kpi-card" id="kpi-stagnant-card">
+              <div class="kpi-lbl"><span class="kpi-dot" style="background:var(--amber);"></span>要対応</div>
+              <div class="kpi-num" id="kpi-stagnant" style="color:var(--amber);">3件</div>
+              <div class="kpi-sub">7日以上動きがない案件</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-lbl"><span class="kpi-dot" style="background:var(--blue);"></span>受注見込み</div>
+              <div class="kpi-num" id="kpi-potential" style="color:var(--blue);">¥162万</div>
+              <div class="kpi-sub">見積完了・未発注</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-lbl"><span class="kpi-dot" style="background:var(--green);"></span>確定売上</div>
+              <div class="kpi-num" id="kpi-confirmed" style="color:var(--green);">¥147万</div>
+              <div class="kpi-sub">発注完了・施工中</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-lbl"><span class="kpi-dot" style="background:var(--g400);"></span>今月入金</div>
+              <div class="kpi-num" id="kpi-nyukin" style="color:var(--g800);">¥82万</div>
+              <div class="kpi-sub">入金確認済み</div>
+            </div>
+          </div>
+
+          <!-- 停滞アラート -->
+          <div id="stagnant-alert" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:var(--rs);padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:16px;">⚠️</span>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:700;color:var(--amber);" id="stagnant-alert-txt">3件の案件が7日以上停滞しています</div>
+              <div style="font-size:11px;color:var(--g600);margin-top:1px;">発注の意思確認が必要な案件があります</div>
+            </div>
+            <button onclick="filterPipe('mitsumori_done')" style="background:var(--amber);color:#fff;border:none;border-radius:var(--rs);padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;">停滞案件を見る</button>
+          </div>
+
+          <!-- 案件リスト -->
+          <div style="font-size:12px;font-weight:700;color:var(--g600);margin-bottom:8px;">
+            <span id="cases-list-lbl">すべての案件</span> <span style="font-weight:400;color:var(--g400);" id="cases-list-cnt">8件</span>
+          </div>
+          <div id="cases-list-main"></div>
+          <div class="disc">AIの回答には誤りが含まれる場合があります。内容は必ずご確認ください。</div>
+        </div>
+      </div>
+
+
+      <!-- ── 設定 ── -->
+      <div id="sub-settings" style="display:none;">
+        <div class="cfg-wrap">
+          <div class="cfg-profile">
+            <div class="ava ava-lg" style="margin:0 auto 10px;">田</div>
+            <div class="cfg-pname">田中 洸輝</div>
+            <div class="cfg-pemail">tanaka@cosoji-kanri.co.jp</div>
+            <div class="cfg-plan-row">
+              <span class="cfg-plan">フリープラン（週10回）</span>
+              <span style="font-size:12px;color:var(--blue);cursor:pointer;" onclick="showUpgradeModal()">Proプランを見る ›</span>
+            </div>
+          </div>
+          <!-- ① 自社情報（共通・帳票の土台） -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">自社情報</div>
+            <div style="font-size:10px;color:var(--g400);margin:-4px 0 8px;line-height:1.5;">見積書・請求書・帳票すべてに反映されます</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="cfgEdit('会社名・住所')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="3" y="7" width="14" height="11" rx="1"/><path d="M7 7V5a3 3 0 016 0v2"/><path d="M8 12h4M8 15h2"/></svg>
+                  <span class="cfg-lbl">会社名・住所</span>
+                </div>
+                <span class="cfg-val">コソジ不動産管理</span><span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('担当者名')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+                  <span class="cfg-lbl">担当者名</span>
+                </div>
+                <span class="cfg-val">田中 洸輝</span><span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('会社ロゴ・印鑑')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="3" y="5" width="14" height="10" rx="1"/><path d="M3 8h14"/><circle cx="7" cy="12" r="1.5"/></svg>
+                  <span class="cfg-lbl">会社ロゴ・印鑑</span>
+                </div>
+                <span class="cfg-val cfg-val--muted">未設定</span><span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('電話番号')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><path d="M6 2h3l1.5 4-2 1.5a10 10 0 004 4L14 10l4 1.5V15a2 2 0 01-2 2C7.2 17 3 12.8 3 8a2 2 0 012-2h1z"/></svg>
+                  <span class="cfg-lbl">電話番号</span>
+                </div>
+                <span class="cfg-val">06-XXXX-XXXX</span><span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ② AI診断 -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">AI診断</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="cfgEdit('デフォルトエリア')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><circle cx="10" cy="8" r="3"/><path d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z"/></svg>
+                  <div>
+                    <div class="cfg-lbl">デフォルトエリア</div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:1px;">修繕費計算・業者検索の基準エリア</div>
+                  </div>
+                </div>
+                <span class="cfg-val">大阪市北区</span><span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ 見積書変換 -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">見積書変換</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="cfgEdit('デフォルト利益率')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M8 8h3a1.5 1.5 0 010 3H8v1h4"/></svg>
+                  <div>
+                    <div class="cfg-lbl">デフォルト利益率</div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:1px;">自社用変換時に上乗せされる利益率</div>
+                  </div>
+                </div>
+                <span class="cfg-val">20%</span><span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('振込先口座')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="2" y="5" width="16" height="12" rx="1"/><path d="M2 9h16"/><path d="M6 13h2M10 13h4"/></svg>
+                  <div>
+                    <div class="cfg-lbl">振込先口座</div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:1px;">請求書・見積書に印字されます</div>
+                  </div>
+                </div>
+                <span class="cfg-val cfg-val--muted">未設定</span><span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ④ 案件管理 -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">案件管理</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="cfgToggle(this)">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><path d="M10 2a6 6 0 016 6c0 3.5-2 6-6 8-4-2-6-4.5-6-8a6 6 0 016-6z"/><circle cx="10" cy="8" r="1.5" fill="#64748B"/></svg>
+                  <div>
+                    <div class="cfg-lbl">案件通知</div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:1px;">停滞中・要対応の案件をお知らせ</div>
+                  </div>
+                </div>
+                <div class="cfg-tgl on"><div class="cfg-tgl-k"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑤ アカウント -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">アカウント</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="cfgEdit('メールアドレス変更')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="2" y="5" width="16" height="12" rx="1.5"/><path d="M2 7l8 5 8-5"/></svg>
+                  <span class="cfg-lbl">メールアドレス</span>
+                </div>
+                <span class="cfg-val">tanaka@...</span><span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('パスワード変更')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="5" y="9" width="10" height="8" rx="1"/><path d="M7 9V7a3 3 0 016 0v2"/><circle cx="10" cy="13" r="1" fill="#64748B"/></svg>
+                  <span class="cfg-lbl">パスワード変更</span>
+                </div>
+                <span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑥ COSOJIシリーズ -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">COSOJIシリーズ</div>
+            <div class="cosoji-services">
+              <a href="https://cosoji.jp" target="_blank" style="text-decoration:none;"><div class="cs-svc"><div class="cs-svc-ico">🚨</div><div class="cs-svc-name">COSOJI レスキュー</div><div class="cs-svc-sub">共用部の緊急対応</div></div></a>
+              <a href="https://cosoji.jp" target="_blank" style="text-decoration:none;"><div class="cs-svc"><div class="cs-svc-ico">🔧</div><div class="cs-svc-name">COSOJI BM</div><div class="cs-svc-sub">施設メンテナンス管理</div></div></a>
+              <a href="https://cosoji.jp" target="_blank" style="text-decoration:none;"><div class="cs-svc"><div class="cs-svc-ico">🏢</div><div class="cs-svc-name">COSOJI Hub</div><div class="cs-svc-sub">業務支援ツール</div></div></a>
+              <a href="https://cosoji.jp" target="_blank" style="text-decoration:none;"><div class="cs-svc"><div class="cs-svc-ico">👥</div><div class="cs-svc-name">COSOJI HR</div><div class="cs-svc-sub">採用・育成支援</div></div></a>
+            </div>
+          </div>
+
+          <!-- ⑦ サポート -->
+          <div class="cfg-grp">
+            <div class="cfg-glbl">サポート</div>
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="window.open('https://cosoji.jp','_blank')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><path d="M10 14v-1"/><path d="M10 7a2 2 0 012 2c0 1-1 1.5-2 2"/></svg>
+                  <span class="cfg-lbl">よくある質問</span>
+                </div>
+                <span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="window.open('https://cosoji.jp','_blank')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><path d="M3 5h14a1 1 0 011 1v8a1 1 0 01-1 1H6l-4 3V6a1 1 0 011-1z"/></svg>
+                  <span class="cfg-lbl">お問い合わせ</span>
+                </div>
+                <span class="cfg-arr">›</span>
+              </div>
+              <div class="cfg-row" onclick="window.open('https://cosoji.jp','_blank')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="1.5"><rect x="4" y="2" width="12" height="16" rx="1.5"/><path d="M7 7h6M7 11h4"/></svg>
+                  <div>
+                    <div class="cfg-lbl">利用規約・プライバシー</div>
+                    <div style="font-size:10px;color:var(--g400);margin-top:1px;">入力内容はAI学習に使用されません（Anthropic社ポリシー準拠）</div>
+                  </div>
+                </div>
+                <span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑧ アカウント操作（破壊的操作） -->
+          <div class="cfg-grp">
+            <div class="cfg-list">
+              <div class="cfg-row" onclick="doLogout()">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="var(--red)" stroke-width="1.5"><path d="M13 15l4-5-4-5"/><path d="M17 10H8"/><path d="M8 3H4a1 1 0 00-1 1v12a1 1 0 001 1h4"/></svg>
+                  <span class="cfg-lbl" style="color:var(--red)">ログアウト</span>
+                </div>
+              </div>
+              <div class="cfg-row" onclick="cfgEdit('アカウント削除')">
+                <div class="cfg-rl">
+                  <svg class="cfg-svg" viewBox="0 0 20 20" fill="none" stroke="#CBD5E1" stroke-width="1.5"><path d="M6 4h8M5 4l1 13h8l1-13"/><path d="M8 8v6M12 8v6"/></svg>
+                  <span class="cfg-lbl" style="color:var(--g400)">アカウントを削除する</span>
+                </div>
+                <span class="cfg-arr">›</span>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--g400);">みんなのAI修繕 v1.0.0 by COSOJI</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ボトムナビ -->
+  <div class="mobile-nav">
+    <button class="bni on" id="bn-a" onclick="goPage('assist');if(currentTab==='vendor')swt('photo');">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/></svg>
+      AI診断
+    </button>
+    <button class="bni" id="bn-v" onclick="goPage('assist');setTimeout(()=>swt('vendor'),80);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      業者を探す
+    </button>
+    <button class="bni" id="bn-m" onclick="guardLogin('cases')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      案件管理
+      <span class="nbadge" id="sb-badge-bn"></span>
+    </button>
+    <button class="bni" id="bn-s" onclick="goPage('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      設定
+    </button>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- 案件詳細モーダル -->
+<div class="modal-bg" id="case-detail-modal">
+  <div class="case-sheet">
+    <div class="cs-handle"></div>
+    <div class="cs-header">
+      <div class="cs-title" id="cd-title">案件詳細</div>
+      <button class="cs-close" onclick="closeModal('case-detail-modal')">✕</button>
+    </div>
+    <div class="cs-meta" id="cd-meta"></div>
+    <!-- ステータス変更 -->
+    <div class="cs-status-section">
+      <div style="font-size:10px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">ステータスを変更</div>
+      <div class="cs-stage-flow" id="cd-stage-flow"></div>
+    </div>
+    <div class="cs-stats">
+      <div class="cs-stat"><div class="cs-stat-lbl">概算金額</div><div class="cs-stat-val" id="cd-amount">—</div></div>
+      <div class="cs-stat"><div class="cs-stat-lbl">経過日数</div><div class="cs-stat-val" id="cd-days">—</div></div>
+    </div>
+    <div class="cs-detail-title">詳細メモ</div>
+    <div class="cs-detail-text" id="cd-detail">—</div>
+    <div id="cd-inv-wrap" style="display:none;margin-top:12px;">
+      <button onclick="openInvFromCase()" style="width:100%;padding:12px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">請求書を発行する</button>
+    </div>
+
+  </div>
+</div>
+<div class="modal-bg" id="vendor-modal">
+  <div class="modal-card" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-head"><div class="modal-title" id="vm-title">🏢 対応できる業者</div><button class="modal-close" onclick="closeModal('vendor-modal')">✕</button></div>
+    <div id="vm-list"></div>
+    <div class="disc">業者情報はAIが生成したダミーデータです</div>
+  </div>
+</div>
+
+<!-- 請求書モーダル -->
+<div class="modal-bg" id="inv-modal">
+  <div class="modal-card" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-head"><div class="modal-title">請求書を発行する</div><button class="modal-close" onclick="closeModal('inv-modal')">✕</button></div>
+    <div class="inv-preview">
+      <div class="inv-row"><div class="inv-lbl">案件名</div><div class="inv-val" id="inv-name">—</div></div>
+      <div class="inv-row"><div class="inv-lbl">請求先</div><div class="inv-val">田中 オーナー様</div></div>
+      <div class="inv-row"><div class="inv-lbl">工事完了日</div><div class="inv-val">2024/11/30</div></div>
+      <div class="inv-row"><div class="inv-lbl">支払期限</div><div class="inv-val">2024/12/31</div></div>
+    </div>
+    <div class="inv-total"><div class="inv-total-lbl">請求金額（税込）</div><div class="inv-total-val" id="inv-amount">—</div></div>
+    <button onclick="guardDownload()" style="width:100%;padding:14px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,var(--bd),var(--bm));color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px;">請求書を発行・送付する</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="guardDownload()" style="padding:11px;border-radius:var(--rs);border:1.5px solid var(--g200);background:var(--w);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">PDF / Excelで保存</button>
+      <button onclick="alert('デモ版：LINEで送付します')" style="padding:11px;border-radius:var(--rs);border:1.5px solid var(--g400);background:var(--w);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:var(--g400);">LINEで送付</button>
+    </div>
+  </div>
+</div>
+
+<!-- 手動案件追加モーダル -->
+<div class="modal-bg" id="manual-case-modal">
+  <div class="modal-card">
+    <div class="modal-head"><div class="modal-title">＋ 案件を手動追加</div><button class="modal-close" onclick="closeModal('manual-case-modal')">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input type="text" id="mc-name" style="width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:11px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;" placeholder="案件名（例：グリーンハイツ301 外壁塗装）*">
+      <input type="text" id="mc-area" style="width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:11px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;" placeholder="エリア（例：大阪市北区）">
+      <input type="number" id="mc-amount" style="width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:11px 12px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;" placeholder="概算金額（円）">
+      <textarea id="mc-detail" style="width:100%;border:1.5px solid var(--g200);border-radius:var(--rs);padding:11px 12px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--g800);outline:none;resize:none;min-height:72px;" placeholder="メモ・詳細（任意）"></textarea>
+    </div>
+    <button onclick="submitManualCase()" style="width:100%;padding:13px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:14px;">追加する</button>
+  </div>
+</div>
+
+<!-- アップグレードモーダル -->
+<div class="modal-bg" id="upgrade-modal">
+  <div class="modal-card" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-head"><div class="modal-title">プランを選ぶ</div><button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button></div>
+
+    <!-- 無料プラン -->
+    <div style="border:1.5px solid var(--g200);border-radius:var(--rs);padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:14px;font-weight:700;color:var(--g800);">無料プラン</div>
+        <div style="font-size:12px;font-weight:700;background:var(--g100);color:var(--g500);padding:3px 10px;border-radius:100px;">現在のプラン</div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--g800);margin-bottom:4px;">¥0</div>
+      <div style="font-size:12px;color:var(--g500);line-height:1.7;">AI診断を週10回まで利用できます。<br>写真診断・報告書診断・見積書査定・業者検索・案件管理（10件まで）が使えます。</div>
+    </div>
+
+    <!-- 有料プラン -->
+    <div style="border:2px solid var(--blue);border-radius:var(--rs);padding:14px;margin-bottom:10px;background:var(--bl);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:14px;font-weight:700;color:var(--blue);">Proプラン</div>
+        <div style="font-size:11px;font-weight:700;background:var(--blue);color:#fff;padding:3px 10px;border-radius:100px;">おすすめ</div>
+      </div>
+      <div style="font-size:20px;font-weight:700;color:var(--blue);margin-bottom:4px;">¥9,800<span style="font-size:12px;font-weight:400;color:var(--bm);"> / 月 / ユーザー</span></div>
+      <div style="font-size:12px;color:var(--bm);line-height:1.7;">無料プランのすべての機能に加え、<strong>AI診断が無制限</strong>で使えます。案件の保存件数も無制限です。</div>
+      <button onclick="showToast('担当者よりご連絡します');closeModal('upgrade-modal');" style="width:100%;padding:11px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:12px;">Proプランに申し込む →</button>
+    </div>
+
+    <!-- カスタマイズプラン -->
+    <div style="border:1.5px solid var(--blue);border-radius:var(--rs);overflow:hidden;margin-bottom:16px;">
+      <!-- ヘッダー -->
+      <div style="background:linear-gradient(135deg,#1E3A8A,#1d4ed8);padding:14px 16px;">
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;">個社カスタマイズ</div>
+        <div style="font-size:11px;color:#BFDBFE;">御社専用のシステムを一緒に作ります</div>
+      </div>
+      <!-- 機能リスト -->
+      <div style="background:#F8FAFC;padding:12px 14px;">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+
+          <div style="background:#fff;border-radius:var(--rs);padding:11px 12px;border:1px solid var(--g200);display:flex;gap:10px;align-items:flex-start;">
+            <div style="font-size:20px;flex-shrink:0;">📄</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">自社フォーマット帳票</div>
+              <div style="font-size:11px;color:var(--g600);line-height:1.5;">御社の見積書・請求書・完了報告書テンプレートをそのままAIが自動生成</div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:var(--rs);padding:11px 12px;border:1px solid var(--g200);display:flex;gap:10px;align-items:flex-start;">
+            <div style="font-size:20px;flex-shrink:0;">🔗</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">既存システム・ツール連携</div>
+              <div style="font-size:11px;color:var(--g600);line-height:1.5;">kintone・Salesforce・報連相・自社基幹システムとAPI連携。入力を二重にしない</div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:var(--rs);padding:11px 12px;border:1px solid var(--g200);display:flex;gap:10px;align-items:flex-start;">
+            <div style="font-size:20px;flex-shrink:0;">📋</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">既存報告書の自動読み込み</div>
+              <div style="font-size:11px;color:var(--g600);line-height:1.5;">これまでの定期報告書・巡回レポートを自動で取り込み、不具合・修繕履歴を蓄積</div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:var(--rs);padding:11px 12px;border:1px solid var(--g200);display:flex;gap:10px;align-items:flex-start;">
+            <div style="font-size:20px;flex-shrink:0;">🏢</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">自社取引業者・見積データの登録</div>
+              <div style="font-size:11px;color:var(--g600);line-height:1.5;">既存の取引業者情報・過去見積書を登録し、御社ならではの相場・見積精度を育てる</div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border-radius:var(--rs);padding:11px 12px;border:1px solid var(--g200);display:flex;gap:10px;align-items:flex-start;">
+            <div style="font-size:20px;flex-shrink:0;">📊</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">会計ソフト自動連携</div>
+              <div style="font-size:11px;color:var(--g600);line-height:1.5;">freee・マネーフォワード・弥生会計へ請求データを自動書き出し・仕訳</div>
+            </div>
+          </div>
+
+        </div>
+        <div style="font-size:11px;color:var(--g500);text-align:center;margin-bottom:10px;">料金は要件・規模によって異なります。まずは無料でご相談ください。</div>
+        <button onclick="showToast('担当者よりご連絡します');closeModal('upgrade-modal');" style="width:100%;padding:12px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">カスタマイズを相談する（無料）→</button>
+      </div>
+    </div>
+
+    <button onclick="closeModal('upgrade-modal')" style="width:100%;padding:10px;border-radius:var(--rs);border:none;background:none;color:var(--g400);font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">閉じる</button>
+  </div>
+</div>
+
+<!-- 登録促進モーダル -->
+<div class="modal-bg" id="reg-modal">
+  <div class="modal-card">
+    <div class="modal-head"><div class="modal-title" id="reg-title">登録が必要です</div><button class="modal-close" onclick="closeModal('reg-modal')">✕</button></div>
+    <div style="font-size:13px;color:var(--g500);line-height:1.65;margin-bottom:20px;" id="reg-sub">この機能を使うには登録（無料）が必要です。</div>
+    <button onclick="closeModal('reg-modal');showPage('register');" style="width:100%;padding:13px;border-radius:var(--rs);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px;">無料で登録する</button>
+    <button onclick="closeModal('reg-modal')" style="width:100%;padding:10px;border-radius:var(--rs);border:none;background:none;color:var(--g400);font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">あとで</button>
+  </div>
+</div>
+
+<!-- カスタマイズモーダル -->
+<div id="customize-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
+  <div style="background:var(--w);border-radius:var(--r);padding:24px 20px;width:90%;max-width:440px;margin:auto;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700;color:var(--g800);">個社カスタマイズ</div>
+      <button onclick="document.getElementById('customize-modal').style.display='none'" style="background:none;border:none;font-size:20px;color:var(--g400);cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--g500);margin-bottom:16px;line-height:1.6;">御社の業務フロー・システムに合わせて個別に開発・カスタマイズします。</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="border:1px solid var(--g200);border-radius:var(--rs);padding:12px;display:flex;gap:10px;"><div style="font-size:20px;">🔗</div><div><div style="font-size:12px;font-weight:700;color:var(--g700);margin-bottom:2px;">既存システム連携</div><div style="font-size:11px;color:var(--g500);line-height:1.5;">kintone・Salesforce・自社基幹システムとAPI連携。</div></div></div>
+      <div style="border:1px solid var(--g200);border-radius:var(--rs);padding:12px;display:flex;gap:10px;"><div style="font-size:20px;">📄</div><div><div style="font-size:12px;font-weight:700;color:var(--g700);margin-bottom:2px;">自社フォーマット帳票</div><div style="font-size:11px;color:var(--g500);line-height:1.5;">見積書・完了報告書を御社テンプレートで自動生成。</div></div></div>
+      <div style="border:1px solid var(--g200);border-radius:var(--rs);padding:12px;display:flex;gap:10px;"><div style="font-size:20px;">📊</div><div><div style="font-size:12px;font-weight:700;color:var(--g700);margin-bottom:2px;">会計ソフト連携・自動仕訳</div><div style="font-size:11px;color:var(--g500);line-height:1.5;">freee・マネーフォワード・弥生会計へ自動連携。</div></div></div>
+    </div>
+    <button onclick="document.getElementById('customize-modal').style.display='none';showToast('担当者よりご連絡します')" style="width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--rs);padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px;">個社カスタマイズを相談する（無料）</button>
+    <div style="font-size:10px;color:var(--g400);text-align:center;">費用は要件・規模によって異なります。</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ═══════════════════════════════
+   定数・状態
+═══════════════════════════════ */
+const API_URL = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-4-20250514';
+let isLoggedIn = false;
+let usageCount = 0;
+const FREE_LIMIT = 10;
+const FREE_CASE_LIMIT = 10;
+let currentTab = 'photo';
+let currentFile = null;
+let lastEstimateBase = 3000000;
+const caseDB = [];
+let users = 1582, caseCnt = 8247, amtRaw = 240000000;
+
+/* サンプルプロンプト（APIキー不要のデモ用） */
+const samplePrompts = {
+  crack: 'RC造マンション外壁南面に幅0.5mm以上のひび割れ（クラック）が複数確認される。',
+  leak: '3階廊下天井に水染み跡あり。上階バルコニーからの漏水と思われる。',
+  waterproof: '築15年の屋上防水シートが劣化。部分的に浮きや破断が見られる。',
+  rust: '共用部鉄骨階段の手すりに赤サビが発生。塗膜の剥離あり。',
+  floor: '共用廊下の長尺シートに剥がれ・割れが発生。転倒リスクあり。'
+};
+
+/* タブごとの「できること」リスト */
+const canDoData = {
+  photo: [
+    { num: '①', title: '修繕費用を概算', sub: '損傷の種類・規模から概算費用を算出' },
+    { num: '②', title: '優先度を判定', sub: '緊急・早期・計画的に対応の3段階で判定' },
+    { num: '③', title: '対応業者を紹介', sub: '工事種別・エリアに合った業者を提案' }
+  ],
+  report: [
+    { num: '①', title: '不具合を一覧化', sub: '報告書から不具合箇所を自動抽出' },
+    { num: '②', title: '修繕費用を算出', sub: '緊急・早期・様子見ごとに費用を算出' },
+    { num: '③', title: 'オーナー報告を支援', sub: '報告ポイントをAIがまとめる' }
+  ],
+  estimate: [
+    { num: '①', title: '相場と比較・スコア判定', sub: '0〜100点のスコアで妥当性を判定' },
+    { num: '②', title: '自社用見積書に変換', sub: '利益率を設定してPDF/Excel出力' },
+    { num: '③', title: '案件として保存', sub: '変換後に案件管理へ保存・請求書発行' }
+  ],
+  vendor: []
+};
+
+/* タブごとのUI設定 */
+const tabUI = {
+  photo: {
+    ico: '📷', main: '写真を撮る・選ぶ', sub: '画像・PDF・Excel・Wordなど何でもOK',
+    accept: 'image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt', btn: 'AIで修繕費用を診断する', placeholder: '例：外壁南側のひび割れ。築18年。'
+  },
+  report: {
+    ico: '📋', main: '報告書を選ぶ・送る', sub: 'PDF・Excel・Word・写真など何でもOK',
+    accept: 'image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt', btn: '不具合を検知・修繕金額を算出する', placeholder: '例：築12年のRC造マンション。大規模修繕の前に確認したい。'
+  },
+  estimate: {
+    ico: '📄', main: '見積書を選ぶ・送る', sub: 'PDF・Excel・写真・手書きスキャンなど何でもOK',
+    accept: 'image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt', btn: '見積書を解析・査定する', placeholder: '例：木造2階建て 築15年 大阪市。相場を確認したい。'
+  },
+  vendor: { ico: '🏠', main: '現場写真・損傷箇所を送る', sub: '写真・PDF・報告書など何でもOK', accept: 'image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx,.txt', btn: '🏠 対応できる業者を探す', placeholder: '例：外壁のひび割れ補修。大阪市北区。' }
+};
+
+/* システムプロンプト */
+const SYS = {
+  photo: '不動産修繕の見積もり専門家として概算見積もりを提供します。JSONのみで返答：{"amount_main":"約○○万円","amount_range":"○○万円〜○○万円","priority":"緊急|早期対応推奨|計画的に対応","priority_level":"red|amber|green","work_type":"工事種別","detail":"修繕内容・工法・注意点（400字以内）","vendors":[{"name":"○○設備工業株式会社","area":"エリア","specialty":"得意工事","rating":"4.2","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"8000円/m2"},{"name":"△△工務店","area":"エリア","specialty":"得意工事","rating":"4.7","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"7500円/m2"},{"name":"□□リフォーム","area":"エリア","specialty":"得意工事","rating":"4.0","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"9000円/m2"}]}',
+  report: '不動産管理の建物診断専門家として不具合と修繕費用を抽出します。JSONのみで返答：{"total_issues":"合計件数（数字）","urgent_issues":"緊急件数（数字）","total_cost":"修繕費合計（例：約120〜180万円）","urgent":[{"name":"不具合名（15字以内）","location":"場所（10字以内）","cost":"概算"}],"early":[{"name":"不具合名（15字以内）","location":"場所（10字以内）","cost":"概算"}],"watch":[{"name":"不具合名（15字以内）","location":"場所（10字以内）","cost":"概算"}],"detail":"オーナー報告ポイント（400字以内）","vendors":[{"name":"○○設備工業株式会社","area":"エリア","specialty":"得意工事","rating":"4.2","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"8000円/m2"},{"name":"△△工務店","area":"エリア","specialty":"得意工事","rating":"4.7","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"7500円/m2"},{"name":"□□リフォーム","area":"エリア","specialty":"得意工事","rating":"4.0","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"9000円/m2"}]}',
+  estimate: '不動産修繕の見積書査定専門家として査定します。JSONのみで返答：{"score":"点数（0〜100）","verdict":"適正|やや高め|高すぎる|割安注意","verdict_level":"ok|warn|ng","price":"金額（例：98万円）","price_raw":3000000,"market":"相場目安（例：75〜95万円）","summary":"一言サマリー（25字以内）","detail":"査定詳細・交渉ポイント（400字以内）","vendors":[{"name":"○○設備工業株式会社","area":"エリア","specialty":"得意工事","rating":"4.2","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"8000円/m2"},{"name":"△△工務店","area":"エリア","specialty":"得意工事","rating":"4.7","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"7500円/m2"},{"name":"□□リフォーム","area":"エリア","specialty":"得意工事","rating":"4.0","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"9000円/m2"}]}'
+};
+
+const ldMsgs = {
+  photo: ['写真を解析中...', '修繕箇所を特定中...', '費用を算出中...'],
+  report: ['報告書を解析中...', '不具合箇所を抽出中...', '修繕金額を算出中...'],
+  estimate: ['見積書を読み込み中...', '相場データと照合中...', '査定結果を生成中...']
+};
+
+/* ═══════════════════════════════
+   初期化
+═══════════════════════════════ */
+function init() {
+  swt('photo');
+  updateUsageUI();
+}
+
+/* ═══════════════════════════════
+   認証
+═══════════════════════════════ */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('pg-' + name).classList.add('on');
+  window.scrollTo(0, 0);
+}
+function doLogin() {
+  isLoggedIn = true;
+  const bar = document.getElementById('save-hint-bar');
+  if (bar) bar.style.display = 'none';
+  updateUsageUI();
+  showPage('app');
+  goPage('assist');
+}
+function doLogout() { isLoggedIn = false; showPage('login'); }
+
+/* ═══════════════════════════════
+   ナビゲーション
+═══════════════════════════════ */
+function goPage(name) {
+  ['assist', 'cases', 'settings'].forEach(s => {
+    const el = document.getElementById('sub-' + s);
+    if (el) el.style.display = s === name ? 'block' : 'none';
+  });
+  // ボトムナビ active（vendorはassist扱い、swt()でbn-v制御）
+  ['a','v','m','s'].forEach(id => { const el = document.getElementById('bn-'+id); if(el) el.classList.remove('on'); });
+  if (name==='assist') { const el=document.getElementById('bn-a'); if(el) el.classList.add('on'); }
+  if (name==='cases')  { const el=document.getElementById('bn-m'); if(el) el.classList.add('on'); }
+  if (name==='settings'){ const el=document.getElementById('bn-s'); if(el) el.classList.add('on'); }
+  // サイドバー active
+  ['assist','vendor','cases'].forEach(s => { const el=document.getElementById('sni-'+s); if(el) el.classList.remove('on'); });
+  if (name==='assist') { const el=document.getElementById('sni-assist'); if(el) el.classList.add('on'); }
+  if (name==='cases')  { const el=document.getElementById('sni-cases');  if(el) el.classList.add('on'); }
+  const t = document.getElementById('pc-title');
+  if (t) t.textContent = {assist:'AI診断',cases:'案件管理',settings:'設定'}[name] || '';
+  if (name !== 'cases') closeGate();
+  if (name === 'cases') { calcKPI(); renderCasesList(); }
+  window.scrollTo(0, 0);
+}
+function guardLogin(dest) {
+  goPage(dest);
+  if (!isLoggedIn) { const sg=document.getElementById('soft-gate'); if(sg) sg.style.display='block'; }
+}
+function closeGate() { const sg=document.getElementById('soft-gate'); if(sg) sg.style.display='none'; }
+function closeModal(id) { const el=document.getElementById(id); if(el) el.classList.remove('on'); }
+function showUpgradeModal() { const el=document.getElementById('upgrade-modal'); if(el) el.classList.add('on'); }
+
+/* ═══════════════════════════════
+   使用回数UI
+═══════════════════════════════ */
+function updateUsageUI() {
+  const rem = FREE_LIMIT - usageCount;
+  if (isLoggedIn) {
+    ['usage-badge','pc-usage-badge'].forEach(id => {
+      const el=document.getElementById(id); if(!el) return;
+      if (rem <= 2) {
+        // 残り2回以下：Proプランへの誘導
+        el.textContent = '残り'+rem+'回 → Pro';
+        el.className = 'usage-pill limit';
+        el.style.cursor = 'pointer';
+        el.onclick = function(){ showUpgradeModal(); };
+      } else if (rem <= 5) {
+        el.textContent = 'ログイン中 '+usageCount+'/'+FREE_LIMIT;
+        el.className = 'usage-pill warn';
+        el.onclick = null;
+      } else {
+        el.textContent = 'ログイン中 '+usageCount+'/'+FREE_LIMIT;
+        el.className = 'usage-pill';
+        el.onclick = null;
+      }
+    });
+  } else {
+    const cls=rem<=2?'limit':rem<=5?'warn':'';
+    ['usage-badge','pc-usage-badge'].forEach(id => {
+      const el=document.getElementById(id); if(!el) return;
+      el.textContent='週'+FREE_LIMIT+'回無料 '+usageCount+'/'+FREE_LIMIT;
+      el.className='usage-pill'+(cls?' '+cls:'');
+      if (rem <= 2) {
+        el.style.cursor = 'pointer';
+        el.onclick = function(){ showUpgradeModal(); };
+      }
+    });
+  }
+}
+
+/* ═══════════════════════════════
+   タブ切替
+═══════════════════════════════ */
+const tabDescs = {
+  photo:    '写真を撮るだけで修繕費用をAIが即算出します',
+  report:   '定期報告書をアップするだけで不具合を自動検知します',
+  estimate: '業者の見積書を相場と比較、または自社用に変換します',
+  vendor:   '現場写真や状況を送るだけで対応できる業者を紹介します'
+};
+let estimateMode = 'assess';
+
+function swt(tab) {
+  currentTab = tab;
+  // タブ切り替え時にサンプルのアクティブ状態をリセット
+  document.querySelectorAll('.sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  ['photo','report','estimate','vendor'].forEach(t => {
+    const el=document.getElementById('tab-'+t); if(el) el.classList.toggle('on', t===tab);
+  });
+
+  const descEl=document.getElementById('tab-desc');
+  if(descEl) descEl.textContent=tabDescs[tab]||'';
+
+  const isVendor=tab==='vendor', isEstimate=tab==='estimate';
+
+  // 各エリアの表示切替
+  const vendorContent=document.getElementById('vendor-tab-content');
+  const dzWrap=document.getElementById('dz-wrap-main');
+  const supArea=document.getElementById('sup-area-main');
+  const runWrap=document.getElementById('run-wrap-main');
+  const estMode=document.getElementById('est-mode-select');
+  const sampPhoto=document.getElementById('samples-wrap');
+  const sampReport=document.getElementById('samples-wrap-report');
+  const sampEst=document.getElementById('samples-wrap-estimate');
+
+  if(vendorContent) vendorContent.style.display=isVendor?'block':'none';
+  if(dzWrap)  dzWrap.style.display='block';
+  if(supArea) supArea.style.display='block';
+  if(runWrap) runWrap.style.display='block';
+  if(estMode) estMode.style.display=isEstimate?'block':'none';
+  if(sampPhoto)  sampPhoto.style.display=tab==='photo'?'block':'none';
+  if(sampReport) sampReport.style.display=tab==='report'?'block':'none';
+  if(sampEst)    sampEst.style.display=tab==='estimate'?'block':'none';
+
+  // DZ・ボタンを全タブで更新（vendorも含む）
+  const ui = tabUI[tab] || tabUI.photo;
+  const dzIco=document.getElementById('dz-ico');
+  const dzTxt=document.getElementById('dz-main-txt');
+  const dzSub=document.getElementById('dz-sub-txt');
+  const fMain=document.getElementById('f-main');
+  const btnTxt=document.getElementById('btn-main-txt');
+  const notePlaceholder=document.getElementById('note-main');
+  if(dzIco) dzIco.textContent=ui.ico;
+  if(dzTxt) dzTxt.textContent=ui.main;
+  if(dzSub) dzSub.textContent=ui.sub;
+  if(fMain) fMain.accept=ui.accept||'image/*,.pdf';
+  if(notePlaceholder) notePlaceholder.placeholder=ui.placeholder||'';
+  if(btnTxt) btnTxt.textContent=isEstimate?(estimateMode==='convert'?'自社用見積書に変換する':'見積書を解析・査定する'):ui.btn;
+
+  // タブ切替時にnote・補足欄をリセット
+  const noteEl=document.getElementById('note-main');
+  if(noteEl) noteEl.value='';
+  const supIn=document.getElementById('sup-in');
+  const supBtn=document.getElementById('sup-tog-btn');
+  if(supIn){ supIn.classList.remove('on'); }
+  if(supBtn){ supBtn.classList.remove('on'); }
+
+  // 結果・変換パネルリセット
+  const rcMain=document.getElementById('rc-main');
+  const convPanel=document.getElementById('conv-panel');
+  if(rcMain) rcMain.classList.remove('on');
+  if(convPanel) convPanel.style.display='none';
+  clr();
+
+  // ボトムナビ・サイドバーのアクティブ状態
+  const bnA=document.getElementById('bn-a'), bnV=document.getElementById('bn-v');
+  const sniA=document.getElementById('sni-assist'), sniV=document.getElementById('sni-vendor');
+  if(tab==='vendor'){
+    if(bnA) bnA.classList.remove('on'); if(bnV) bnV.classList.add('on');
+    if(sniA) sniA.classList.remove('on'); if(sniV) sniV.classList.add('on');
+  } else {
+    if(bnA) bnA.classList.add('on'); if(bnV) bnV.classList.remove('on');
+    if(sniA) sniA.classList.add('on'); if(sniV) sniV.classList.remove('on');
+  }
+}
+
+/* 見積書モード切替 */
+function setEstMode(mode) {
+  estimateMode=mode;
+  const a=document.getElementById('est-mode-btn-assess');
+  const c=document.getElementById('est-mode-btn-convert');
+  if(a && c) {
+    if(mode==='assess') {
+      a.style.background='var(--w)'; a.style.boxShadow='0 1px 3px rgba(0,0,0,.1)';
+      a.querySelector('div:first-child').style.color='var(--blue)';
+      a.querySelector('div:last-child').style.color='var(--g500)';
+      c.style.background='transparent'; c.style.boxShadow='none';
+      c.querySelector('div:first-child').style.color='var(--g600)';
+      c.querySelector('div:last-child').style.color='var(--g400)';
+    } else {
+      c.style.background='var(--w)'; c.style.boxShadow='0 1px 3px rgba(0,0,0,.1)';
+      c.querySelector('div:first-child').style.color='var(--blue)';
+      c.querySelector('div:last-child').style.color='var(--g500)';
+      a.style.background='transparent'; a.style.boxShadow='none';
+      a.querySelector('div:first-child').style.color='var(--g600)';
+      a.querySelector('div:last-child').style.color='var(--g400)';
+    }
+  }
+  const btnTxt=document.getElementById('btn-main-txt');
+  if(btnTxt) btnTxt.textContent=mode==='convert'?'自社用見積書に変換する':'見積書を解析・査定する';
+}
+
+/* ═══════════════════════════════
+   サンプル選択
+═══════════════════════════════ */
+/* サンプル選択時にDZをアップロード済み状態に見せる */
+function showSampleInDZ(label, emoji, bgStyle) {
+  // DZを非表示にしてプレビュー表示
+  const dz = document.getElementById('dz-main');
+  const pv = document.getElementById('pv-main');
+  const pvImg = document.getElementById('pvimg-main');
+  const pvFile = document.getElementById('pvf-main');
+  if (!dz || !pv) return;
+
+  // ダミーのプレビューを作成（サムネイルカード風）
+  dz.style.display = 'none';
+  pv.style.display = 'block';
+  pvImg.style.display = 'none';
+  pvFile.style.display = 'flex';
+  pvFile.style.background = bgStyle || 'var(--bl)';
+  pvFile.style.borderRadius = 'var(--rs)';
+  pvFile.style.padding = '14px';
+  pvFile.style.alignItems = 'center';
+  pvFile.style.gap = '12px';
+  pvFile.innerHTML =
+    '<div style="font-size:36px;flex-shrink:0;">' + emoji + '</div>' +
+    '<div><div style="font-size:13px;font-weight:700;color:var(--g800);">' + label + '</div>' +
+    '<div style="font-size:11px;color:var(--g500);margin-top:2px;">サンプルデータ（登録不要）</div></div>' +
+    '<button onclick="clrSample()" style="margin-left:auto;width:24px;height:24px;border-radius:50%;background:var(--g600);border:none;color:#fff;cursor:pointer;font-size:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">✕</button>';
+}
+function clrSample() {
+  // サンプルのアクティブ状態をリセット
+  document.querySelectorAll('.sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  const dz = document.getElementById('dz-main');
+  const pv = document.getElementById('pv-main');
+  if (dz) dz.style.display = '';
+  if (pv) pv.style.display = 'none';
+  const pvFile = document.getElementById('pvf-main');
+  if (pvFile) { pvFile.style.display = 'none'; pvFile.innerHTML = ''; pvFile.style.background = ''; }
+  currentFile = null;
+  const note = document.getElementById('note-main');
+  if (note) note.value = '';
+  const supIn = document.getElementById('sup-in');
+  const supBtn = document.getElementById('sup-tog-btn');
+  if (supIn) supIn.classList.remove('on');
+  if (supBtn) supBtn.classList.remove('on');
+}
+
+/* ── サンプルダミー結果データ ── */
+const sampleResults = {
+  grass: { amount_main:'約8〜25万円', amount_range:'8万円〜25万円', priority:'計画的に対応', priority_level:'green', work_type:'除草・植栽管理', detail:'敷地内の雑草繁茂は建物美観・害虫発生・排水詰まりの原因になります。定期的な除草（年2〜4回）と防草シートの設置が有効です。駐車場・植栽帯・外周部の状況に応じて対応範囲を決定します。', vendors:[{name:'大阪緑化サービス',area:'大阪市内',specialty:'除草・植栽管理',rating:'4.5',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'関西造園メンテ',area:'大阪府全域',specialty:'造園・除草全般',rating:'4.3',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'ナニワ環境整備',area:'大阪市内',specialty:'敷地管理・除草',rating:'4.1',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'}] },
+  crack: { amount_main:'約45〜80万円', amount_range:'45万円〜80万円', priority:'早期対応推奨', priority_level:'amber', work_type:'外壁補修工事', detail:'RC造外壁の幅0.5mm以上のひび割れ（クラック）は、雨水侵入による鉄筋腐食のリスクがあります。Uカット工法でシーリング充填後、防水塗装仕上げが標準的です。足場不要の箇所は高所作業車で対応可能。放置すると大規模修繕が必要になるため早期対応を推奨します。', vendors:[{name:'大阪外壁補修センター',area:'大阪市',specialty:'外壁塗装・補修',rating:'4.6',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'3,500円/m'},{name:'関西建物メンテナンス',area:'大阪・兵庫',specialty:'防水・外壁工事',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'4,200円/m'},{name:'ナニワ左官工業',area:'大阪市内',specialty:'左官・補修工事',rating:'4.2',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'3,800円/m'}] },
+  waterproof: { amount_main:'約120〜200万円', amount_range:'120万円〜200万円', priority:'早期対応推奨', priority_level:'amber', work_type:'屋上防水工事', detail:'築15年の屋上防水シートの浮き・破断は早期対応が必要です。既存シートを撤去し、ウレタン塗膜防水（密着工法）で全面改修するのが一般的です。ドレン（排水口）の清掃・交換も同時に実施を推奨します。', vendors:[{name:'大阪防水技建',area:'大阪府全域',specialty:'屋上・陸屋根防水',rating:'4.7',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'4,500円/m²'},{name:'ミナミ建材防水部',area:'大阪市',specialty:'塗膜防水工事',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'5,000円/m²'},{name:'関西ルーフメンテ',area:'大阪・奈良',specialty:'防水リフォーム',rating:'4.2',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'4,200円/m²'}] },
+  rust:  { amount_main:'約20〜50万円', amount_range:'20万円〜50万円', priority:'計画的に対応', priority_level:'green', work_type:'鉄部塗装工事', detail:'共用部鉄骨階段の手すりの赤サビと塗膜剥離は、ケレン（さびを落とす）作業後に錆止め塗料＋仕上げ塗装が標準工法です。現状は構造上の問題はありませんが、放置するとサビが内部まで進行し補強工事が必要になります。', vendors:[{name:'大阪鉄部塗装プロ',area:'大阪市内',specialty:'鉄部・金属塗装',rating:'4.5',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'2,200円/m²'},{name:'なにわ塗装工業',area:'大阪全域',specialty:'鉄部塗装・防錆',rating:'4.3',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'1,800円/m²'},{name:'関西金属メンテ',area:'大阪・兵庫',specialty:'金属工事全般',rating:'4.1',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'2,500円/m²'}] },
+};
+const sampleResultsReport = {
+  regular: { total_issues:'7', urgent_issues:'2', total_cost:'約85〜140万円', urgent:[{name:'給水ポンプ異音',location:'機械室',cost:'約30万円'},{name:'屋上防水浮き',location:'屋上全面',cost:'約80万円'}], early:[{name:'外壁タイル剥落',location:'南面3〜5F',cost:'約40万円'},{name:'廊下照明不点灯',location:'2F東廊下',cost:'約8万円'}], watch:[{name:'駐輪場屋根腐食',location:'1F駐輪場',cost:'要調査'},{name:'エントランスドア歪み',location:'正面玄関',cost:'約12万円'},{name:'外壁ひび割れ',location:'北面1〜2F',cost:'約20万円'}], detail:'緊急対応が必要な給水ポンプ異音は放置すると断水リスクがあります。屋上防水の浮きも雨水侵入が懸念されます。オーナー様への報告では、これら2件の緊急対応費用として先行して約110万円の予算確保をご提案ください。', vendors:[{name:'大阪設備メンテ',area:'大阪市',specialty:'設備・防水工事',rating:'4.6',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'関西建物診断',area:'大阪府',specialty:'建物総合管理',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'ナニワ工務店',area:'大阪市内',specialty:'総合修繕工事',rating:'4.2',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'}] },
+  large: { total_issues:'14', urgent_issues:'3', total_cost:'約850〜1,200万円', urgent:[{name:'外壁タイル大規模剥落',location:'全面',cost:'約300万円'},{name:'防水層全面劣化',location:'屋上・バルコニー',cost:'約400万円'},{name:'鉄骨腐食',location:'外部階段',cost:'約150万円'}], early:[{name:'給排水管更新',location:'竪管全体',cost:'約200万円'},{name:'電気幹線劣化',location:'電気室',cost:'約80万円'}], watch:[{name:'外壁ひび割れ',location:'各所',cost:'約60万円'},{name:'駐車場床劣化',location:'1F',cost:'約50万円'}], detail:'大規模修繕前調査の結果、外壁・防水・鉄部の3点が緊急対応レベルです。総工費は850〜1,200万円規模と想定されます。オーナー様には修繕積立金の現状確認と、優先度に応じた段階的実施計画の提案をご検討ください。', vendors:[{name:'関西大規模修繕',area:'大阪・兵庫',specialty:'大規模修繕専門',rating:'4.7',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'なにわ総合建設',area:'大阪府全域',specialty:'マンション修繕',rating:'4.5',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'大阪建物管理',area:'近畿全域',specialty:'修繕コンサル',rating:'4.3',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'}] },
+  emergency: { total_issues:'3', urgent_issues:'3', total_cost:'約180〜250万円', urgent:[{name:'天井崩落危険',location:'101号室',cost:'約80万円'},{name:'給水管破裂',location:'3F廊下',cost:'約60万円'},{name:'ガス漏れ疑い',location:'2F廊下',cost:'要調査'}], early:[], watch:[], detail:'3件すべてが緊急対応が必要な重大不具合です。特に天井崩落危険と給水管破裂は入居者の安全に直結します。本日中に対応業者への連絡と、必要に応じて該当室・エリアの立入制限をご検討ください。', vendors:[{name:'24時間緊急対応隊',area:'大阪市内',specialty:'緊急修繕全般',rating:'4.8',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'関西緊急設備',area:'大阪府',specialty:'設備緊急対応',rating:'4.6',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'なにわ急修',area:'大阪市全域',specialty:'緊急補修工事',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'}] },
+};
+const sampleResultsEstimate = {
+  highwall:   { score:'38', verdict:'高すぎる', verdict_level:'ng', price:'320万円', price_raw:3200000, market:'180〜240万円', summary:'相場の1.4倍。要再交渉', detail:'外壁塗装800m²の相場は180〜240万円が一般的です。この見積書は高圧洗浄・シーラー・上塗り2回・足場を含んでいますが、それでも割高です。塗料グレード（フッ素→シリコンへ変更）や足場の共有化で30〜40%のコスト削減が可能です。COSOJIに無料見積を依頼することを推奨します。', vendors:[{name:'大阪外壁塗装センター',area:'大阪市',specialty:'外壁塗装',rating:'4.6',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'2,200円/m²'},{name:'関西塗装プロ',area:'大阪府',specialty:'建物塗装全般',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'2,500円/m²'},{name:'ナニワ塗装',area:'大阪市内',specialty:'外壁・鉄部塗装',rating:'4.2',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'2,800円/m²'}] },
+  fairplumbing:{ score:'76', verdict:'適正', verdict_level:'ok', price:'98万円', price_raw:980000, market:'85〜110万円', summary:'相場範囲内。妥当な金額', detail:'給排水設備工事98万円は相場（85〜110万円）の中央値に近く適正です。配管材料（塩ビ管）・工賃・養生費が適切に計上されています。追加値引き交渉の余地は小さいですが、工期・保証内容を確認した上で発注を検討してください。', vendors:[{name:'大阪給排水センター',area:'大阪市',specialty:'給排水設備',rating:'4.5',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'なにわ管工事',area:'大阪府',specialty:'配管工事全般',rating:'4.3',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'},{name:'関西設備工業',area:'大阪・兵庫',specialty:'設備工事',rating:'4.1',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積'}] },
+  fairroof:   { score:'71', verdict:'適正', verdict_level:'ok', price:'185万円', price_raw:1850000, market:'160〜210万円', summary:'相場内。適正価格です', detail:'屋上防水工事185万円（約300m²）は4,500〜6,000円/m²の相場に対し、約617円/m²（税込）で相場範囲内です。ウレタン塗膜防水の材料費・工賃・ドレン改修が適切に含まれています。保証年数（10年以上推奨）と施工実績を確認の上、発注を進めてください。', vendors:[{name:'大阪防水技建',area:'大阪府全域',specialty:'屋上・陸屋根防水',rating:'4.7',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'5,000円/m²'},{name:'関西ルーフメンテ',area:'大阪・奈良',specialty:'防水リフォーム',rating:'4.4',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'4,500円/m²'},{name:'ミナミ建材防水部',area:'大阪市',specialty:'塗膜防水工事',rating:'4.2',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'5,500円/m²'}] },
+};
+const sampleResultsVendor = {
+  vendor_default: { work_type:'修繕工事', vendors:[{name:'大阪総合リフォーム',area:'大阪市全域',specialty:'総合修繕・リフォーム',rating:'4.7',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積',description:'マンション修繕実績500件以上'},{name:'関西建物メンテナンス',area:'大阪・兵庫・京都',specialty:'外壁・防水・設備全般',rating:'4.5',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積',description:'緊急対応・24時間受付'},{name:'ナニワ工務店',area:'大阪市内',specialty:'内外装・鉄部・床工事',rating:'4.3',tel:'06-XXXX-XXXX',url:'https://cosoji.jp',price_range:'要見積',description:'地域密着30年の実績'}] },
+};
+
+function selectSample(key) {
+  document.querySelectorAll('#samples-wrap .sample-btn').forEach(el=>el.classList.remove('active'));
+  var chipMap={'grass':0,'crack':1,'waterproof':2,'rust':3};
+  var chips=document.querySelectorAll('#samples-wrap .sample-btn');
+  if(chips[chipMap[key]]!=null) chips[chipMap[key]].classList.add('active');
+
+  const labels={grass:'除草',crack:'外壁ひび割れ',waterproof:'屋上防水劣化',rust:'鉄部サビ'};
+  const emojis={grass:'🌿',crack:'🧱',waterproof:'🏠',rust:'⚙️'};
+  const bgs={grass:'#F3F4F6',crack:'#F3F4F6',waterproof:'#F3F4F6',rust:'#F3F4F6'};
+  showSampleInDZ(labels[key]||key, emojis[key]||'📷', bgs[key]||'var(--bl)');
+
+  // APIを呼ばずダミー結果を直接表示
+  const result = sampleResults[key];
+  if (result) {
+    setTimeout(() => {
+      renderResult(result);
+      addCase(result);
+      usageCount++; updateUsageUI();
+      caseCnt++; animCount('sc', caseCnt);
+    }, 600);
+  }
+}
+
+/* ═══════════════════════════════
+   ファイル
+═══════════════════════════════ */
+function dg(e) { e.preventDefault(); document.getElementById('dz-main').classList.add('drag'); }
+function udg() { document.getElementById('dz-main').classList.remove('drag'); }
+function dp(e) { e.preventDefault(); udg(); const f = e.dataTransfer.files[0]; if (f) proc(f); }
+function sl(input) { const f = input.files[0]; if (f) proc(f); }
+function proc(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    const isImg = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    currentFile = {
+      b64: data.split(',')[1],
+      mime: data.split(';')[0].split(':')[1],
+      name: file.name,
+      size: file.size,
+      isImg,
+      isPdf,
+      ext: file.name.split('.').pop().toLowerCase()
+    };
+    showPv();
+  };
+  reader.readAsDataURL(file);
+}
+function showPv() {
+  const f = currentFile;
+  document.getElementById('pv-main').style.display = 'block';
+  const img = document.getElementById('pvimg-main');
+  const pf = document.getElementById('pvf-main');
+  if (f.isImg) {
+    img.src = 'data:' + f.mime + ';base64,' + f.b64; img.style.display = 'block'; pf.style.display = 'none';
+  } else {
+    img.style.display = 'none'; pf.style.display = 'flex';
+    document.getElementById('pvn-main').textContent = f.name;
+    document.getElementById('pvs-main').textContent = Math.round(f.size / 1024) + 'KB';
+  }
+}
+function clr() {
+  // サンプルのアクティブ状態もリセット
+  document.querySelectorAll('.sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  currentFile = null;
+  const dz = document.getElementById('dz-main');
+  const pv = document.getElementById('pv-main');
+  if (dz) dz.style.display = '';
+  if (pv) pv.style.display = 'none';
+  const pvFile = document.getElementById('pvf-main');
+  if (pvFile) { pvFile.style.display = 'none'; pvFile.innerHTML = ''; pvFile.style.background = ''; }
+  const pvImg = document.getElementById('pvimg-main');
+  if (pvImg) pvImg.style.display = 'none';
+  const fi = document.getElementById('f-main');
+  if (fi) fi.value = '';
+}
+function toggleSup() {
+  document.getElementById('sup-tog-btn').classList.toggle('on');
+  document.getElementById('sup-in').classList.toggle('on');
+}
+function tdp(k) {
+  document.getElementById('det-tog-' + k).classList.toggle('on');
+  document.getElementById('det-body-' + k).classList.toggle('on');
+}
+
+/* ═══════════════════════════════
+   ガード
+═══════════════════════════════ */
+function guardDownload() {
+  if (!isLoggedIn) {
+    document.getElementById('reg-title').textContent = '登録するとダウンロードできます';
+    document.getElementById('reg-sub').textContent = '診断結果・見積書・請求書のダウンロードには登録（無料）が必要です。登録後はすべての機能を週10回まで無料でご利用いただけます。';
+    document.getElementById('reg-modal').classList.add('on');
+  } else {
+    alert('デモ版：ファイルをダウンロードします');
+  }
+}
+function checkLimit() {
+  if (usageCount >= FREE_LIMIT) {
+    document.getElementById('reg-title').textContent = '今週の無料枠を使い切りました';
+    document.getElementById('reg-sub').textContent = '無料プランはAI診断を週' + FREE_LIMIT + '回まで利用できます。有料プランでは無制限にご利用いただけます（¥9,800/月/ユーザー）。';
+    document.getElementById('reg-modal').classList.add('on');
+    return false;
+  }
+  return true;
+}
+
+/* ═══════════════════════════════
+   AI実行
+═══════════════════════════════ */
+async function runAI() {
+  if (!checkLimit()) return;
+  const note = document.getElementById('note-main').value;
+  if (!currentFile && !note.trim()) {
+    alert('写真またはファイルを選択するか、内容を入力してください');
+    return;
+  }
+
+  // 業者タブ：写真・テキストから業者を探す
+  if (currentTab === 'vendor') {
+    const btn=document.getElementById('btn-main'); btn.disabled=true;
+    const ldEl=document.getElementById('ld-main'); ldEl.classList.add('on');
+    const ldMsg=document.getElementById('ld-msg'); if(ldMsg) ldMsg.textContent='工事内容を解析中...';
+    const resultsEl=document.getElementById('vendor-tab-results');
+    if(resultsEl) resultsEl.style.display='none';
+    try {
+      const content=[];
+      if(currentFile && currentFile.isImg) content.push({type:'image',source:{type:'base64',media_type:currentFile.mime,data:currentFile.b64}});
+      else if(currentFile) content.push({type:'text',text:'[添付ファイル：'+currentFile.name+' ('+currentFile.ext+'形式)]\nファイルの内容をもとに分析してください。'});
+      content.push({type:'text',text:note||'写真の損傷箇所に対応できる業者を探してください。'});
+      const SYS_V='不動産修繕の業者マッチング専門家として、工事内容に合う業者を3社提案します。JSONのみで返答：{"work_type":"工事種別（20字以内）","vendors":[{"name":"○○設備工業株式会社","area":"エリア","specialty":"得意工事","rating":"4.5","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"8000円/m2","description":"実績・特徴（30字以内）"},{"name":"△△工務店","area":"エリア","specialty":"得意工事","rating":"4.2","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"7500円/m2","description":"実績・特徴（30字以内）"},{"name":"□□リフォーム","area":"エリア","specialty":"得意工事","rating":"4.0","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"9000円/m2","description":"実績・特徴（30字以内）"}]}';
+      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:800,system:SYS_V,messages:[{role:'user',content}]})});
+      const data=await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const raw=data.content&&data.content[0]?data.content[0].text:'{}';
+      const j=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      if(resultsEl && j.vendors) {
+        resultsEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">'+(j.work_type||'対応業者')+'・紹介 '+j.vendors.length+'社</div>'+
+          j.vendors.map((v,i)=>'<div class="vcard"><div class="vc-head"><div><div class="vc-name">'+(i===0?'1. ':i===1?'2. ':i===2?'3. ':'')+v.name+'</div><div class="vc-area">📍 '+v.area+'</div>'+(v.description?'<div style="font-size:11px;color:var(--g500);margin-top:2px;">'+v.description+'</div>':'')+
+          '</div><div class="vc-star">★'+v.rating+'</div></div><div class="vc-tags"><span class="vc-tag">'+v.specialty+'</span><span class="vc-tag">'+v.price_range+'</span></div>'+
+          '<div class="vc-acts"><a class="vc-btn vc-call" href="tel:'+v.tel+'">電話する</a><a class="vc-btn vc-web" href="'+v.url+'" target="_blank">HPを見る</a></div></div>').join('');
+        resultsEl.style.display='block';
+        resultsEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+      }
+      usageCount++; updateUsageUI();
+    } catch(e){
+      // フォールバック：ダミー業者結果を表示
+      var vFallback = sampleResultsVendor.vendor_default;
+      if(resultsEl && vFallback.vendors) {
+        showToast('デモ結果を表示しています');
+        resultsEl.innerHTML='<div style="font-size:11px;font-weight:700;color:var(--g500);letter-spacing:.05em;margin-bottom:10px;">対応業者・紹介 '+vFallback.vendors.length+'社</div>'+
+          vFallback.vendors.map(function(v,i){ return '<div class="vcard"><div class="vc-head"><div><div class="vc-name">'+(i===0?'1. ':i===1?'2. ':i===2?'3. ':'')+v.name+'</div><div class="vc-area">📍 '+v.area+'</div>'+(v.description?'<div style="font-size:11px;color:var(--g500);margin-top:2px;">'+v.description+'</div>':'')+
+          '</div><div class="vc-star">★'+v.rating+'</div></div><div class="vc-tags"><span class="vc-tag">'+v.specialty+'</span><span class="vc-tag">'+v.price_range+'</span></div>'+
+          '<div class="vc-acts"><a class="vc-btn vc-call" href="tel:'+v.tel+'">電話する</a><a class="vc-btn vc-web" href="'+v.url+'" target="_blank">HPを見る</a></div></div>'; }).join('');
+        resultsEl.style.display='block';
+        resultsEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+        var btnTxt=document.getElementById('btn-main-txt'); if(btnTxt) btnTxt.textContent='別の写真・内容で再検索する';
+        usageCount++; updateUsageUI();
+      } else { showToast('エラー：'+e.message); }
+    }
+    btn.disabled=false; ldEl.classList.remove('on');
+    return;
+  }
+  if (currentTab === 'estimate' && estimateMode === 'convert') {
+    const btn=document.getElementById('btn-main'); btn.disabled=true;
+    const ldEl=document.getElementById('ld-main'); ldEl.classList.add('on');
+    const rcMain=document.getElementById('rc-main'); if(rcMain) rcMain.classList.remove('on');
+    const convPanel=document.getElementById('conv-panel'); if(convPanel) convPanel.style.display='none';
+    const ldMsg=document.getElementById('ld-msg'); if(ldMsg) ldMsg.textContent='見積書を読み込み中...';
+    try {
+      const content=[];
+      if(currentFile && currentFile.isImg) content.push({type:'image',source:{type:'base64',media_type:currentFile.mime,data:currentFile.b64}});
+      else if(currentFile) content.push({type:'text',text:'[添付ファイル：'+currentFile.name+' ('+currentFile.ext+'形式)]\nファイルの内容をもとに分析してください。'});
+      content.push({type:'text',text:note||'見積書の金額合計を読み取ってください。'});
+      const SYS_CONV='見積書から金額を読み取ります。JSONのみで返答：{"price_raw":数値（税抜き合計金額）,"price":"表示用金額（例：98万円）","work_name":"工事名称（20字以内）"}';
+      const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:400,system:SYS_CONV,messages:[{role:'user',content}]})});
+      const data=await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const raw=data.content&&data.content[0]?data.content[0].text:'{}';
+      const j=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      lastEstimateBase=j.price_raw||3000000;
+      if(convPanel){convPanel.style.display='block'; calcConv(); convPanel.scrollIntoView({behavior:'smooth',block:'nearest'});}
+      usageCount++; updateUsageUI();
+      addCase({verdict:'変換',price_raw:lastEstimateBase,price:j.price||'—',detail:j.work_name||'見積書変換'});
+    } catch(e){
+      // APIエラー時もデフォルト金額で変換パネルを表示
+      lastEstimateBase = lastEstimateBase || 3000000;
+      if(convPanel){convPanel.style.display='block'; calcConv(); convPanel.scrollIntoView({behavior:'smooth',block:'nearest'});}
+      showToast('金額を手動で確認してください');
+    }
+    btn.disabled=false; ldEl.classList.remove('on');
+    return;
+  }
+
+  const btn = document.getElementById('btn-main'); btn.disabled = true;
+  const ldEl = document.getElementById('ld-main'); ldEl.classList.add('on');
+  document.getElementById('rc-main').classList.remove('on');
+  document.getElementById('conv-panel').style.display = 'none';
+  const msgs = ldMsgs[currentTab] || ['解析中...'];
+  let mi = 0;
+  const ldTimer = setInterval(() => { mi = (mi + 1) % msgs.length; document.getElementById('ld-msg').textContent = msgs[mi]; }, 1800);
+  try {
+    const content = [];
+    if (currentFile && currentFile.isImg) content.push({ type: 'image', source: { type: 'base64', media_type: currentFile.mime, data: currentFile.b64 } });
+    else if (currentFile) content.push({ type: 'text', text: '[添付ファイル：' + currentFile.name + ' (' + currentFile.ext + '形式)]\nファイルの内容をもとに分析してください。' });
+    content.push({ type: 'text', text: note || 'アップロードされた内容を解析してください。' });
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: SYS[currentTab], messages: [{ role: 'user', content }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const raw = data.content && data.content[0] ? data.content[0].text : '{}';
+    let j;
+    try {
+      j = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    } catch(parseErr) {
+      throw new Error('Invalid response format');
+    }
+    renderResult(j);
+    usageCount++; updateUsageUI();
+    caseCnt++; animCount('sc', caseCnt);
+    if (!isLoggedIn && usageCount === 3) {
+      setTimeout(function() {
+        var bar = document.getElementById('save-hint-bar');
+        if (bar) { bar.querySelector('.save-hint-txt').textContent = '💡 3回使いました！登録すると診断結果が保存されます'; }
+      }, 2000);
+    }
+  } catch (e) {
+    // APIキーなし・通信エラー時はダミー結果を表示（デモ環境対応）
+    var fallback = null;
+    if (currentTab === 'photo') {
+      fallback = sampleResults['crack'];
+    } else if (currentTab === 'report') {
+      fallback = sampleResultsReport['regular'];
+    } else if (currentTab === 'estimate') {
+      fallback = sampleResultsEstimate[estimateMode === 'convert' ? 'fairplumbing' : 'highwall'];
+    }
+    if (fallback) {
+      showToast('デモ結果を表示しています');
+      renderResult(fallback);
+      usageCount++; updateUsageUI();
+      caseCnt++; animCount('sc', caseCnt);
+    } else {
+      showToast('エラー：' + e.message);
+      const errEl = document.getElementById('det-txt-p');
+      const errBody = document.getElementById('det-body-p');
+      const errTog = document.getElementById('det-tog-p');
+      const resPhoto = document.getElementById('res-photo');
+      const rcMain = document.getElementById('rc-main');
+      if(errEl) errEl.textContent = 'エラーが発生しました：' + e.message;
+      if(errBody) errBody.classList.add('on');
+      if(errTog) errTog.classList.add('on');
+      if(resPhoto) resPhoto.style.display = 'block';
+      if(rcMain) rcMain.classList.add('on');
+    }
+  }
+  clearInterval(ldTimer); btn.disabled = false; ldEl.classList.remove('on');
+}
+
+/* ═══════════════════════════════
+   結果レンダリング
+═══════════════════════════════ */
+const pmap = { '緊急': { c: 'pr-r', i: '' }, '早期対応推奨': { c: 'pr-a', i: '' }, '計画的に対応': { c: 'pr-g', i: '' } };
+const vmap = { ok: { c: 'rb-ok', i: '', t: '適正', sc: 'rs-ok' }, warn: { c: 'rb-warn', i: '', t: 'やや高め', sc: 'rs-warn' }, ng: { c: 'rb-ng', i: '', t: '高すぎる', sc: 'rs-ng' }, caution: { c: 'rb-warn', i: '', t: '割安注意', sc: 'rs-warn' } };
+
+function renderResult(j) {
+  ['res-photo', 'res-report', 'res-estimate'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
+  if (currentTab === 'photo') {
+    document.getElementById('cost-num').textContent = j.amount_main || '—';
+    document.getElementById('cost-range').textContent = j.amount_range || '';
+    var pl = pmap[j.priority] || { c: 'pr-g', i: '🟢' };
+    document.getElementById('cost-pri').innerHTML = '<span class="pri ' + pl.c + '">' + pl.i + ' ' + (j.priority || '') + '</span>';
+    document.getElementById('det-txt-p').textContent = j.detail || '';
+    var vpb=document.getElementById('vendor-photo-btn'); if(vpb) vpb.onclick = function(){ showVendors('対応業者', j.vendors); };
+    document.getElementById('res-photo').style.display = 'block';
+    addCase(j);
+  } else if (currentTab === 'report') {
+    document.getElementById('rpt-urg').textContent = j.urgent_issues || '0';
+    document.getElementById('rpt-total').textContent = j.total_issues || '—';
+    document.getElementById('rpt-cost').textContent = j.total_cost || '—';
+    var html = '';
+    if (j.urgent && j.urgent.length > 0) { html += '<div class="issue-glbl">🔴 緊急対応（今すぐ）</div>'; j.urgent.forEach(function(i){ html += '<div class="issue-item"><span class="issue-ico">🔴</span><div class="issue-body"><div class="issue-name">' + i.name + '</div><div class="issue-loc">📍 ' + i.location + '</div></div><div class="issue-cost">' + i.cost + '</div></div>'; }); }
+    if (j.early && j.early.length > 0) { html += '<div class="issue-glbl">🟡 早期対応（1ヶ月以内）</div>'; j.early.forEach(function(i){ html += '<div class="issue-item"><span class="issue-ico">🟡</span><div class="issue-body"><div class="issue-name">' + i.name + '</div><div class="issue-loc">📍 ' + i.location + '</div></div><div class="issue-cost">' + i.cost + '</div></div>'; }); }
+    if (j.watch && j.watch.length > 0) { html += '<div class="issue-glbl">⚪ 様子見</div>'; j.watch.forEach(function(i){ html += '<div class="issue-item"><span class="issue-ico">⚪</span><div class="issue-body"><div class="issue-name">' + i.name + '</div><div class="issue-loc">📍 ' + i.location + '</div></div><div class="issue-cost">' + i.cost + '</div></div>'; }); }
+    document.getElementById('rpt-issues').innerHTML = html;
+    document.getElementById('det-txt-r').textContent = j.detail || '';
+    var vrb=document.getElementById('vendor-report-btn'); if(vrb) vrb.onclick = function(){ showVendors('対応業者', j.vendors); };
+    document.getElementById('res-report').style.display = 'block';
+    addCase(j);
+  } else if (currentTab === 'estimate') {
+    lastEstimateBase = j.price_raw || 3000000;
+    var vl = vmap[j.verdict_level] || vmap.ok;
+    // 判定バー（色のみ、スコアなし）
+    var verdictBar = document.getElementById('est-verdict-bar');
+    if (verdictBar) {
+      var vColors = { ok: {bg:'var(--gl)',color:'var(--green)',text:'相場範囲内の金額です'}, warn: {bg:'var(--al)',color:'var(--amber)',text:'⚠️ やや高めです。交渉の余地があります'}, ng: {bg:'var(--rl)',color:'var(--red)',text:'相場より高い見積です。再交渉を推奨します'}, caution: {bg:'#ECFDF5',color:'#059669',text:'💡 相場より割安です。内容を確認してください'} };
+      var vc = vColors[j.verdict_level] || vColors.ok;
+      verdictBar.style.display = 'block';
+      verdictBar.style.background = vc.bg;
+      verdictBar.style.color = vc.color;
+      verdictBar.textContent = vc.text;
+    }
+    document.getElementById('est-price').textContent = j.price || '—';
+    document.getElementById('est-market').textContent = j.market || '—';
+    document.getElementById('det-txt-e').textContent = j.detail || '';
+    var cosojiBtn = document.getElementById('cosoji-btn-est');
+    var convertBtn = document.getElementById('convert-btn');
+    if (j.verdict_level === 'ng' || j.verdict_level === 'warn') {
+      cosojiBtn.style.display = 'flex'; convertBtn.style.display = 'flex';
+    } else {
+      cosojiBtn.style.display = 'none'; convertBtn.style.display = 'flex';
+    }
+    var veb=document.getElementById('vendor-est-btn'); if(veb) veb.onclick = function(){ showVendors('別の業者', j.vendors); };
+    document.getElementById('res-estimate').style.display = 'block';
+    addCase(j);
+  }
+  document.getElementById('rc-main').classList.add('on');
+  document.getElementById('rc-main').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ═══════════════════════════════
+   業者モーダル
+═══════════════════════════════ */
+function showVendors(title, vendors) {
+  document.getElementById('vm-title').textContent = '🏢 ' + title;
+  document.getElementById('vm-list').innerHTML = (vendors || []).map(v =>
+    '<div class="vcard"><div class="vc-head"><div><div class="vc-name">' + v.name + '</div><div class="vc-area">📍 ' + v.area + '</div></div><div class="vc-star">★' + v.rating + '</div></div>' +
+    '<div class="vc-tags"><span class="vc-tag">' + v.specialty + '</span><span class="vc-tag">' + v.price_range + '</span></div>' +
+    '<div class="vc-acts"><a class="vc-btn vc-call" href="tel:' + v.tel + '">電話する</a><a class="vc-btn vc-web" href="' + v.url + '" target="_blank">HPを見る</a></div></div>'
+  ).join('');
+  document.getElementById('vendor-modal').classList.add('on');
+}
+
+/* ═══════════════════════════════
+   見積変換
+═══════════════════════════════ */
+function showConvert() {
+  document.getElementById('conv-panel').style.display = 'block';
+  calcConv();
+  document.getElementById('conv-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function calcConv() {
+  const rate = Math.min(parseFloat(document.getElementById('profit-rate').value) || 20, 99);
+  const base = lastEstimateBase;
+  // 粗利率方式：売価 = 原価 ÷ (1 - 粗利率)
+  const sellPrice = Math.round(base / (1 - rate / 100));
+  const profit = sellPrice - base;
+  const total = Math.round(sellPrice * 1.1);
+  const fmt = n => n.toLocaleString('ja-JP');
+  document.getElementById('conv-base').textContent = '¥' + fmt(base);
+  document.getElementById('conv-profit').textContent = '¥' + fmt(profit);
+  document.getElementById('conv-total').textContent = '¥' + fmt(total);
+}
+
+/* ═══════════════════════════════
+   請求書モーダル
+═══════════════════════════════ */
+function openInvModal(name, area, amount) {
+  if (!isLoggedIn) { guardDownload(); return; }
+  document.getElementById('inv-name').textContent = name || '外壁塗装工事一式';
+  document.getElementById('inv-amount').textContent = '¥' + (amount || '1,364,000');
+  document.getElementById('inv-modal').classList.add('on');
+}
+
+/* ═══════════════════════════════
+   共有
+═══════════════════════════════ */
+function shareResult(method) {
+  const num = document.getElementById('cost-num') ? document.getElementById('cost-num').textContent : '—';
+  const txt = '【みんなのAI修繕 診断結果】\n概算：' + num + '\n\nby COSOJI みんなのAI修繕';
+  if (method === 'line') { window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(location.href) + '&text=' + encodeURIComponent(txt), '_blank'); }
+  else { window.open('mailto:?subject=' + encodeURIComponent('修繕診断結果') + '&body=' + encodeURIComponent(txt)); }
+}
+
+
+/* ═══════════════════════════════
+   トースト・設定・カウンター
+═══════════════════════════════ */
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g800);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:700;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2);pointer-events:none;';
+  t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+}
+function cfgEdit(name) { showToast('「' + name + '」はデモ版では準備中です'); }
+function cfgToggle(row) { const tgl = row.querySelector('.cfg-tgl'); if (tgl) tgl.classList.toggle('on'); }
+function animCount(id, val) {
+  const el = document.getElementById(id); if (!el) return;
+  const prev = parseFloat(el.textContent.replace(/,/g, '')) || 0;
+  let i = 0;
+  const t = setInterval(() => { i++; const e2 = 1 - Math.pow(1 - i / 20, 3); const c = prev + (val - prev) * e2;
+    el.textContent = id === 'sa' ? (Math.round(c * 10) / 10).toFixed(1) : c.toLocaleString('ja-JP').split('.')[0];
+    if (i >= 20) clearInterval(t); }, 30);
+}
+setInterval(() => {
+  if (Math.random() < 0.12) { users++; animCount('su', users); }
+  caseCnt += Math.floor(Math.random() * 4 + 1);
+  amtRaw += Math.floor(Math.random() * 300000 + 50000);
+  animCount('sc', caseCnt); animCount('sa', amtRaw / 100000000);
+}, 6000);
+
+/* ═══════════════════════════════
+   案件パイプライン管理
+═══════════════════════════════ */
+var STAGE_ORDER = ['mitsumori','mitsumori_done','hacchu','kooji','seikyuu','nyukin'];
+var STAGE_LABELS = {mitsumori:'見積依頼中',mitsumori_done:'見積完了',hacchu:'発注完了',kooji:'施工完了',seikyuu:'請求書発行済',nyukin:'入金完了',shissho:'失注'};
+var STAGE_ICONS = {mitsumori:'',mitsumori_done:'',hacchu:'',kooji:'',seikyuu:'',nyukin:'',shissho:''};
+var STAGE_NEXT = {
+  mitsumori:     {txt:'見積書の到着を待つ',     act:null},
+  mitsumori_done:{txt:'発注の意思確認が必要',    act:'次のステージへ'},
+  hacchu:        {txt:'施工日程を確認中',        act:null},
+  kooji:         {txt:'施工完了を確認したら請求書を発行',act:'請求書を発行する'},
+  seikyuu:       {txt:'入金の確認待ち',          act:null},
+  nyukin:        {txt:'完了',                  act:null},
+  shissho:       {txt:'失注',                  act:null}
+};
+var STAGE_CLS = {mitsumori:'sp-mitsumori',mitsumori_done:'sp-mitsumori_done',hacchu:'sp-hacchu',kooji:'sp-kooji',seikyuu:'sp-seikyuu',nyukin:'sp-nyukin',shissho:'sp-shissho'};
+var currentPipeFilter = 'all';
+var currentDetailCase = null;
+
+var allCasesDB = [
+  {id:'CASE-001',name:'グリーンハイツ301 外壁塗装',area:'大阪市北区',date:'2024/11/08',amount:1240000,stage:'mitsumori_done',days:9,stagnant:true,detail:'外壁全面の塗装工事。見積124万円が届いている。オーナーへの発注確認が必要。'},
+  {id:'CASE-002',name:'サンライズ502 給排水修繕',area:'東京都渋谷区',date:'2024/11/07',amount:380000,stage:'mitsumori_done',days:10,stagnant:true,detail:'5階配管漏水。見積38万円。発注判断が必要。'},
+  {id:'CASE-003',name:'パレス北野 屋上防水',area:'神戸市中央区',date:'2024/10/20',amount:820000,stage:'nyukin',days:0,stagnant:false,detail:'屋上防水工事完了。82万円入金確認済み。'},
+  {id:'CASE-004',name:'ロイヤルハイツ 共用廊下修繕',area:'福岡市博多区',date:'2024/11/05',amount:280000,stage:'mitsumori',days:6,stagnant:false,detail:'廊下床材の張り替え。COSOJIへ無料見積依頼中。'},
+  {id:'CASE-005',name:'ブルームハイツ 外壁ひび割れ補修',area:'大阪市北区',date:'2024/11/10',amount:820000,stage:'hacchu',days:1,stagnant:false,detail:'外壁南面ひび割れ。82万円で発注完了。施工は来月初旬予定。'},
+  {id:'CASE-006',name:'ガーデンコート 給水管更新',area:'京都市左京区',date:'2024/11/01',amount:450000,stage:'mitsumori',days:4,stagnant:false,detail:'老朽化した給水管の全面更新。見積依頼中。'},
+  {id:'CASE-007',name:'アーバン新大阪 屋根修繕',area:'大阪市淀川区',date:'2024/10/28',amount:650000,stage:'kooji',days:2,stagnant:false,detail:'屋根瓦の補修工事施工中。完了後に請求書発行予定。'},
+  {id:'CASE-008',name:'サニーコート 駐車場舗装',area:'兵庫県西宮市',date:'2024/10/15',amount:350000,stage:'seikyuu',days:3,stagnant:true,detail:'駐車場舗装工事完了。請求書発行済み。35万円の入金待ち。'}
+];
+
+function fmtAmt(n) { return n >= 10000 ? (n / 10000).toFixed(0) + '万' : n.toLocaleString() + '円'; }
+
+function calcKPI() {
+  var stagnant = allCasesDB.filter(function(c){ return c.stagnant; }).length;
+  var potential = allCasesDB.filter(function(c){ return c.stage === 'mitsumori_done'; }).reduce(function(s,c){ return s+c.amount; }, 0);
+  var confirmed = allCasesDB.filter(function(c){ return c.stage === 'hacchu' || c.stage === 'kooji'; }).reduce(function(s,c){ return s+c.amount; }, 0);
+  var nyukin = allCasesDB.filter(function(c){ return c.stage === 'nyukin'; }).reduce(function(s,c){ return s+c.amount; }, 0);
+  var se = document.getElementById('kpi-stagnant'); if (se) se.textContent = stagnant + '件';
+  var pe = document.getElementById('kpi-potential'); if (pe) pe.textContent = '¥' + fmtAmt(potential);
+  var ce = document.getElementById('kpi-confirmed'); if (ce) ce.textContent = '¥' + fmtAmt(confirmed);
+  var ne = document.getElementById('kpi-nyukin'); if (ne) ne.textContent = '¥' + fmtAmt(nyukin);
+  Object.keys(STAGE_LABELS).forEach(function(s) {
+    var cnt = allCasesDB.filter(function(c){ return c.stage === s; }).length;
+    var el = document.getElementById('ptc-' + s); if (el) el.textContent = cnt;
+  });
+  var allEl = document.getElementById('ptc-all'); if (allEl) allEl.textContent = allCasesDB.length;
+  var stagnantCases = allCasesDB.filter(function(c){ return c.stagnant; });
+  var banner = document.getElementById('stagnant-alert');
+  if (banner) banner.style.display = stagnantCases.length > 0 ? 'flex' : 'none';
+  var btxt = document.getElementById('stagnant-alert-txt');
+  if (btxt) btxt.textContent = stagnantCases.length + '件の案件が7日以上停滞しています';
+  var sb = document.getElementById('sb-badge');
+  if (sb) { sb.style.display = allCasesDB.length > 0 ? 'inline' : 'none'; sb.textContent = allCasesDB.length; }
+}
+
+function filterPipe(stage) {
+  currentPipeFilter = stage;
+  document.querySelectorAll('.ptab').forEach(function(t){ t.classList.remove('active'); });
+  var a = document.querySelector('[data-s="' + stage + '"]');
+  if (a) {
+    a.classList.add('active');
+    // アクティブタブが画面内に必ず見えるようにスクロール
+    a.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+  renderCasesList();
+}
+
+function renderCasesList() {
+  var list = document.getElementById('cases-list-main'); if (!list) return;
+  var filtered = currentPipeFilter === 'all' ? allCasesDB : allCasesDB.filter(function(c){ return c.stage === currentPipeFilter; });
+  var lblEl = document.getElementById('cases-list-lbl');
+  if (lblEl) lblEl.textContent = currentPipeFilter === 'all' ? 'すべての案件' : (STAGE_LABELS[currentPipeFilter] || '案件');
+  var cntEl = document.getElementById('cases-list-cnt'); if (cntEl) cntEl.textContent = filtered.length + '件';
+  list.innerHTML = '';
+  filtered.forEach(function(c) {
+    var div = document.createElement('div');
+    div.className = 'case-row' + (c.stagnant ? ' stagnant' : '');
+    var amt = '¥' + fmtAmt(c.amount);
+    var days = c.days > 0 ? c.days + '日経過' : '本日';
+    var stageInfo = STAGE_NEXT[c.stage] || {txt:'', act:null};
+    var isNyukin = c.stage === 'nyukin';
+    var isShissho = c.stage === 'shissho';
+    // 請求書バー：施工完了のみ
+    var invBar = '';
+    if (c.stage === 'kooji') {
+      invBar = '<div class="case-act-wrap"><span class="case-act-hint">施工が完了しました</span><button class="case-next-btn">請求書を発行する</button></div>';
+    }
+    div.innerHTML =
+      '<div class="case-row-top"><div class="case-row-name">' + c.name + '</div><div class="case-row-amt">' + amt + '</div></div>' +
+      '<div class="case-row-meta">' +
+        '<span class="sp-pill ' + (STAGE_CLS[c.stage]||'') + '">' + (STAGE_LABELS[c.stage]||c.stage) + '</span>' +
+        (!isNyukin && !isShissho ? '<span class="case-row-days' + (c.stagnant?' warn':'') + '">' + days + '</span>' : '') +
+      '</div>' +
+      invBar;
+    var cRef = c;
+    div.addEventListener('click', function(){ openCaseDetail(cRef); });
+    var invBtn = div.querySelector('.case-next-btn');
+    if (invBtn) {
+      invBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openCaseDetail(cRef);
+        setTimeout(function(){ openInvFromCase(); }, 150);
+      });
+    }
+    list.appendChild(div);
+  });
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--g400);font-size:13px;">このステージの案件はありません</div>';
+  }
+}
+
+function openCaseDetail(c) {
+  currentDetailCase = c;
+  document.getElementById('cd-title').textContent = c.name;
+  document.getElementById('cd-meta').textContent = (c.id||'') + ' · ' + (c.date||'') + ' · ' + (c.area||'');
+  document.getElementById('cd-amount').textContent = '¥' + fmtAmt(c.amount);
+  document.getElementById('cd-days').textContent = c.stage === 'nyukin' ? '完了' : c.days > 0 ? c.days + '日経過' : '本日';
+  document.getElementById('cd-detail').textContent = c.detail || '詳細情報はありません。';
+  // 施工完了以降は請求書発行ボタンを表示
+  const invWrap = document.getElementById('cd-inv-wrap');
+  if (invWrap) invWrap.style.display = ['kooji','seikyuu','nyukin'].includes(c.stage) ? 'block' : 'none';
+  renderStageFlow(c);
+  document.getElementById('case-detail-modal').classList.add('on');
+}
+
+function openInvFromCase() {
+  if (!currentDetailCase) return;
+  closeModal('case-detail-modal');
+  openInvModal(currentDetailCase.name, currentDetailCase.area, currentDetailCase.amount > 0 ? currentDetailCase.amount.toLocaleString() : '');
+}
+
+function renderStageFlow(c) {
+  var flow = document.getElementById('cd-stage-flow'); if (!flow) return;
+  flow.innerHTML = '';
+  var isShissho = c.stage === 'shissho';
+  var curIdx = STAGE_ORDER.indexOf(c.stage);
+
+  STAGE_ORDER.forEach(function(stage, i) {
+    var isCur = !isShissho && c.stage === stage;
+    var isDone = !isShissho && i < curIdx;
+    var isNy = stage === 'nyukin';
+
+    var btn = document.createElement('button');
+    btn.className = 'cs-stage-btn' + (isCur ? (isNy ? ' nyukin' : ' cur') : isDone ? ' done' : '');
+    btn.style.cursor = isCur ? 'default' : 'pointer';
+    if (!isCur) { (function(s){ btn.addEventListener('click', function(){ changeStage(s); }); })(stage); }
+
+    var dot = document.createElement('div'); dot.className = 'csb-dot' + (isDone ? ' d' : isCur ? (isNy ? ' ny' : ' c') : '');
+    var lbl = document.createElement('div'); lbl.className = 'csb-lbl' + (isCur ? (isNy ? ' ny' : ' c') : '');
+    lbl.textContent = (STAGE_ICONS[stage]||'') + ' ' + (STAGE_LABELS[stage]||stage);
+    var right = document.createElement('div'); right.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0';
+
+    if (isDone) {
+      var chk = document.createElement('span'); chk.className = 'csb-check'; chk.textContent = '✓'; right.appendChild(chk);
+      var tgD = document.createElement('span'); tgD.className = 'csb-tag csb-tag-done'; tgD.textContent = '完了'; right.appendChild(tgD);
+    } else if (isCur) {
+      var tgC = document.createElement('span'); tgC.className = 'csb-tag'; tgC.style.background = isNy ? 'var(--green)' : 'var(--blue)'; tgC.textContent = '現在'; right.appendChild(tgC);
+    } else {
+      var tgM = document.createElement('span'); tgM.style.cssText = 'font-size:10px;color:var(--g400);';
+      tgM.textContent = isShissho ? '↑タップで復活' : 'タップで移動'; right.appendChild(tgM);
+    }
+    btn.appendChild(dot); btn.appendChild(lbl); btn.appendChild(right);
+    flow.appendChild(btn);
+  });
+
+  var shisshoBtn = document.createElement('button');
+  shisshoBtn.className = 'cs-stage-btn' + (isShissho ? ' shissho' : '');
+  shisshoBtn.style.marginTop = '4px';
+  shisshoBtn.style.cursor = isShissho ? 'default' : 'pointer';
+  var shDot = document.createElement('div'); shDot.className = 'csb-dot' + (isShissho ? ' sh' : '');
+  var shLbl = document.createElement('div'); shLbl.className = 'csb-lbl' + (isShissho ? ' sh' : '');
+  shLbl.textContent = '失注';
+  var shRight = document.createElement('div'); shRight.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0';
+
+  if (isShissho) {
+    var shTag = document.createElement('span'); shTag.className = 'csb-tag'; shTag.style.background = 'var(--red)'; shTag.textContent = '現在'; shRight.appendChild(shTag);
+  } else {
+    shisshoBtn.style.opacity = '0.6';
+    var shHint = document.createElement('span'); shHint.style.cssText = 'font-size:10px;color:var(--g400);'; shHint.textContent = 'タップで失注'; shRight.appendChild(shHint);
+    shisshoBtn.addEventListener('click', function(){
+      if (shisshoBtn.dataset.confirming === '1') {
+        changeStage('shissho');
+      } else {
+        shisshoBtn.dataset.confirming = '1';
+        shisshoBtn.style.opacity = '1'; shisshoBtn.style.background = 'var(--rl)'; shisshoBtn.style.border = '1.5px solid var(--red)';
+        shLbl.textContent = '❌ 本当に失注にする？'; shLbl.style.color = 'var(--red)';
+        shHint.textContent = 'もう一度タップで確定'; shHint.style.color = 'var(--red)';
+        setTimeout(function(){
+          if (shisshoBtn.dataset.confirming === '1') {
+            shisshoBtn.dataset.confirming = '0'; shisshoBtn.style.opacity = '0.6';
+            shisshoBtn.style.background = ''; shisshoBtn.style.border = '';
+            shLbl.textContent = '失注'; shLbl.style.color = ''; shHint.textContent = 'タップで失注'; shHint.style.color = '';
+          }
+        }, 3000);
+      }
+    });
+  }
+  shisshoBtn.appendChild(shDot); shisshoBtn.appendChild(shLbl); shisshoBtn.appendChild(shRight);
+  flow.appendChild(shisshoBtn);
+}
+
+function changeStage(newStage) {
+  if (!currentDetailCase) return;
+  currentDetailCase.stage = newStage;
+  currentDetailCase.stagnant = false;
+  currentDetailCase.days = 0;
+  renderStageFlow(currentDetailCase);
+  calcKPI();
+  renderCasesList();
+  showToast((STAGE_LABELS[newStage]||newStage) + 'に更新しました');
+}
+
+function addCase(j) {
+  var now = new Date();
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var ds = now.getFullYear() + '/' + pad(now.getMonth()+1) + '/' + pad(now.getDate());
+  var name = '', amount = 0, detail = '';
+  if (currentTab === 'photo') { name = (j.priority === '緊急' ? '[緊急] ' : '') + '写真診断 ' + (j.amount_main||''); amount = j.price_raw||0; detail = j.detail||''; }
+  else if (currentTab === 'report') { var uc = j.urgent ? j.urgent.length : 0; name = (uc > 0 ? '[緊急'+uc+'件] ' : '') + '報告書診断 ' + (j.total_cost||''); amount = 0; detail = j.detail||''; }
+  else if (currentTab === 'estimate') { name = '見積書査定：' + (j.verdict||'') + ' ' + (j.price||''); amount = j.price_raw||0; detail = j.detail||''; }
+  var newCase = {
+    id: 'CASE-' + String(allCasesDB.length+1).padStart(3,'0'),
+    name: name, amount: amount, date: ds, area: '—', stage: 'mitsumori', days: 0, stagnant: false, detail: detail
+  };
+  allCasesDB.unshift(newCase);
+  calcKPI();
+  renderCasesList();
+  showToast('✅ 案件管理に追加しました');
+}
+
+/* ═══════════════════════════════
+   COSOJI依頼フォーム
+═══════════════════════════════ */
+function toggleCosoji(tab) {
+  var formId = 'cosoji-form-' + tab;
+  var form = document.getElementById(formId); if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  if (form.style.display !== 'none') form.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function submitCosoji(tab) {
+  var btnId = tab === 'est' ? 'cosoji-btn-est' : 'cosoji-btn-' + tab;
+  var btn = document.getElementById(btnId);
+  var comp = document.getElementById('cosoji-complete-' + tab);
+  var trust = document.getElementById('cosoji-trust-' + tab);
+  if (!btn || btn.classList.contains('done')) return;
+  // 1タップで完了
+  btn.classList.add('done');
+  btn.textContent = '✅ 依頼しました';
+  btn.disabled = true;
+  if (trust) trust.style.display = 'none'; // 完了後はtrust textを非表示
+  if (comp) comp.style.display = 'block';
+  showToast('✅ 無料見積を依頼しました。1営業日以内に担当者からご連絡します。');
+  addCase({ priority:'', amount_main:'依頼済み', price_raw:0, detail:'COSOJIへ無料見積依頼済み。' });
+}
+
+/* ═══════════════════════════════
+   サンプル（報告書・見積書）
+═══════════════════════════════ */
+var samplePromptsReport = {
+  regular: '定期巡回報告書より。築15年のRC造マンション（10階建て・大阪市）。屋上防水の浮き・外壁タイルの剥落・給水ポンプの異音・廊下照明の不点灯など複数の不具合を確認。',
+  large: '大規模修繕前の調査報告書。築20年・鉄骨造ビル（6階建て・東京都）。外壁全面にひび割れ・錆汁・タイル剥落が多数。屋上防水は全面更新が必要な状態。エレベーターも点検要。',
+  emergency: '緊急対応報告書。3階の給水管破裂により、2・3階に大規模漏水発生。天井・壁に浸水被害。電気設備への影響も懸念される。即日対応が必要。'
+};
+var samplePromptsEstimate = {
+  highwall: '外壁塗装工事の見積書。RC造マンション（5階建て・延床面積800m2）。外壁高圧洗浄・シーラー・上塗り2回。足場仮設含む。見積金額：3,200,000円（税込）。大阪市北区。',
+  fairplumbing: '給排水管更新工事の見積書。築25年マンション（8階建て）。給水管（鋼管→塩ビ管）全面更新・排水管清掃・接続工事一式。見積金額：2,850,000円（税込）。東京都渋谷区。',
+  fairroof: '屋上防水工事の見積書。RC造ビル屋上（面積300m2）。既存防水撤去・ウレタン防水2層・保護塗料。見積金額：1,980,000円（税込）。神戸市中央区。'
+};
+
+function selectSampleReport(key) {
+  document.querySelectorAll('#samples-wrap-report .sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  var rmap={'regular':0,'large':1,'emergency':2};
+  var rchips=document.querySelectorAll('#samples-wrap-report .sample-btn');
+  if(rchips[rmap[key]]!=null) rchips[rmap[key]].classList.add('active');
+
+  var labels={regular:'定期巡回報告書',large:'大規模修繕前調査',emergency:'緊急対応報告書'};
+  var emojis={regular:'📋',large:'🏢',emergency:'🚨'};
+  var bgs={regular:'#F3F4F6',large:'#F3F4F6',emergency:'#F3F4F6'};
+  showSampleInDZ(labels[key]||key, emojis[key]||'📋', bgs[key]||'var(--bl)');
+
+  var result = sampleResultsReport[key];
+  if (result) {
+    setTimeout(function(){
+      renderResult(result);
+      usageCount++; updateUsageUI();
+      caseCnt++; animCount('sc', caseCnt);
+    }, 600);
+  }
+}
+
+function selectSampleEstimate(key) {
+  document.querySelectorAll('#samples-wrap-estimate .sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  var emap={'highwall':0,'fairplumbing':1,'fairroof':2};
+  var echips=document.querySelectorAll('#samples-wrap-estimate .sample-btn');
+  if(echips[emap[key]]!=null) echips[emap[key]].classList.add('active');
+
+  var labels={highwall:'外壁塗装見積書（高め）',fairplumbing:'給排水見積書（適正）',fairroof:'屋上防水見積書（適正）'};
+  var emojis={highwall:'📄',fairplumbing:'📄',fairroof:'📄'};
+  var bgs={highwall:'#F3F4F6',fairplumbing:'#F3F4F6',fairroof:'#F3F4F6'};
+  showSampleInDZ(labels[key]||key, emojis[key]||'📄', bgs[key]||'var(--bl)');
+
+  var result = sampleResultsEstimate[key];
+  if (!result) return;
+  lastEstimateBase = result.price_raw || 0;
+
+  if (estimateMode === 'convert') {
+    // 変換モード：査定スキップ→変換パネルへ直行
+    setTimeout(function(){
+      var convPanel = document.getElementById('conv-panel');
+      var rcMain = document.getElementById('rc-main');
+      if (rcMain) rcMain.classList.remove('on');
+      if (convPanel) {
+        calcConv();
+        convPanel.style.display = 'block';
+        convPanel.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }
+      usageCount++; updateUsageUI();
+      caseCnt++; animCount('sc', caseCnt);
+      addCase({verdict:'変換', price_raw:lastEstimateBase, price:result.price||'—', detail:labels[key]||'見積書変換'});
+    }, 400);
+  } else {
+    // 査定モード：通常の結果表示
+    setTimeout(function(){
+      renderResult(result);
+      usageCount++; updateUsageUI();
+      caseCnt++; animCount('sc', caseCnt);
+    }, 600);
+  }
+}
+
+/* ═══════════════════════════════
+   業者タブ：独立検索
+═══════════════════════════════ */
+function selectSampleVendor(key) {
+  document.querySelectorAll('#vendor-tab-content .sample-btn').forEach(function(el){ el.classList.remove('active'); });
+  var chips = document.querySelectorAll('#vendor-tab-content .chip');
+  var keyMap = {crack:0, waterproof:1, plumbing:2};
+  if (chips[keyMap[key]] != null) chips[keyMap[key]].classList.add('active');
+
+  var labels={crack:'外壁補修工事',waterproof:'屋上防水工事',plumbing:'給排水設備工事'};
+  showSampleInDZ(labels[key]||key, '🏠', '#F3F4F6');
+
+  var resultsEl = document.getElementById('vendor-tab-results');
+  var result = sampleResultsVendor.vendor_default;
+  result.work_type = labels[key] || '修繕工事';
+  if (resultsEl && result.vendors) {
+    resultsEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--g500);letter-spacing:.05em;margin-bottom:10px;">' + result.work_type + '・紹介 ' + result.vendors.length + '社</div>' +
+      result.vendors.map(function(v, i){
+        return '<div class="vcard"><div class="vc-head"><div><div class="vc-name">'+(i===0?'1. ':i===1?'2. ':i===2?'3. ':'')+v.name+'</div><div class="vc-area">📍 '+v.area+'</div>'+(v.description?'<div style="font-size:11px;color:var(--g500);margin-top:2px;">'+v.description+'</div>':'')+
+        '</div><div class="vc-star">★'+v.rating+'</div></div><div class="vc-tags"><span class="vc-tag">'+v.specialty+'</span><span class="vc-tag">'+v.price_range+'</span></div>'+
+        '<div class="vc-acts"><a class="vc-btn vc-call" href="tel:'+v.tel+'">電話する</a><a class="vc-btn vc-web" href="'+v.url+'" target="_blank">HPを見る</a></div></div>';
+      }).join('');
+    setTimeout(function(){
+      resultsEl.style.display = 'block';
+      resultsEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+      // ボタンを「別の写真で再検索」に変更
+      var btnTxt = document.getElementById('btn-main-txt');
+      if (btnTxt) btnTxt.textContent = '別の写真・内容で再検索する';
+      usageCount++; updateUsageUI();
+    }, 600);
+  }
+}
+function hideVendorInputArea() {
+  // 非表示にしない - DZ・補足・ボタンは常に表示
+}
+
+const SYS_VENDOR = '不動産修繕の業者マッチング専門家として業者を提案します。JSONのみで返答：{"vendors":[{"name":"○○設備工業株式会社","area":"エリア","specialty":"得意工事","rating":"4.5","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"8000円/m2","description":"実績・特徴（30字以内）"},{"name":"△△工務店","area":"エリア","specialty":"得意工事","rating":"4.2","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"7500円/m2","description":"実績・特徴（30字以内）"},{"name":"□□リフォーム","area":"エリア","specialty":"得意工事","rating":"4.0","tel":"03-XXXX-XXXX","url":"https://example.com","price_range":"9000円/m2","description":"実績・特徴（30字以内）"}]}';
+
+async function runVendorSearch() {
+  if (!checkLimit()) return;
+  const workTypeEl = document.getElementById('vendor-work-type');
+  const areaEl = document.getElementById('vendor-area');
+  const workType = workTypeEl ? workTypeEl.value : '';
+  const area = areaEl ? areaEl.value.trim() : '';
+  const btn = document.querySelector('#vendor-tab-content .btn-ai');
+  if (btn) { btn.disabled = true; btn.textContent = '検索中...'; }
+  const resultsEl = document.getElementById('vendor-tab-results');
+  if (resultsEl) resultsEl.style.display = 'none';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 800, system: SYS_VENDOR, messages: [{ role: 'user', content: [{ type: 'text', text: '工事種別：' + workType + '\nエリア：' + area }] }] })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const raw = data.content && data.content[0] ? data.content[0].text : '{}';
+    const j = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    if (resultsEl && j.vendors) {
+      resultsEl.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--g400);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px;">' + workType + '・' + area + ' の対応業者 ' + j.vendors.length + '社</div>' +
+        j.vendors.map((v, i) =>
+          '<div class="vcard"><div class="vc-head"><div><div class="vc-name">' + (i===0?'1. ':i===1?'2. ':i===2?'3. ':' ') + v.name + '</div><div class="vc-area">📍 ' + v.area + '</div>' + (v.description ? '<div style="font-size:11px;color:var(--g500);margin-top:2px;">' + v.description + '</div>' : '') + '</div><div class="vc-star">★' + v.rating + '</div></div>' +
+          '<div class="vc-tags"><span class="vc-tag">' + v.specialty + '</span><span class="vc-tag">' + v.price_range + '</span></div>' +
+          '<div class="vc-acts"><a class="vc-btn vc-call" href="tel:' + v.tel + '">電話する</a><a class="vc-btn vc-web" href="' + v.url + '" target="_blank">HPを見る</a></div></div>'
+        ).join('');
+      resultsEl.style.display = 'block';
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      hideVendorInputArea();
+      // ボタンを「再検索する」に変更
+      var btnTxt = document.getElementById('btn-main-txt');
+      if (btnTxt) btnTxt.textContent = '別の写真・内容で再検索する';
+    }
+    usageCount++; updateUsageUI();
+  } catch (e) { showToast('エラー：' + e.message); }
+  if (btn) { btn.disabled = false; }
+}
+
+/* ═══════════════════════════════
+   手動案件追加
+═══════════════════════════════ */
+function openManualCase() {
+  if (!isLoggedIn) { showToast('案件の追加にはログインが必要です'); return; }
+  ['mc-name','mc-area','mc-detail'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  const amt=document.getElementById('mc-amount'); if(amt) amt.value='';
+  document.getElementById('manual-case-modal').classList.add('on');
+}
+function submitManualCase() {
+  const name = document.getElementById('mc-name').value.trim();
+  if (!name) { showToast('案件名を入力してください'); return; }
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ds = now.getFullYear() + '/' + pad(now.getMonth()+1) + '/' + pad(now.getDate());
+  allCasesDB.unshift({
+    id: 'CASE-' + String(allCasesDB.length+1).padStart(3,'0'),
+    name,
+    area: document.getElementById('mc-area').value || '—',
+    amount: parseInt(document.getElementById('mc-amount').value) || 0,
+    date: ds, stage: 'mitsumori', days: 0, stagnant: false,
+    detail: document.getElementById('mc-detail').value || ''
+  });
+  calcKPI(); renderCasesList();
+  closeModal('manual-case-modal');
+  showToast('✅ 案件を追加しました');
+}
+
+/* ═══════════════════════════════
+   カスタマイズモーダル
+═══════════════════════════════ */
+function showCustomizeModal() {
+  var m = document.getElementById('customize-modal'); if (m) m.style.display = 'flex';
+}
+
+init();
+</script>
+</body>
+</html>
