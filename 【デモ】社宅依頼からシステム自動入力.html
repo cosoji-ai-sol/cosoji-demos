@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社宅管理 AI自動化デモ</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F4F0;
+  --surface:#FFFFFF;
+  --surface2:#F0EEE8;
+  --border:rgba(50,45,40,0.1);
+  --border-md:rgba(50,45,40,0.2);
+  --text:#181714;
+  --text2:#68655E;
+  --text3:#A09D96;
+  --blue:#2B7FD4;
+  --blue-bg:#EBF3FC;
+  --blue-text:#0B4A8A;
+  --green:#2D6B0E;
+  --green-bg:#E8F3DC;
+  --green-text:#1E5009;
+  --amber:#7A4A08;
+  --amber-bg:#FAF0D8;
+  --amber-text:#5C3505;
+  --gray-bg:#EDECE7;
+  --gray-text:#4A4845;
+  --red:#9B2020;
+  --red-bg:#FAEAEA;
+  --r:10px;--r-sm:6px;
+}
+body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 1rem;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.main{padding:2rem;max-width:760px;}
+
+/* Sidebar */
+.logo{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+.logo span{color:var(--blue);}
+.nav-section{margin-bottom:1.5rem;}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.08em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;padding:0 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--r-sm);cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--text2);}
+.nav-item:hover{background:var(--surface2);}
+.nav-item.active{background:var(--blue-bg);color:var(--blue-text);font-weight:500;}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--border-md);flex-shrink:0;}
+.nav-dot.done{background:var(--green);}
+.nav-dot.active{background:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);}
+.nav-dot.pending{background:var(--text3);}
+
+/* Phase badge */
+.phase-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:500;margin-bottom:1rem;}
+.phase-1{background:var(--blue-bg);color:var(--blue-text);}
+.phase-2{background:var(--green-bg);color:var(--green-text);}
+.phase-3{background:var(--amber-bg);color:var(--amber-text);}
+
+/* Page header */
+.page-title{font-size:18px;font-weight:500;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem;line-height:1.6;}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;}
+.card-title{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+/* Field grid */
+.fg{display:grid;grid-template-columns:140px 1fr;gap:10px 12px;align-items:start;}
+.fl{font-size:13px;color:var(--text2);padding-top:8px;}
+.fv{display:flex;align-items:center;gap:8px;}
+.fi{width:100%;padding:7px 10px;border-radius:var(--r-sm);border:1px solid var(--border-md);background:var(--surface);font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:all 0.2s;}
+.fi:focus{border-color:var(--blue);}
+.fi.ai{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-text);}
+.fi.ai2{border-color:var(--green);background:var(--green-bg);color:var(--green-text);}
+.fi.ai3{border-color:#B8861A;background:var(--amber-bg);color:var(--amber-text);}
+.fi.empty{border-color:var(--border);background:var(--bg);color:var(--text3);font-style:italic;}
+textarea.fi{resize:vertical;min-height:60px;line-height:1.6;}
+
+/* Confidence */
+.conf{font-size:10px;padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+.c-hi{background:var(--green-bg);color:var(--green-text);}
+.c-md{background:var(--amber-bg);color:var(--amber-text);}
+.c-no{background:var(--gray-bg);color:var(--gray-text);}
+
+/* Status */
+.status{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:10px;}
+.s-wait{background:var(--amber-bg);color:var(--amber-text);}
+.s-hearing{background:var(--blue-bg);color:var(--blue-text);}
+.s-applied{background:#EDE8F8;color:#3D2080;}
+.s-contract{background:var(--green-bg);color:var(--green-text);}
+
+/* Buttons */
+.btn{padding:9px 20px;border-radius:var(--r-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-blue:hover{background:var(--blue-text);border-color:var(--blue-text);}
+.btn-blue:disabled{background:var(--surface2);border-color:var(--border);color:var(--text3);cursor:not-allowed;}
+.btn-green{background:var(--green-bg);color:var(--green-text);border-color:var(--green);}
+.btn-green:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border-md);}
+.btn-ghost:hover{background:var(--surface2);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+
+/* Progress */
+.prog-wrap{background:var(--surface2);border-radius:var(--r);padding:1rem;margin-bottom:1rem;}
+.prog-label{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.dots{display:flex;gap:4px;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:blink 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.prog-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s ease;width:0%;}
+
+/* Email card */
+.email-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
+.email-header{background:var(--surface2);padding:.75rem 1rem;display:flex;align-items:center;gap:10px;}
+.email-from{font-size:12px;color:var(--text2);}
+.email-from strong{color:var(--text);font-weight:500;}
+.email-body{padding:1rem;font-size:12px;line-height:1.9;color:var(--text2);font-family:monospace;white-space:pre-line;background:var(--surface);}
+
+/* Drive card */
+.drive-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
+.drive-header{background:var(--surface2);padding:.75rem 1rem;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;}
+.drive-file{display:flex;align-items:center;gap:10px;padding:.75rem 1rem;border-top:1px solid var(--border);font-size:13px;}
+.file-icon{width:32px;height:32px;border-radius:4px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.file-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.new-badge{font-size:10px;padding:2px 6px;background:var(--blue-bg);color:var(--blue-text);border-radius:6px;margin-left:auto;}
+
+/* Form preview */
+.form-card{border:1px solid #C4B8F0;border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
+.form-header{background:#EDE8F8;padding:.75rem 1rem;font-size:13px;font-weight:500;color:#3D2080;display:flex;align-items:center;gap:8px;}
+.form-body{padding:1rem;}
+.form-row{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px;margin-bottom:8px;align-items:center;}
+.form-key{color:var(--text2);}
+.form-val{font-weight:500;}
+
+/* Banner */
+.banner{border-radius:var(--r);padding:.875rem 1rem;display:flex;align-items:flex-start;gap:10px;margin-bottom:1rem;}
+.banner-blue{background:var(--blue-bg);border:1px solid #B0CFEE;}
+.banner-green{background:var(--green-bg);border:1px solid #A8CC80;}
+.banner-amber{background:var(--amber-bg);border:1px solid #E0B060;}
+.banner-text{font-size:13px;font-weight:500;}
+.banner-sub{font-size:12px;margin-top:2px;opacity:.8;}
+
+/* Legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+.leg-dot{width:10px;height:10px;border-radius:2px;}
+.leg-1{background:var(--blue-bg);border:1px solid var(--blue);}
+.leg-2{background:var(--green-bg);border:1px solid var(--green);}
+.leg-3{background:var(--amber-bg);border:1px solid #B8861A;}
+.leg-e{background:var(--bg);border:1px solid var(--border-md);}
+
+/* Timeline in sidebar */
+.timeline{margin-top:2rem;}
+.tl-item{display:flex;gap:10px;padding-bottom:16px;position:relative;}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:7px;top:16px;width:1px;height:calc(100% - 8px);background:var(--border);}
+.tl-icon{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-md);background:var(--surface);flex-shrink:0;margin-top:1px;}
+.tl-icon.done{background:var(--green);border-color:var(--green);}
+.tl-icon.active{background:var(--blue);border-color:var(--blue);}
+.tl-content{font-size:12px;color:var(--text2);line-height:1.5;}
+.tl-content strong{display:block;color:var(--text);font-weight:500;font-size:12px;}
+
+/* Row actions */
+.row-actions{display:flex;gap:8px;align-items:center;margin-top:1.25rem;flex-wrap:wrap;}
+
+/* Notice */
+.notice{font-size:11px;color:var(--text3);margin-top:.75rem;line-height:1.6;}
+
+/* Fade-in */
+.fade{opacity:0;transform:translateY(6px);transition:opacity .3s ease,transform .3s ease;}
+.fade.in{opacity:1;transform:translateY(0);}
+
+/* Page tabs */
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:var(--r-sm);margin-bottom:1.5rem;width:fit-content;}
+.tab{padding:6px 16px;border-radius:6px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;}
+.tab.on{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+/* Record header */
+.rec-header{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.rec-avatar{width:44px;height:44px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--blue-text);flex-shrink:0;}
+.rec-name{font-size:16px;font-weight:500;}
+.rec-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+@media(max-width:600px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .main{padding:1rem;}
+  .fg{grid-template-columns:1fr;}
+  .fl{padding-top:0;font-size:12px;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">カクシン<span>クラウド</span> <span style="font-size:10px;color:var(--text3);font-weight:400;">AI連携デモ</span></div>
+
+  <div class="nav-section">
+    <div class="nav-label">案件</div>
+    <div class="nav-item active">
+      <div class="nav-dot active"></div>
+      山田 太郎
+    </div>
+  </div>
+
+  <div class="timeline" id="timeline">
+    <div class="nav-label" style="margin-bottom:12px;">自動化フロー</div>
+    <div class="tl-item">
+      <div class="tl-icon active" id="tl1"></div>
+      <div class="tl-content"><strong>依頼書受信</strong>Gmail自動監視 → AI抽出</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-icon" id="tl2"></div>
+      <div class="tl-content"><strong>申込・個人情報</strong>Googleフォーム → 自動追記</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-icon" id="tl3"></div>
+      <div class="tl-content"><strong>契約条件・請求書</strong>Driveフォルダ → OCR → 自動登録</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-icon" id="tl4"></div>
+      <div class="tl-content"><strong>契約書</strong>Drive監視 → AI抽出</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main" id="mainArea">
+
+  <!-- ===== VIEW: Phase1 START ===== -->
+  <div id="v-p1-start">
+    <div class="phase-badge phase-1">Phase 1 — 依頼書受信</div>
+    <div class="page-title">Gmail自動監視</div>
+    <div class="page-sub">社宅代行会社からのメールを自動検知し、添付PDFからAIが情報を抽出します。</div>
+
+    <div class="email-card">
+      <div class="email-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="#68655E" stroke-width="1.5"/><path d="M2 8l10 6 10-6" stroke="#68655E" stroke-width="1.5"/></svg>
+        <div class="email-from"><strong>reloc-shatak@reloc.co.jp</strong> → shatak@example-fudosan.co.jp</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text3);">2026/04/28 10:23</div>
+      </div>
+      <div class="email-body">件名：【社宅入居依頼】山田太郎様 RC-2026-04287
+
+お世話になっております。リロクラブ株式会社です。
+下記の入居依頼書をご確認いただき、物件のご手配をお願いいたします。
+
+依頼番号：RC-2026-04287
+
+■ 契約会社
+株式会社サンプルテクノロジー（人事総務部 / 鈴木一郎）
+Tel: 06-1234-5678
+
+■ 入居者
+山田 太郎（ヤマダ タロウ）　1988年5月15日生
+Tel: 080-1234-5678　Mail: t.yamada@sample-tech.co.jp
+
+■ 希望条件
+入居希望：2026年5月15日以降
+エリア：大阪市北区・中央区・福島区
+間取り：1LDK〜2LDK　賃料上限：150,000円（共益費込）
+
+■ 社宅規定
+賃料上限：160,000円（共益費含む）
+会社負担：80%　従業員負担：上限の20%　駐車場：不要
+
+添付：社宅入居依頼書_山田太郎.pdf</div>
+    </div>
+
+    <div class="banner banner-blue fade in">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" stroke="#2B7FD4" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="#2B7FD4" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div><div class="banner-text" style="color:var(--blue-text);">登録済みの送信元アドレスを検知しました</div><div class="banner-sub" style="color:var(--blue-text);">reloc-shatak@reloc.co.jp（リロクラブ）— 自動処理を開始します</div></div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-blue" onclick="goP1Extract()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z" stroke="#fff" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        AIで依頼書を抽出する
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase1 EXTRACT ===== -->
+  <div id="v-p1-extract" style="display:none;">
+    <div class="phase-badge phase-1">Phase 1 — 依頼書受信</div>
+    <div class="page-title">AI抽出中...</div>
+    <div class="prog-wrap">
+      <div class="prog-label"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span id="p1msg">フォーマットを識別中...（リロクラブ）</span></div>
+      <div class="prog-track"><div class="prog-fill" id="p1fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase1 RESULT ===== -->
+  <div id="v-p1-result" style="display:none;">
+    <div class="phase-badge phase-1">Phase 1 — 依頼書受信</div>
+    <div class="rec-header">
+      <div class="rec-avatar">山田</div>
+      <div>
+        <div class="rec-name">山田 太郎 <span class="status s-wait" style="font-size:11px;vertical-align:middle;">ヒアリング待ち</span></div>
+        <div class="rec-sub">RC-2026-04287 ／ リロクラブ ／ 依頼受信：2026/04/28</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="leg-dot leg-1"></div>Phase1 AI自動入力</div>
+      <div class="leg"><div class="leg-dot leg-e"></div>未入力（ヒアリング後）</div>
+    </div>
+
+    <div class="card fade" id="r1c1">
+      <div class="card-title">契約会社情報</div>
+      <div class="fg">
+        <div class="fl">会社名</div><div class="fv"><input class="fi ai" value="株式会社サンプルテクノロジー"><span class="conf c-hi">高</span></div>
+        <div class="fl">担当部署</div><div class="fv"><input class="fi ai" value="人事総務部"><span class="conf c-hi">高</span></div>
+        <div class="fl">担当者名</div><div class="fv"><input class="fi ai" value="鈴木 一郎"><span class="conf c-hi">高</span></div>
+        <div class="fl">担当者連絡先</div><div class="fv"><input class="fi ai" value="06-1234-5678"><span class="conf c-hi">高</span></div>
+      </div>
+    </div>
+    <div class="card fade" id="r1c2">
+      <div class="card-title">入居者情報</div>
+      <div class="fg">
+        <div class="fl">氏名</div><div class="fv"><input class="fi ai" value="山田 太郎"><span class="conf c-hi">高</span></div>
+        <div class="fl">フリガナ</div><div class="fv"><input class="fi ai" value="ヤマダ タロウ"><span class="conf c-hi">高</span></div>
+        <div class="fl">電話番号</div><div class="fv"><input class="fi ai" value="080-1234-5678"><span class="conf c-hi">高</span></div>
+        <div class="fl">メールアドレス</div><div class="fv"><input class="fi ai" value="t.yamada@sample-tech.co.jp"><span class="conf c-hi">高</span></div>
+      </div>
+    </div>
+    <div class="card fade" id="r1c3">
+      <div class="card-title">希望条件</div>
+      <div class="fg">
+        <div class="fl">入居希望日</div><div class="fv"><input class="fi ai" value="2026年5月15日以降"><span class="conf c-hi">高</span></div>
+        <div class="fl">希望エリア</div><div class="fv"><input class="fi ai" value="大阪市北区・中央区・福島区"><span class="conf c-hi">高</span></div>
+        <div class="fl">希望間取り</div><div class="fv"><input class="fi ai" value="1LDK〜2LDK"><span class="conf c-hi">高</span></div>
+        <div class="fl">希望賃料上限</div><div class="fv"><input class="fi ai" value="150,000円（共益費込）"><span class="conf c-hi">高</span></div>
+        <div class="fl">詳細希望</div><div class="fv"><input class="fi empty" placeholder="ヒアリング後に入力" disabled><span class="conf c-no">未入力</span></div>
+      </div>
+    </div>
+    <div class="card fade" id="r1c4">
+      <div class="card-title">社宅規定</div>
+      <div class="fg">
+        <div class="fl">賃料上限</div><div class="fv"><input class="fi ai" value="160,000円（共益費含む）"><span class="conf c-hi">高</span></div>
+        <div class="fl">会社負担割合</div><div class="fv"><input class="fi ai" value="80%"><span class="conf c-md">中</span></div>
+        <div class="fl">従業員負担</div><div class="fv"><input class="fi ai" value="上限の20%"><span class="conf c-hi">高</span></div>
+        <div class="fl">駐車場</div><div class="fv"><input class="fi ai" value="不要"><span class="conf c-hi">高</span></div>
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetAll()">最初からやり直す</button>
+      <button class="btn btn-green" onclick="goP2Start()">カクシンクラウドへ登録 → 次のフェーズへ</button>
+    </div>
+    <div class="notice">※ AIの抽出結果です。内容を確認のうえ登録してください。</div>
+  </div>
+
+  <!-- ===== VIEW: Phase2 START ===== -->
+  <div id="v-p2-start" style="display:none;">
+    <div class="phase-badge phase-2">Phase 2 — 申込・個人情報</div>
+    <div class="page-title">Googleフォーム自動連携</div>
+    <div class="page-sub">入居申込フォームの回答を検知し、カクシンクラウドの既存レコードに自動追記します。</div>
+
+    <div class="banner banner-green fade in">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" stroke="#2D6B0E" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#2D6B0E" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div><div class="banner-text" style="color:var(--green-text);">Googleフォームへの回答を検知しました</div><div class="banner-sub" style="color:var(--green-text);">t.yamada@sample-tech.co.jp — RC-2026-04287 のレコードに紐付けます</div></div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#3D2080" stroke-width="1.5"/><path d="M8 12h8M8 8h8M8 16h4" stroke="#3D2080" stroke-width="1.5" stroke-linecap="round"/></svg>
+        入居申込フォーム — 回答データ
+      </div>
+      <div class="form-body">
+        <div class="form-row"><div class="form-key">氏名</div><div class="form-val">山田 太郎</div></div>
+        <div class="form-row"><div class="form-key">フリガナ</div><div class="form-val">ヤマダ タロウ</div></div>
+        <div class="form-row"><div class="form-key">生年月日</div><div class="form-val">1988年5月15日</div></div>
+        <div class="form-row"><div class="form-key">現住所</div><div class="form-val">大阪府吹田市春日3-5-101</div></div>
+        <div class="form-row"><div class="form-key">電話番号</div><div class="form-val">080-1234-5678</div></div>
+        <div class="form-row"><div class="form-key">メール</div><div class="form-val">t.yamada@sample-tech.co.jp</div></div>
+        <div class="form-row"><div class="form-key">勤務先</div><div class="form-val">株式会社サンプルテクノロジー</div></div>
+        <div class="form-row"><div class="form-key">年収</div><div class="form-val">620万円</div></div>
+        <div class="form-row"><div class="form-key">入居人数</div><div class="form-val">2名（本人＋配偶者）</div></div>
+        <div class="form-row"><div class="form-key">緊急連絡先</div><div class="form-val">山田 花子（妻）090-8765-4321</div></div>
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-blue" onclick="goP2Extract()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z" stroke="#fff" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        レコードに自動追記する
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase2 RESULT ===== -->
+  <div id="v-p2-result" style="display:none;">
+    <div class="phase-badge phase-2">Phase 2 — 申込・個人情報</div>
+    <div class="rec-header">
+      <div class="rec-avatar">山田</div>
+      <div>
+        <div class="rec-name">山田 太郎 <span class="status s-applied" style="font-size:11px;vertical-align:middle;">申込済み</span></div>
+        <div class="rec-sub">RC-2026-04287 ／ リロクラブ ／ 依頼受信：2026/04/28</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="leg-dot leg-1"></div>Phase1（依頼書）</div>
+      <div class="leg"><div class="leg-dot leg-2"></div>Phase2 フォーム自動追記</div>
+      <div class="leg"><div class="leg-dot leg-e"></div>未入力</div>
+    </div>
+
+    <div class="card fade" id="r2c1">
+      <div class="card-title">入居者情報（更新）</div>
+      <div class="fg">
+        <div class="fl">氏名</div><div class="fv"><input class="fi ai" value="山田 太郎"><span class="conf c-hi">Ph1</span></div>
+        <div class="fl">生年月日</div><div class="fv"><input class="fi ai2" value="1988年5月15日"><span class="conf c-hi">Ph2</span></div>
+        <div class="fl">現住所</div><div class="fv"><input class="fi ai2" value="大阪府吹田市春日3-5-101"><span class="conf c-hi">Ph2</span></div>
+        <div class="fl">電話番号</div><div class="fv"><input class="fi ai" value="080-1234-5678"><span class="conf c-hi">Ph1</span></div>
+        <div class="fl">メール</div><div class="fv"><input class="fi ai" value="t.yamada@sample-tech.co.jp"><span class="conf c-hi">Ph1</span></div>
+        <div class="fl">年収</div><div class="fv"><input class="fi ai2" value="620万円"><span class="conf c-hi">Ph2</span></div>
+        <div class="fl">入居人数</div><div class="fv"><input class="fi ai2" value="2名（本人＋配偶者）"><span class="conf c-hi">Ph2</span></div>
+        <div class="fl">緊急連絡先</div><div class="fv"><input class="fi ai2" value="山田 花子（妻）090-8765-4321"><span class="conf c-hi">Ph2</span></div>
+      </div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetAll()">最初からやり直す</button>
+      <button class="btn btn-green" onclick="goP3Start()">次のフェーズへ（契約条件・請求書）</button>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase3 START ===== -->
+  <div id="v-p3-start" style="display:none;">
+    <div class="phase-badge phase-3">Phase 3 — 契約条件・請求書・契約書</div>
+    <div class="page-title">Googleドライブ監視</div>
+    <div class="page-sub">指定フォルダへのファイル格納を自動検知し、OCRで読み取ってカクシンクラウドへ追記します。</div>
+
+    <div class="drive-card">
+      <div class="drive-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 19h20L12 2z" stroke="#2B7FD4" stroke-width="1.5"/></svg>
+        Googleドライブ ／ 社宅案件 ／ RC-2026-04287_山田太郎
+      </div>
+      <div class="drive-file">
+        <div class="file-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#9B2020" stroke-width="1.5"/><path d="M14 2v6h6" stroke="#9B2020" stroke-width="1.5"/></svg></div>
+        <div><div style="font-size:13px;">契約条件確認書_グランドヒルズ梅田.pdf</div><div class="file-meta">格納：2026/04/30 14:22 — 管理会社：グランドヒルズ管理株式会社</div></div>
+        <div class="new-badge">新着</div>
+      </div>
+      <div class="drive-file">
+        <div class="file-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#9B2020" stroke-width="1.5"/><path d="M14 2v6h6" stroke="#9B2020" stroke-width="1.5"/></svg></div>
+        <div><div style="font-size:13px;">請求書_初期費用明細.pdf</div><div class="file-meta">格納：2026/04/30 14:23</div></div>
+        <div class="new-badge">新着</div>
+      </div>
+      <div class="drive-file">
+        <div class="file-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#9B2020" stroke-width="1.5"/><path d="M14 2v6h6" stroke="#9B2020" stroke-width="1.5"/></svg></div>
+        <div><div style="font-size:13px;">賃貸借契約書_山田太郎.pdf</div><div class="file-meta">格納：2026/05/02 10:05</div></div>
+        <div class="new-badge">新着</div>
+      </div>
+    </div>
+
+    <div class="banner banner-amber fade in">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" stroke="#7A4A08" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="#7A4A08" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div><div class="banner-text" style="color:var(--amber-text);">3件の新着ファイルを検知しました</div><div class="banner-sub" style="color:var(--amber-text);">OCRおよびAI解析で項目を抽出し、レコードに追記します</div></div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-blue" onclick="goP3Extract()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z" stroke="#fff" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        OCR＋AI解析を開始する
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase3 EXTRACT ===== -->
+  <div id="v-p3-extract" style="display:none;">
+    <div class="phase-badge phase-3">Phase 3 — 契約条件・請求書・契約書</div>
+    <div class="page-title">OCR＋AI解析中...</div>
+    <div class="prog-wrap">
+      <div class="prog-label"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span id="p3msg">契約条件確認書を解析中...</span></div>
+      <div class="prog-track"><div class="prog-fill" id="p3fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: Phase3 RESULT ===== -->
+  <div id="v-p3-result" style="display:none;">
+    <div class="phase-badge phase-3">Phase 3 — 契約条件・請求書・契約書</div>
+    <div class="rec-header">
+      <div class="rec-avatar">山田</div>
+      <div>
+        <div class="rec-name">山田 太郎 <span class="status s-contract" style="font-size:11px;vertical-align:middle;">契約手続き中</span></div>
+        <div class="rec-sub">RC-2026-04287 ／ リロクラブ ／ グランドヒルズ梅田 205号室</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="leg"><div class="leg-dot leg-1"></div>Phase1（依頼書）</div>
+      <div class="leg"><div class="leg-dot leg-2"></div>Phase2（フォーム）</div>
+      <div class="leg"><div class="leg-dot leg-3"></div>Phase3 OCR自動追記</div>
+    </div>
+
+    <div class="card fade" id="r3c1">
+      <div class="card-title">物件・契約条件</div>
+      <div class="fg">
+        <div class="fl">物件名</div><div class="fv"><input class="fi ai3" value="グランドヒルズ梅田"><span class="conf c-hi">高</span></div>
+        <div class="fl">住所</div><div class="fv"><input class="fi ai3" value="大阪市北区梅田3-1-205"><span class="conf c-hi">高</span></div>
+        <div class="fl">号室</div><div class="fv"><input class="fi ai3" value="205号室"><span class="conf c-hi">高</span></div>
+        <div class="fl">管理会社</div><div class="fv"><input class="fi ai3" value="グランドヒルズ管理株式会社"><span class="conf c-hi">高</span></div>
+        <div class="fl">契約開始日</div><div class="fv"><input class="fi ai3" value="2026年5月15日"><span class="conf c-hi">高</span></div>
+        <div class="fl">契約終了日</div><div class="fv"><input class="fi ai3" value="2028年5月14日"><span class="conf c-hi">高</span></div>
+        <div class="fl">月額賃料</div><div class="fv"><input class="fi ai3" value="148,000円"><span class="conf c-hi">高</span></div>
+        <div class="fl">共益費</div><div class="fv"><input class="fi ai3" value="8,000円"><span class="conf c-hi">高</span></div>
+      </div>
+    </div>
+
+    <div class="card fade" id="r3c2">
+      <div class="card-title">請求書（初期費用）</div>
+      <div class="fg">
+        <div class="fl">敷金</div><div class="fv"><input class="fi ai3" value="296,000円（2ヶ月）"><span class="conf c-hi">高</span></div>
+        <div class="fl">礼金</div><div class="fv"><input class="fi ai3" value="148,000円（1ヶ月）"><span class="conf c-hi">高</span></div>
+        <div class="fl">仲介手数料</div><div class="fv"><input class="fi ai3" value="156,000円（税込）"><span class="conf c-hi">高</span></div>
+        <div class="fl">火災保険</div><div class="fv"><input class="fi ai3" value="18,000円（2年）"><span class="conf c-md">中</span></div>
+        <div class="fl">鍵交換費</div><div class="fv"><input class="fi ai3" value="22,000円（税込）"><span class="conf c-hi">高</span></div>
+        <div class="fl">初期費用合計</div><div class="fv"><input class="fi ai3" value="640,000円"><span class="conf c-hi">高</span></div>
+      </div>
+    </div>
+
+    <div class="card fade" id="r3c3">
+      <div class="card-title">契約書（主要項目）</div>
+      <div class="fg">
+        <div class="fl">契約者</div><div class="fv"><input class="fi ai3" value="株式会社サンプルテクノロジー"><span class="conf c-hi">高</span></div>
+        <div class="fl">入居者</div><div class="fv"><input class="fi ai3" value="山田 太郎"><span class="conf c-hi">高</span></div>
+        <div class="fl">更新料</div><div class="fv"><input class="fi ai3" value="賃料1ヶ月分"><span class="conf c-hi">高</span></div>
+        <div class="fl">解約予告</div><div class="fv"><input class="fi ai3" value="退去1ヶ月前"><span class="conf c-md">中</span></div>
+        <div class="fl">原状回復</div><div class="fv"><input class="fi ai3" value="ガイドライン準拠"><span class="conf c-md">中</span></div>
+      </div>
+    </div>
+
+    <div class="banner banner-green fade in" id="finalBanner" style="display:none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10" stroke="#2D6B0E" stroke-width="1.5"/><path d="M8 12l3 3 5-5" stroke="#2D6B0E" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div><div class="banner-text" style="color:var(--green-text);">全フェーズの自動入力が完了しました</div><div class="banner-sub" style="color:var(--green-text);">依頼書受信 → 申込情報 → 契約情報まで、手打ちゼロでカクシンクラウドへ登録されました</div></div>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetAll()">最初からやり直す</button>
+      <button class="btn btn-green" id="finalBtn" onclick="finalize()">カクシンクラウドへ登録して完了</button>
+    </div>
+    <div class="notice">※ OCR・AI抽出結果は参考値です。法的効力のある書類（契約書）は必ず内容を確認のうえ登録してください。</div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function goP1Extract(){
+  show('v-p1-extract');
+  const msgs=['フォーマットを識別中...（リロクラブ）','テキストレイヤーを抽出中...','Claude APIで項目を解析中...','Salesforceフィールドにマッピング中...','抽出完了'];
+  const pcts=[12,35,62,88,100];
+  animate('p1fill','p1msg',msgs,pcts,()=>{ show('v-p1-result'); fadeCards(['r1c1','r1c2','r1c3','r1c4']); setTL(1,'done'); setTL(2,'active'); });
+}
+function goP2Start(){ show('v-p2-start'); setTL(2,'active'); }
+function goP2Extract(){
+  setTimeout(()=>{ show('v-p2-result'); fadeCards(['r2c1']); setTL(2,'done'); setTL(3,'active'); },600);
+}
+function goP3Start(){ show('v-p3-start'); setTL(3,'active'); }
+function goP3Extract(){
+  show('v-p3-extract');
+  const msgs=['契約条件確認書を解析中（OCR）...','請求書を解析中（OCR）...','契約書を解析中（OCR）...','Claude APIで項目を抽出中...','Salesforceフィールドにマッピング中...','追記完了'];
+  const pcts=[10,30,52,72,90,100];
+  animate('p3fill','p3msg',msgs,pcts,()=>{ show('v-p3-result'); fadeCards(['r3c1','r3c2','r3c3']); setTimeout(()=>{ document.getElementById('finalBanner').style.display='flex'; },900); setTL(3,'done'); setTL(4,'done'); });
+}
+function finalize(){
+  const btn=document.getElementById('finalBtn');
+  btn.textContent='登録完了 ✓'; btn.disabled=true;
+}
+function resetAll(){
+  ['v-p1-start','v-p1-extract','v-p1-result','v-p2-start','v-p2-result','v-p3-start','v-p3-extract','v-p3-result'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  document.querySelectorAll('.fade').forEach(el=>el.classList.remove('in'));
+  document.getElementById('p1fill').style.width='0%';
+  document.getElementById('p3fill').style.width='0%';
+  document.getElementById('finalBanner').style.display='none';
+  const fb=document.getElementById('finalBtn'); if(fb){fb.textContent='カクシンクラウドへ登録して完了';fb.disabled=false;}
+  [1,2,3,4].forEach(i=>setTL(i,i===1?'active':'pending'));
+  show('v-p1-start');
+}
+function show(id){
+  ['v-p1-start','v-p1-extract','v-p1-result','v-p2-start','v-p2-result','v-p3-start','v-p3-extract','v-p3-result'].forEach(v=>{ const el=document.getElementById(v); if(el) el.style.display='none'; });
+  const t=document.getElementById(id); if(t) t.style.display='block';
+}
+function fadeCards(ids){ ids.forEach((id,i)=>{ setTimeout(()=>{ const el=document.getElementById(id); if(el) el.classList.add('in'); },i*130); }); }
+function animate(fillId,msgId,msgs,pcts,done){
+  let i=0;
+  const fill=document.getElementById(fillId), msg=document.getElementById(msgId);
+  const t=setInterval(()=>{
+    if(i<msgs.length){ msg.textContent=msgs[i]; fill.style.width=pcts[i]+'%'; i++; }
+    else{ clearInterval(t); setTimeout(done,400); }
+  },700);
+}
+function setTL(n,state){
+  const el=document.getElementById('tl'+n); if(!el) return;
+  el.className='tl-icon'+(state==='done'?' done':state==='active'?' active':'');
+}
+// init
+setTL(1,'active');
+</script>
+</body>
+</html>
