@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COSOJI BM AIソリューション</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:#f8fafc;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const C = {
+  sidebar:"#0f1c2e",primary:"#2563eb",primaryL:"#dbeafe",primaryLL:"#eff6ff",
+  bg:"#f8fafc",white:"#ffffff",border:"#e2e8f0",border2:"#f1f5f9",
+  text:"#0f172a",text2:"#64748b",text3:"#94a3b8",
+  red:"#dc2626",redL:"#fee2e2",orange:"#ea580c",orangeL:"#ffedd5",
+  yellow:"#d97706",yellowL:"#fef3c7",green:"#059669",greenL:"#d1fae5",
+  purple:"#7c3aed",purpleL:"#ede9fe",teal:"#0d9488",tealL:"#ccfbf1",
+};
+const STATUS = {
+  "未着手":         {color:C.red,   bg:C.redL},
+  "見積依頼":       {color:C.orange,bg:C.orangeL},
+  "修繕実施中":     {color:C.primary,bg:C.primaryL},
+  "オーナー報告中": {color:C.purple,bg:C.purpleL},
+  "修繕完了報告済": {color:C.teal,  bg:C.tealL},
+  "完了":           {color:C.green, bg:C.greenL},
+};
+const STATUS_KEYS = Object.keys(STATUS);
+const DEPTS = ["賃貸管理部1課","賃貸管理部2課","賃貸管理部3課"];
+const MEMBERS = [
+  {name:"田中 一郎",dept:"賃貸管理部1課"},{name:"佐藤 花子",dept:"賃貸管理部1課"},
+  {name:"鈴木 次郎",dept:"賃貸管理部2課"},{name:"伊藤 四郎",dept:"賃貸管理部2課"},
+  {name:"山本 三郎",dept:"賃貸管理部3課"},{name:"渡辺 五郎",dept:"賃貸管理部3課"},
+];
+const BUILDINGS = [
+  {id:1, name:"丸の内パークビル",              area:"千代田区丸の内",floors:32,tan:"田中 一郎",dept:"賃貸管理部1課",issues:8,lastReport:"2026/03/28",bm:"アメニティサポート"},
+  {id:2, name:"新宿住友ビルディング",           area:"新宿区西新宿",  floors:18,tan:"伊藤 四郎",dept:"賃貸管理部2課",issues:3,lastReport:"2026/03/31",bm:"アメニティサポート"},
+  {id:3, name:"渋谷スクランブルタワー",         area:"渋谷区渋谷",    floors:12,tan:"鈴木 次郎",dept:"賃貸管理部2課",issues:2,lastReport:"2026/03/29",bm:"東洋BM"},
+  {id:4, name:"銀座プレミアムビル",             area:"中央区銀座",    floors:24,tan:"佐藤 花子",dept:"賃貸管理部1課",issues:0,lastReport:"2026/03/30",bm:"東洋BM"},
+  {id:5, name:"品川グランドタワー",             area:"港区港南",      floors:28,tan:"田中 一郎",dept:"賃貸管理部1課",issues:0,lastReport:"2026/03/27",bm:"日本管理センター"},
+  {id:6, name:"池袋サンシャインビル",           area:"豊島区東池袋",  floors:15,tan:"山本 三郎",dept:"賃貸管理部3課",issues:5,lastReport:"未提出",    bm:"東洋BM"},
+  {id:7, name:"秋葉原UDXビル",                 area:"千代田区外神田",floors:20,tan:"渡辺 五郎",dept:"賃貸管理部3課",issues:1,lastReport:"未提出",    bm:"日本管理センター"},
+  {id:8, name:"恵比寿ガーデンプレイス",         area:"渋谷区恵比寿",  floors:5, tan:"佐藤 花子",dept:"賃貸管理部1課",issues:0,lastReport:"2026/03/29",bm:"アメニティサポート"},
+  {id:9, name:"汐留シオサイトビル",             area:"港区東新橋",    floors:22,tan:"鈴木 次郎",dept:"賃貸管理部2課",issues:4,lastReport:"2026/03/26",bm:"東洋BM"},
+  {id:10,name:"上野パークフロントビル",         area:"台東区上野",    floors:16,tan:"田中 一郎",dept:"賃貸管理部1課",issues:2,lastReport:"2026/03/30",bm:"アメニティサポート"},
+  {id:11,name:"六本木ヒルズ森タワー",           area:"港区六本木",    floors:30,tan:"山本 三郎",dept:"賃貸管理部3課",issues:6,lastReport:"2026/03/25",bm:"日本管理センター"},
+  {id:12,name:"豊洲フロンティアビル",           area:"江東区豊洲",    floors:14,tan:"伊藤 四郎",dept:"賃貸管理部2課",issues:1,lastReport:"2026/03/28",bm:"東洋BM"},
+  {id:13,name:"お台場メディアビル",             area:"江東区青海",    floors:10,tan:"渡辺 五郎",dept:"賃貸管理部3課",issues:0,lastReport:"2026/03/31",bm:"アメニティサポート"},
+  {id:14,name:"赤坂サカスビル",                area:"港区赤坂",      floors:8, tan:"佐藤 花子",dept:"賃貸管理部1課",issues:3,lastReport:"2026/03/27",bm:"東洋BM"},
+  {id:15,name:"西新宿テクノタワー",             area:"新宿区西新宿",  floors:19,tan:"田中 一郎",dept:"賃貸管理部1課",issues:0,lastReport:"2026/03/29",bm:"日本管理センター"},
+  {id:16,name:"有楽町プレミアムスクエア",       area:"千代田区有楽町",floors:11,tan:"鈴木 次郎",dept:"賃貸管理部2課",issues:2,lastReport:"2026/03/30",bm:"アメニティサポート"},
+  {id:17,name:"神田スクエアビル",               area:"千代田区神田",  floors:9, tan:"山本 三郎",dept:"賃貸管理部3課",issues:1,lastReport:"未提出",    bm:"東洋BM"},
+  {id:18,name:"虎ノ門ヒルズステーションタワー", area:"港区虎ノ門",    floors:35,tan:"伊藤 四郎",dept:"賃貸管理部2課",issues:7,lastReport:"2026/03/26",bm:"日本管理センター"},
+  {id:19,name:"大崎ブライトコアビル",           area:"品川区大崎",    floors:13,tan:"渡辺 五郎",dept:"賃貸管理部3課",issues:0,lastReport:"2026/03/28",bm:"アメニティサポート"},
+  {id:20,name:"浜松町世界貿易センター",         area:"港区浜松町",    floors:7, tan:"佐藤 花子",dept:"賃貸管理部1課",issues:2,lastReport:"2026/03/31",bm:"東洋BM"},
+];
+const ISSUES_RAW = [
+  {id:1, bid:1, type:"修繕",    cat:"屋根・防水",title:"屋上防水シート剥離",         sev:"high",  status:"見積依頼",       days:12,tan:"田中 一郎",est:"850,000円",   memo:"東面10㎡。雨漏りリスクあり。"},
+  {id:2, bid:1, type:"設備",    cat:"電気",      title:"受変電設備の経年劣化",        sev:"high",  status:"オーナー報告中", days:8, tan:"田中 一郎",est:"2,400,000円", memo:"次回更新2027年予定だが前倒し検討中。"},
+  {id:3, bid:1, type:"法定点検",cat:"消防",      title:"消火器の期限切れ（3F・5F）",  sev:"high",  status:"修繕実施中",     days:5, tan:"田中 一郎",est:"45,000円",    memo:"業者発注済み。来週交換予定。"},
+  {id:4, bid:1, type:"修繕",    cat:"外壁",      title:"外壁タイルひび割れ（南面）",  sev:"medium",status:"未着手",         days:3, tan:"田中 一郎",est:"未取得",      memo:""},
+  {id:5, bid:2, type:"法定点検",cat:"消防",      title:"非常用照明バッテリー劣化",    sev:"high",  status:"未着手",         days:9, tan:"伊藤 四郎",est:"未取得",      memo:"期限超過。即時対応必要。"},
+  {id:6, bid:2, type:"設備",    cat:"建具",      title:"エントランス自動ドア調整",    sev:"medium",status:"見積依頼",       days:4, tan:"伊藤 四郎",est:"35,000円",    memo:"メーカー調整依頼済み。"},
+  {id:7, bid:3, type:"修繕",    cat:"外壁",      title:"外壁タイルひび割れ補修",      sev:"medium",status:"修繕実施中",     days:6, tan:"鈴木 次郎",est:"240,000円",   memo:"足場設置済み。今月末完了予定。"},
+  {id:8, bid:6, type:"設備",    cat:"昇降機",    title:"エレベーター制御盤老朽化",    sev:"high",  status:"未着手",         days:8, tan:"山本 三郎",est:"未取得",      memo:"誤作動発生。メーカー見積もり取得中。"},
+  {id:9, bid:9, type:"修繕",    cat:"防水",      title:"地下駐車場排水溝詰まり",      sev:"medium",status:"修繕完了報告済", days:0, tan:"鈴木 次郎",est:"80,000円",    memo:"完了。次回定期清掃は6ヶ月後。"},
+  {id:10,bid:11,type:"法定点検",cat:"消防",      title:"スプリンクラー点検未実施",    sev:"high",  status:"未着手",         days:14,tan:"山本 三郎",est:"未取得",      memo:"点検業者が未確定。至急手配が必要。"},
+  {id:11,bid:18,type:"設備",    cat:"空調",      title:"中央空調ポンプ異音",          sev:"high",  status:"見積依頼",       days:7, tan:"伊藤 四郎",est:"未取得",      memo:""},
+  {id:12,bid:18,type:"修繕",    cat:"屋根・防水",title:"屋上排水ドレン詰まり",       sev:"medium",status:"完了",           days:0, tan:"伊藤 四郎",est:"25,000円",    memo:"清掃完了済み。"},
+];
+const INSPECTIONS = [
+  {bid:1,type:"消防設備",            date:"2026/02/15",result:"指摘あり",items:3,inspector:"東洋防災"},
+  {bid:1,type:"建築基準法定期報告",  date:"2026/01/20",result:"指摘あり",items:1,inspector:"東京建築検査"},
+  {bid:1,type:"エレベーター定期点検",date:"2026/03/10",result:"異常なし",items:0,inspector:"三菱エレベーター"},
+  {bid:1,type:"給排水設備点検",      date:"2026/02/28",result:"指摘あり",items:2,inspector:"関東設備"},
+  {bid:2,type:"消防設備",            date:"2026/03/05",result:"指摘あり",items:2,inspector:"東洋防災"},
+  {bid:2,type:"エレベーター定期点検",date:"2026/02/20",result:"異常なし",items:0,inspector:"日立エレベーター"},
+];
+const BM_DEFECTS = [
+  {id:"D001",type:"numeric",sev:"high",  loc:"850,0000",            desc:"修繕費用の桁数が異常（正：8,500,000円）",sug:"850,0000円を8,500,000円に修正"},
+  {id:"D002",type:"numeric",sev:"high",  loc:"103%",                desc:"対応完了率が100%超で論理的に不整合",    sug:"実績値を確認し100%以内に修正"},
+  {id:"D003",type:"numeric",sev:"high",  loc:"-3件",                desc:"苦情件数が負の値",                      sug:"実際の件数を正の整数に修正"},
+  {id:"D004",type:"missing",sev:"medium",loc:"給排水設備：",        desc:"給排水設備の点検結果が空欄（必須項目）", sug:"正常・要注意・要修繕など記載"},
+  {id:"D005",type:"missing",sev:"medium",loc:"TBD",                 desc:"水道使用量が未記載",                    sug:"実測値を記載"},
+  {id:"D006",type:"missing",sev:"medium",loc:"担当：",              desc:"修繕担当者名が空欄",                    sug:"担当者名を記載"},
+  {id:"D007",type:"format", sev:"low",   loc:"2026年2月〜2026/3/31",desc:"日付表記が不統一",                     sug:"2026年2月1日〜2026年3月31日に統一"},
+];
+const RTEXT = "月次建物管理レポート\n報告期間：2026年2月〜2026/3/31\n施設名：丸の内パークビル\n\n設備点検結果\n空調設備：正常稼働\n電気設備：正常\n給排水設備：\n\nエネルギー消費量\n電力使用量：12,450 kWh\n水道使用量：TBD\n\n修繕履歴\n2月5日 屋上防水補修 費用：850,0000円\n3月3日 外壁タイル補修 担当：\n\nテナント対応\n苦情件数：-3件\n対応完了率：103%";
+const INSP_TYPES = ["消防設備","建築基準法定期報告","エレベーター定期点検","給排水設備点検","特殊建築物定期調査"];
+const TC = {numeric:{bg:C.redL,bd:"#fca5a5",tc:C.red},missing:{bg:"#fff8f3",bd:"#fdba74",tc:C.orange},format:{bg:"#faf7ff",bd:C.purpleL,tc:C.purple}};
+const DEPT_COLORS = {"賃貸管理部1課":{color:"#0369a1",bg:"#e0f2fe"},"賃貸管理部2課":{color:"#7c3aed",bg:"#ede9fe"},"賃貸管理部3課":{color:"#059669",bg:"#d1fae5"}};
+const BULK_FILES = [
+  {name:"丸の内パークビル_BMレポート_2026年3月.pdf",    size:"842KB",defects:8},
+  {name:"新宿住友ビルディング_BMレポート_2026年3月.pdf", size:"763KB",defects:3},
+  {name:"渋谷スクランブルタワー_BMレポート_2026年3月.pdf",size:"591KB",defects:2},
+  {name:"銀座プレミアムビル_BMレポート_2026年3月.pdf",   size:"688KB",defects:0},
+  {name:"品川グランドタワー_BMレポート_2026年3月.pdf",   size:"712KB",defects:0},
+];
+
+const Tag = ({children,color,bg,style={}}) => (
+  <span style={{display:"inline-flex",alignItems:"center",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,color,background:bg,whiteSpace:"nowrap",...style}}>{children}</span>
+);
+const SevDot = ({sev}) => (
+  <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:sev==="high"?C.red:sev==="medium"?C.orange:C.text3,marginRight:5,flexShrink:0}}/>
+);
+const StatusTag = ({status}) => {
+  const s = STATUS[status]||{color:C.text2,bg:C.border2};
+  return <Tag color={s.color} bg={s.bg}>{status}</Tag>;
+};
+const Card = ({children,style={}}) => (
+  <div style={{background:C.white,borderRadius:12,border:`1px solid ${C.border}`,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",overflow:"hidden",...style}}>{children}</div>
+);
+const CardHead = ({title,right,sub}) => (
+  <div style={{padding:"14px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"}}>
+    <div>
+      <div style={{fontSize:13,fontWeight:700,color:C.text}}>{title}</div>
+      {sub&&<div style={{fontSize:11,color:C.text2,marginTop:1}}>{sub}</div>}
+    </div>
+    {right}
+  </div>
+);
+const Kpi = ({label,value,sub,color,icon,onClick}) => (
+  <div onClick={onClick} style={{background:C.white,borderRadius:12,border:`1px solid ${C.border}`,padding:"16px 20px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",cursor:onClick?"pointer":"default"}}
+    onMouseEnter={e=>{if(onClick)e.currentTarget.style.boxShadow="0 4px 12px rgba(0,0,0,0.12)";}}
+    onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 4px rgba(0,0,0,0.06)";}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+      <span style={{fontSize:11,color:C.text2}}>{label}</span>
+      <span style={{fontSize:18}}>{icon}</span>
+    </div>
+    <div style={{fontSize:28,fontWeight:800,color,lineHeight:1}}>{value}</div>
+    {sub&&<div style={{fontSize:11,color:C.text2,marginTop:4}}>{sub}</div>}
+    {onClick&&<div style={{fontSize:10,color:color,marginTop:6,opacity:0.7}}>クリックで詳細を見る →</div>}
+  </div>
+);
+const Avatar = ({name,size=26,color=C.primary,bg=C.primaryL}) => (
+  <div style={{width:size,height:size,borderRadius:"50%",background:bg,color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.42,fontWeight:700,flexShrink:0}}>{name[0]}</div>
+);
+const DeptTag = ({dept}) => {
+  const dc = DEPT_COLORS[dept]||{color:C.text2,bg:C.border2};
+  return <Tag color={dc.color} bg={dc.bg}>{dept}</Tag>;
+};
+const Spinner = ({size=14,color=C.primary,trackColor}) => (
+  <div style={{width:size,height:size,border:`2px solid ${trackColor||C.primaryL}`,borderTopColor:color,borderRadius:"50%",animation:"spin 0.7s linear infinite",flexShrink:0}}/>
+);
+
+function PdfPanel({title,sub,onClose}) {
+  function renderHL() {
+    const marks=[];
+    BM_DEFECTS.forEach(d=>{const idx=RTEXT.indexOf(d.loc);if(idx!==-1)marks.push({start:idx,end:idx+d.loc.length,type:d.type,desc:d.desc});});
+    marks.sort((a,b)=>a.start-b.start);
+    const parts=[];let cur=0;
+    marks.forEach(m=>{if(m.start<cur)return;if(m.start>cur)parts.push({text:RTEXT.slice(cur,m.start),hl:false});parts.push({text:RTEXT.slice(m.start,m.end),hl:true,type:m.type,desc:m.desc});cur=m.end;});
+    if(cur<RTEXT.length)parts.push({text:RTEXT.slice(cur),hl:false});
+    return parts;
+  }
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}>
+      <div style={{flex:1,background:"rgba(0,0,0,0.45)"}} onClick={onClose}/>
+      <div style={{width:500,background:C.white,height:"100%",display:"flex",flexDirection:"column",boxShadow:"-8px 0 32px rgba(0,0,0,0.18)"}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fafbfc"}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:C.text}}>📄 レポート原文</div>
+            <div style={{fontSize:11,color:C.text2,marginTop:2}}>{title} — {sub}</div>
+          </div>
+          <button onClick={onClose} style={{width:28,height:28,borderRadius:6,border:`1px solid ${C.border}`,background:C.white,color:C.text2,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+        </div>
+        <div style={{padding:"10px 16px",borderBottom:`1px solid ${C.border}`,background:C.bg,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+          <span style={{fontSize:11,color:C.text2,fontWeight:600}}>不具合ハイライト：</span>
+          {[[C.redL,C.red,"数値異常"],[C.orangeL,C.orange,"記載漏れ"],[C.purpleL,C.purple,"フォーマット"]].map(([bg,bd,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:C.text2}}>
+              <div style={{width:10,height:10,borderRadius:2,background:bg,border:`1px solid ${bd}`}}/>{l}
+            </div>
+          ))}
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"18px 20px"}}>
+          <div style={{fontSize:12,lineHeight:2.6,fontFamily:"monospace",whiteSpace:"pre-wrap",color:C.text}}>
+            {renderHL().map((p,i)=>p.hl?(
+              <span key={i} title={p.desc} style={{background:TC[p.type].bg,borderBottom:`2px solid ${TC[p.type].tc}`,color:TC[p.type].tc,borderRadius:3,padding:"1px 4px",cursor:"help",fontWeight:700}}>{p.text}</span>
+            ):<span key={i}>{p.text}</span>)}
+          </div>
+        </div>
+        <div style={{padding:"12px 16px",borderTop:`1px solid ${C.border}`,background:"#fafbfc",display:"flex",gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:"9px 0",borderRadius:8,border:`1px solid ${C.border}`,background:C.white,color:C.text2,fontSize:12,fontWeight:600,cursor:"pointer"}}>閉じる</button>
+          <button style={{flex:2,padding:"9px 0",borderRadius:8,border:"none",background:C.primary,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>📥 原文PDFをダウンロード</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotifyModal({target,bld,onClose}) {
+  const [sent,setSent]=useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+      <div style={{background:"#fff",borderRadius:16,padding:24,width:"90%",maxWidth:460,boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>担当者へ通知</div>
+        <div style={{fontSize:12,color:C.text2,marginBottom:16}}>{bld} — {target.title}</div>
+        <div style={{marginBottom:12}}><label style={{fontSize:11,fontWeight:600,color:C.text2,display:"block",marginBottom:5}}>通知先</label><input defaultValue={target.tan} style={{width:"100%",padding:"9px 12px",border:`1px solid ${C.border}`,borderRadius:8,fontSize:13,outline:"none"}}/></div>
+        <div style={{marginBottom:12}}><label style={{fontSize:11,fontWeight:600,color:C.text2,display:"block",marginBottom:5}}>通知方法</label><div style={{display:"flex",gap:14}}>{["メール","Teams","Slack"].map(m=><label key={m} style={{display:"flex",alignItems:"center",gap:5,fontSize:12,cursor:"pointer"}}><input type="checkbox" defaultChecked={m!=="Slack"}/>{m}</label>)}</div></div>
+        <div style={{marginBottom:12}}><label style={{fontSize:11,fontWeight:600,color:C.text2,display:"block",marginBottom:5}}>メッセージ</label>
+          <textarea defaultValue={"【放置アラート通知】\n\n" + target.tan + " 様\n\n" + bld + "にて" + target.days + "日間未対応の指摘事項があります。\n内容：" + target.title + "\n\nCOSOJI BM AIシステム"}
+            style={{width:"100%",minHeight:90,background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 12px",fontSize:11,fontFamily:"monospace",resize:"vertical",outline:"none"}}/>
+        </div>
+        {sent?<div style={{textAlign:"center",padding:12,background:C.greenL,borderRadius:8,color:C.green,fontWeight:700}}>通知を送信しました</div>
+        :<div style={{display:"flex",gap:10,marginTop:12}}>
+          <button onClick={onClose} style={{flex:1,padding:10,borderRadius:8,border:`1px solid ${C.border}`,background:"#fff",color:C.text2,fontSize:13,fontWeight:600,cursor:"pointer"}}>キャンセル</button>
+          <button onClick={()=>setSent(true)} style={{flex:2,padding:10,borderRadius:8,border:"none",background:C.red,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>通知を送信する</button>
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function BulkUpload({showRaw}) {
+  const [phase,setPhase]=useState("idle");
+  const [progress,setProgress]=useState(0);
+  const [checkIdx,setCheckIdx]=useState(-1);
+  const [results,setResults]=useState([]);
+  function startDemo(){
+    if(phase!=="idle")return;
+    setPhase("dropping");
+    setTimeout(function(){
+      setPhase("loading");let p=0;
+      const t=setInterval(function(){p+=20;setProgress(p);if(p>=100){clearInterval(t);setPhase("loaded");}},200);
+    },600);
+  }
+  function runCheck(){
+    setPhase("checking");setCheckIdx(0);setResults([]);let i=0;
+    const t=setInterval(function(){
+      i++;setCheckIdx(i);
+      setResults(function(prev){return [...prev,{...BULK_FILES[i-1],status:"チェック済"}];});
+      if(i>=BULK_FILES.length){clearInterval(t);setPhase("done");}
+    },600);
+  }
+  function reset(){setPhase("idle");setProgress(0);setCheckIdx(-1);setResults([]);}
+  const totalDefects=results.reduce(function(s,f){return s+f.defects;},0);
+  return (
+    <Card style={{marginBottom:18}}>
+      <CardHead title="一括アップロード（複数PDF）" right={phase==="done"?<button onClick={reset} style={{padding:"5px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:C.white,color:C.text2,fontSize:12,cursor:"pointer"}}>リセット</button>:null}/>
+      {(phase==="idle"||phase==="dropping"||phase==="loading"||phase==="loaded")&&(
+        <div onClick={startDemo} style={{margin:16,border:"2px dashed "+(phase==="loaded"?C.green:phase==="dropping"||phase==="loading"?C.primary:C.border),borderRadius:10,padding:24,textAlign:"center",background:phase==="loaded"?C.greenL:phase==="dropping"||phase==="loading"?C.primaryLL:C.bg,cursor:phase==="loaded"?"default":"pointer",transition:"all 0.3s"}}>
+          {phase==="idle"&&<><div style={{fontSize:28,marginBottom:8}}>📂</div><div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:4}}>PDFをここにドロップ、またはクリックして選択</div><div style={{fontSize:11,color:C.text2}}>複数のBMレポートを一括でアップロードしてAIチェックできます</div></>}
+          {phase==="dropping"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}><Spinner/><span style={{fontSize:13,fontWeight:600,color:C.primary}}>ファイルを認識中...</span></div>}
+          {phase==="loading"&&<div><div style={{fontSize:12,fontWeight:600,color:C.primary,marginBottom:10}}>PDFを読み込み中... {progress}%</div><div style={{background:C.primaryL,borderRadius:99,height:8,overflow:"hidden",width:"60%",margin:"0 auto"}}><div style={{height:"100%",borderRadius:99,background:C.primary,width:progress+"%",transition:"width 0.15s"}}/></div></div>}
+          {phase==="loaded"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}><span style={{fontSize:24}}>✅</span><div style={{textAlign:"left"}}><div style={{fontSize:13,fontWeight:700,color:C.green}}>5件のPDFの読み込みが完了しました</div><div style={{fontSize:11,color:C.text2,marginTop:2}}>丸の内パークビル / 新宿住友ビルディング / 渋谷スクランブルタワー 他2件</div></div></div>}
+        </div>
+      )}
+      {(phase==="loaded"||phase==="checking"||phase==="done")&&(
+        <div style={{padding:"0 16px 16px"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <span style={{fontSize:12,fontWeight:600,color:C.text}}>5件のファイル</span>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              {phase==="done"&&totalDefects>0&&<Tag color={C.red} bg={C.redL}>合計 {totalDefects}件の不具合を検知</Tag>}
+              {phase==="done"&&totalDefects===0&&<Tag color={C.green} bg={C.greenL}>すべて異常なし</Tag>}
+              {(phase==="loaded"||phase==="checking")&&(
+                <button onClick={runCheck} disabled={phase==="checking"} style={{padding:"6px 16px",borderRadius:8,border:"none",background:phase==="checking"?"#94a3b8":C.primary,color:"#fff",fontSize:12,fontWeight:700,cursor:phase==="checking"?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6}}>
+                  {phase==="checking"&&<Spinner size={12} color="#fff" trackColor="rgba(255,255,255,0.3)"/>}
+                  {phase==="checking"?"AIがチェック中...":"一括AIチェック実行"}
+                </button>
+              )}
+            </div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#fafbfc"}}>{["ファイル名","サイズ","ステータス","検知結果",""].map(h=><th key={h} style={{padding:"8px 12px",fontSize:11,fontWeight:700,color:C.text2,textAlign:"left",borderBottom:"1px solid "+C.border}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {BULK_FILES.map(function(f,i){
+                const res=results[i];const isChecking=phase==="checking"&&i===checkIdx-1;
+                return (
+                  <tr key={i} style={{borderBottom:"1px solid "+C.border2,background:isChecking?"#fffbf9":C.white,transition:"background 0.2s"}}>
+                    <td style={{padding:"10px 12px",fontSize:12,color:C.text}}>📄 {f.name}</td>
+                    <td style={{padding:"10px 12px",fontSize:12,color:C.text2}}>{f.size}</td>
+                    <td style={{padding:"10px 12px"}}>
+                      {isChecking&&<div style={{display:"flex",alignItems:"center",gap:6}}><Spinner size={12}/><span style={{fontSize:11,color:C.primary}}>チェック中</span></div>}
+                      {!isChecking&&res&&<Tag color={C.green} bg={C.greenL}>チェック済</Tag>}
+                      {!isChecking&&!res&&<Tag color={C.yellow} bg={C.yellowL}>待機中</Tag>}
+                    </td>
+                    <td style={{padding:"10px 12px"}}>
+                      {res&&(res.defects>0?<Tag color={C.red} bg={C.redL}>{res.defects}件検知</Tag>:<Tag color={C.green} bg={C.greenL}>異常なし</Tag>)}
+                      {!res&&<span style={{fontSize:12,color:C.text3}}>—</span>}
+                    </td>
+                    <td style={{padding:"10px 12px"}}>{res&&<button onClick={showRaw} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 10px",borderRadius:6,border:"1px solid "+C.border,background:C.white,color:C.text2,fontSize:11,fontWeight:600,cursor:"pointer"}}>📄 原文確認</button>}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+const NAV = [
+  {id:"dashboard",icon:"⬛",label:"ダッシュボード"},
+  {id:"buildings", icon:"🏢",label:"建物一覧"},
+  {id:"issues",    icon:"⚠️",label:"指摘事項管理"},
+  {id:"bm",        icon:"📋",label:"BMレポートチェック"},
+  {id:"members",   icon:"👤",label:"担当者別"},
+];
+
+function Sidebar({page,setPage,deptFilter,setDeptFilter}) {
+  return (
+    <div style={{width:220,background:C.sidebar,height:"100vh",position:"fixed",top:0,left:0,display:"flex",flexDirection:"column",zIndex:100}}>
+      <div style={{padding:"20px 16px 12px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <div style={{width:30,height:30,borderRadius:7,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:"#fff"}}>CS</div>
+          <div><div style={{fontSize:12,fontWeight:700,color:"#fff",lineHeight:1.2}}>COSOJI BM</div><div style={{fontSize:9,color:"#60a5fa"}}>AIソリューション</div></div>
+        </div>
+        <div style={{padding:"6px 10px",background:"rgba(255,255,255,0.08)",borderRadius:6,fontSize:10,color:"#93c5fd"}}>PM会社向けデモ</div>
+      </div>
+      <div style={{padding:"8px 12px",borderTop:"1px solid rgba(255,255,255,0.06)",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{fontSize:9,color:"#475569",marginBottom:6,letterSpacing:"0.05em"}}>部署フィルター</div>
+        {["all",...DEPTS].map(d=>(
+          <button key={d} onClick={()=>setDeptFilter(d)} style={{width:"100%",textAlign:"left",padding:"5px 10px",borderRadius:6,border:"none",background:deptFilter===d?"rgba(37,99,235,0.3)":"none",color:deptFilter===d?"#93c5fd":"#64748b",fontSize:11,cursor:"pointer",marginBottom:2}}>
+            {d==="all"?"全部署":d}
+          </button>
+        ))}
+      </div>
+      <div style={{padding:"8px 8px",flex:1}}>
+        {NAV.map(n=>(
+          <button key={n.id} onClick={()=>setPage(n.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,border:"none",background:page===n.id?"rgba(37,99,235,0.25)":"none",color:page===n.id?"#93c5fd":"#94a3b8",fontSize:12,fontWeight:page===n.id?700:400,cursor:"pointer",marginBottom:2,textAlign:"left",borderLeft:page===n.id?"2px solid #2563eb":"2px solid transparent"}}>
+            <span style={{fontSize:14}}>{n.icon}</span>{n.label}
+          </button>
+        ))}
+      </div>
+      <div style={{padding:"12px 16px",borderTop:"1px solid rgba(255,255,255,0.08)",fontSize:10,color:"#475569"}}>管理物件：1,247棟 ｜ 2026年4月</div>
+    </div>
+  );
+}
+
+function Dashboard({setPage,setIssueFilter,deptFilter}) {
+  const bldF=deptFilter==="all"?BUILDINGS:BUILDINGS.filter(b=>b.dept===deptFilter);
+  const issF=deptFilter==="all"?ISSUES_RAW:ISSUES_RAW.filter(i=>BUILDINGS.find(b=>b.id===i.bid)&&BUILDINGS.find(b=>b.id===i.bid).dept===deptFilter);
+  const stalled=issF.filter(i=>i.days>=3&&i.status!=="完了"&&i.status!=="修繕完了報告済");
+  const openIss=issF.filter(i=>i.status!=="完了"&&i.status!=="修繕完了報告済");
+  const noReport=bldF.filter(b=>b.lastReport==="未提出");
+  const statusCounts={};STATUS_KEYS.forEach(k=>{statusCounts[k]=0;});issF.forEach(i=>{if(statusCounts[i.status]!==undefined)statusCounts[i.status]++;});
+  function goIssues(f){setIssueFilter(f);setPage("issues");}
+  return (
+    <div style={{padding:28}}>
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+          <h1 style={{fontSize:20,fontWeight:800,color:C.text}}>ダッシュボード</h1>
+          {deptFilter!=="all"&&<DeptTag dept={deptFilter}/>}
+        </div>
+        <p style={{fontSize:12,color:C.text2}}>全物件の状況を一括確認できます</p>
+      </div>
+      {stalled.length>0&&(
+        <div onClick={()=>goIssues("stalled")} style={{background:"linear-gradient(90deg,#dc2626,#b91c1c)",color:"#fff",borderRadius:10,padding:"12px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 16px rgba(220,38,38,0.3)",cursor:"pointer"}}>
+          <span style={{fontSize:18}}>🚨</span>
+          <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700}}>自動アラート：{stalled.length}件の指摘事項が3日以上放置されています</div><div style={{fontSize:11,opacity:.85,marginTop:1}}>クリックして指摘事項管理ページで確認・担当者に通知してください</div></div>
+          <div style={{background:"rgba(255,255,255,0.2)",borderRadius:8,padding:"5px 14px",fontSize:18,fontWeight:900,border:"1px solid rgba(255,255,255,0.3)"}}>放置 {stalled.length}件</div>
+          <span>›</span>
+        </div>
+      )}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+        <Kpi label="管理物件数" value={bldF.length===BUILDINGS.length?"1,247":bldF.length} sub="棟" color={C.primary} icon="🏢" onClick={()=>setPage("buildings")}/>
+        <Kpi label="未完了 指摘事項" value={openIss.length} sub={"うち重大："+issF.filter(i=>i.sev==="high").length+"件"} color={C.red} icon="⚠️" onClick={()=>goIssues("open")}/>
+        <Kpi label="放置案件（3日超）" value={stalled.length} sub="自動アラート対象" color={C.orange} icon="⏰" onClick={()=>goIssues("stalled")}/>
+        <Kpi label="レポート未提出" value={noReport.length} sub="今月分" color={C.yellow} icon="📄" onClick={()=>setPage("buildings")}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:18}}>
+        <Card>
+          <CardHead title="指摘事項 ステータス内訳"/>
+          <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:10}}>
+            {STATUS_KEYS.map(k=>{
+              const cnt=statusCounts[k];const tot=issF.length;const pct=tot>0?Math.round(cnt/tot*100):0;const s=STATUS[k];
+              return (<div key={k} style={{cursor:"pointer"}} onClick={()=>goIssues(k)}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:12,color:C.text}}>{k}</span><span style={{fontSize:12,fontWeight:700,color:s.color}}>{cnt}件 →</span></div>
+                <div style={{background:C.border2,borderRadius:99,height:6,overflow:"hidden"}}><div style={{height:"100%",borderRadius:99,background:s.color,width:pct+"%",transition:"width 0.3s"}}/></div>
+              </div>);
+            })}
+          </div>
+        </Card>
+        <Card>
+          <CardHead title="放置案件 TOP5" right={<span style={{fontSize:11,color:C.text2}}>放置日数順</span>}/>
+          <div style={{padding:"4px 0"}}>
+            {stalled.slice(0,5).map((item,idx)=>(
+              <div key={item.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 20px",borderBottom:idx<Math.min(stalled.length,5)-1?"1px solid "+C.border2:"none",cursor:"pointer"}} onClick={()=>goIssues("stalled")}>
+                <SevDot sev={item.sev}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:600,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(BUILDINGS.find(b=>b.id===item.bid)||{}).name}</div>
+                  <div style={{fontSize:11,color:C.text2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.title}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+                  <span style={{fontSize:10,fontWeight:700,color:item.days>=7?C.red:C.orange,background:item.days>=7?C.redL:C.orangeL,padding:"1px 7px",borderRadius:4}}>{item.days}日</span>
+                  <span style={{fontSize:10,color:C.text2}}>{item.tan}</span>
+                </div>
+              </div>
+            ))}
+            {stalled.length===0&&<div style={{padding:28,textAlign:"center",color:C.text2,fontSize:12}}>放置案件はありません</div>}
+          </div>
+        </Card>
+      </div>
+      <Card style={{marginBottom:18}}>
+        <CardHead title="部署別 状況サマリー"/>
+        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
+          {DEPTS.map(dept=>{
+            const dIss=ISSUES_RAW.filter(i=>(BUILDINGS.find(b=>b.id===i.bid)||{}).dept===dept);
+            const dOpen=dIss.filter(i=>i.status!=="完了"&&i.status!=="修繕完了報告済").length;
+            const dStalled=dIss.filter(i=>i.days>=3&&i.status!=="完了"&&i.status!=="修繕完了報告済").length;
+            const dc=DEPT_COLORS[dept];
+            return (<div key={dept} style={{padding:16,borderRadius:10,border:"1px solid "+dc.bg,background:dc.bg+"44",cursor:"pointer"}} onClick={()=>goIssues("open")}>
+              <div style={{fontSize:12,fontWeight:700,color:dc.color,marginBottom:10}}>{dept}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:C.red}}>{dOpen}</div><div style={{fontSize:10,color:C.text2}}>未完了</div></div>
+                <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:800,color:dStalled>0?C.orange:C.green}}>{dStalled}</div><div style={{fontSize:10,color:C.text2}}>放置件数</div></div>
+              </div>
+            </div>);
+          })}
+        </div>
+      </Card>
+      <Card>
+        <CardHead title="担当者別 未完了件数"/>
+        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:12}}>
+          {MEMBERS.filter(m=>deptFilter==="all"||m.dept===deptFilter).map(m=>{
+            const open=ISSUES_RAW.filter(i=>i.tan===m.name&&i.status!=="完了"&&i.status!=="修繕完了報告済").length;
+            const total=ISSUES_RAW.filter(i=>i.tan===m.name).length;
+            return (<div key={m.name} style={{textAlign:"center",padding:"12px 8px",background:C.bg,borderRadius:10,border:"1px solid "+C.border,cursor:"pointer"}} onClick={()=>setPage("members")}>
+              <Avatar name={m.name} size={36}/>
+              <div style={{marginTop:6,fontSize:11,fontWeight:600,color:C.text}}>{m.name.split(" ")[0]}</div>
+              <div style={{fontSize:9,color:C.text2,marginBottom:4}}>{m.dept.replace("賃貸管理部","")}</div>
+              <div style={{fontSize:20,fontWeight:800,color:open>0?C.red:C.green}}>{open}</div>
+              <div style={{fontSize:10,color:C.text2}}>/{total}件</div>
+            </div>);
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Buildings({setPage,setSelBld,deptFilter}) {
+  const [search,setSearch]=useState("");
+  const [fTan,setFTan]=useState("all");
+  const filtered=BUILDINGS.filter(b=>{
+    return (b.name.includes(search)||b.area.includes(search)||b.bm.includes(search))&&(fTan==="all"||b.tan===fTan)&&(deptFilter==="all"||b.dept===deptFilter);
+  });
+  return (
+    <div style={{padding:28}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+        <h1 style={{fontSize:20,fontWeight:800,color:C.text}}>建物一覧</h1>
+        {deptFilter!=="all"&&<DeptTag dept={deptFilter}/>}
+        <span style={{fontSize:12,color:C.text2}}>全 {filtered.length} 棟</span>
+      </div>
+      <div style={{display:"flex",gap:10,marginBottom:14}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="建物名・エリア・BM会社で検索..." style={{flex:1,padding:"8px 14px",border:"1px solid "+C.border,borderRadius:8,fontSize:12,outline:"none"}}/>
+        <select value={fTan} onChange={e=>setFTan(e.target.value)} style={{padding:"8px 12px",border:"1px solid "+C.border,borderRadius:8,fontSize:12,outline:"none",background:"#fff"}}>
+          <option value="all">担当者：全員</option>
+          {MEMBERS.filter(m=>deptFilter==="all"||m.dept===deptFilter).map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
+        </select>
+      </div>
+      <Card>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:"#fafbfc"}}>{["建物名","エリア","部署","担当者","BM会社","指摘数","最終レポート",""].map(h=><th key={h} style={{padding:"10px 16px",fontSize:11,fontWeight:700,color:C.text2,textAlign:"left",borderBottom:"1px solid "+C.border,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+          <tbody>
+            {filtered.map(b=>(
+              <tr key={b.id} style={{borderBottom:"1px solid "+C.border2,cursor:"pointer"}} onClick={()=>{setSelBld(b.id);setPage("building_detail");}}>
+                <td style={{padding:"11px 16px",fontSize:12,fontWeight:600,color:C.text}}>{b.name}</td>
+                <td style={{padding:"11px 16px",fontSize:12,color:C.text2}}>{b.area}</td>
+                <td style={{padding:"11px 16px"}}><DeptTag dept={b.dept}/></td>
+                <td style={{padding:"11px 16px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><Avatar name={b.tan} size={22}/><span style={{fontSize:12}}>{b.tan}</span></div></td>
+                <td style={{padding:"11px 16px",fontSize:12,color:C.text2}}>{b.bm}</td>
+                <td style={{padding:"11px 16px"}}>{b.issues>0?<Tag color={b.issues>=5?C.red:C.orange} bg={b.issues>=5?C.redL:C.orangeL}>{b.issues}件</Tag>:<Tag color={C.green} bg={C.greenL}>0件</Tag>}</td>
+                <td style={{padding:"11px 16px"}}>{b.lastReport==="未提出"?<Tag color={C.red} bg={C.redL}>未提出</Tag>:<span style={{fontSize:12,color:C.text2}}>{b.lastReport}</span>}</td>
+                <td style={{padding:"11px 16px",fontSize:12,color:C.primary,fontWeight:600}}>詳細 ›</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+function BuildingDetail({buildingId,goBack}) {
+  const b=BUILDINGS.find(x=>x.id===buildingId);
+  const bIssues=ISSUES_RAW.filter(i=>i.bid===buildingId);
+  const bInsp=INSPECTIONS.filter(i=>i.bid===buildingId);
+  const [tab,setTab]=useState("issues");
+  const [memo,setMemo]=useState("");
+  const [editing,setEditing]=useState(false);
+  const [pdfPanel,setPdfPanel]=useState(null);
+  const [notifyTarget,setNotifyTarget]=useState(null);
+  if(!b) return null;
+  return (
+    <div style={{padding:28}}>
+      {pdfPanel&&<PdfPanel title={b.name} sub={pdfPanel} onClose={()=>setPdfPanel(null)}/>}
+      {notifyTarget&&<NotifyModal target={notifyTarget} bld={b.name} onClose={()=>setNotifyTarget(null)}/>}
+      <button onClick={goBack} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:"1px solid "+C.border,background:C.white,color:C.text2,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:20}}>← 建物一覧に戻る</button>
+      <div style={{background:"linear-gradient(135deg,"+C.sidebar+",#1e3a5f)",borderRadius:14,padding:"20px 24px",marginBottom:18,color:"#fff"}}>
+        <div style={{fontSize:20,fontWeight:800,marginBottom:8}}>{b.name}</div>
+        <div style={{display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}>
+          {[["📍",b.area],["🏢",b.floors+"F"],["👤",b.tan],["🔧",b.bm]].map(function(arr){return <span key={arr[1]} style={{fontSize:12,opacity:.85}}>{arr[0]} {arr[1]}</span>;})}
+          <span style={{fontSize:11,background:"rgba(255,255,255,0.15)",padding:"2px 10px",borderRadius:10}}>{b.dept}</span>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>
+        <Kpi label="指摘事項" value={bIssues.length} sub="件" color={C.red} icon="⚠️"/>
+        <Kpi label="重大" value={bIssues.filter(i=>i.sev==="high").length} sub="件" color={C.red} icon="🔴"/>
+        <Kpi label="未着手" value={bIssues.filter(i=>i.status==="未着手").length} sub="件" color={C.orange} icon="⏸"/>
+        <Kpi label="点検登録" value={bInsp.length} sub="件" color={C.primary} icon="📋"/>
+      </div>
+      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid "+C.border}}>
+        {[["issues","指摘事項"],["inspections","点検一覧"],["memo","メモ"]].map(function(arr){
+          return <button key={arr[0]} onClick={()=>setTab(arr[0])} style={{padding:"10px 20px",fontSize:12,fontWeight:600,color:tab===arr[0]?C.primary:C.text2,background:"none",border:"none",borderBottom:tab===arr[0]?"2px solid "+C.primary:"2px solid transparent",cursor:"pointer",marginBottom:-1}}>{arr[1]}</button>;
+        })}
+      </div>
+      {tab==="issues"&&(
+        <Card>
+          <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#fafbfc"}}>{["種別","内容","緊急度","ステータス","放置日数","見積","操作"].map(h=><th key={h} style={{padding:"9px 14px",fontSize:11,fontWeight:700,color:C.text2,textAlign:"left",borderBottom:"1px solid "+C.border}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {bIssues.length===0?<tr><td colSpan={7} style={{padding:32,textAlign:"center",color:C.text2,fontSize:13}}>指摘事項はありません</td></tr>
+              :bIssues.map(iss=>(
+                <tr key={iss.id} style={{borderBottom:"1px solid "+C.border2}}>
+                  <td style={{padding:"10px 14px"}}><Tag color={C.primary} bg={C.primaryL}>{iss.type}</Tag></td>
+                  <td style={{padding:"10px 14px"}}><div style={{fontSize:12,fontWeight:600,color:C.text}}>{iss.title}</div><div style={{fontSize:11,color:C.text2}}>{iss.cat}</div>{iss.memo&&<div style={{fontSize:10,color:C.text3,marginTop:2}}>{iss.memo}</div>}</td>
+                  <td style={{padding:"10px 14px"}}><SevDot sev={iss.sev}/><span style={{fontSize:11,color:iss.sev==="high"?C.red:iss.sev==="medium"?C.orange:C.text2}}>{iss.sev==="high"?"重大":iss.sev==="medium"?"中程度":"軽微"}</span></td>
+                  <td style={{padding:"10px 14px"}}><StatusTag status={iss.status}/></td>
+                  <td style={{padding:"10px 14px"}}>{iss.days>0?<span style={{fontSize:11,fontWeight:700,color:iss.days>=7?C.red:iss.days>=3?C.orange:C.text2,background:iss.days>=7?C.redL:iss.days>=3?C.orangeL:C.border2,padding:"2px 8px",borderRadius:4}}>{iss.days}日</span>:<span style={{fontSize:11,color:C.green}}>完了済</span>}</td>
+                  <td style={{padding:"10px 14px",fontSize:12,color:C.text2}}>{iss.est}</td>
+                  <td style={{padding:"10px 14px"}}>{iss.days>=3&&iss.status!=="完了"&&iss.status!=="修繕完了報告済"&&<button onClick={()=>setNotifyTarget(iss)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:C.red,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>通知</button>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+      {tab==="inspections"&&(
+        <Card>
+          {bInsp.length===0?<div style={{padding:32,textAlign:"center",color:C.text2,fontSize:13}}>点検データが登録されていません</div>
+          :<table style={{width:"100%",borderCollapse:"collapse"}}>
+            <thead><tr style={{background:"#fafbfc"}}>{["点検種別","実施日","結果","指摘件数","点検会社","原文確認"].map(h=><th key={h} style={{padding:"9px 14px",fontSize:11,fontWeight:700,color:C.text2,textAlign:"left",borderBottom:"1px solid "+C.border}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {bInsp.map((ins,i)=>(
+                <tr key={i} style={{borderBottom:"1px solid "+C.border2}}>
+                  <td style={{padding:"11px 14px",fontSize:12,fontWeight:600,color:C.text}}>{ins.type}</td>
+                  <td style={{padding:"11px 14px",fontSize:12,color:C.text2}}>{ins.date}</td>
+                  <td style={{padding:"11px 14px"}}><Tag color={ins.result==="異常なし"?C.green:C.red} bg={ins.result==="異常なし"?C.greenL:C.redL}>{ins.result}</Tag></td>
+                  <td style={{padding:"11px 14px",fontSize:12,fontWeight:700,color:ins.items>0?C.red:C.green}}>{ins.items}件</td>
+                  <td style={{padding:"11px 14px",fontSize:12,color:C.text2}}>{ins.inspector}</td>
+                  <td style={{padding:"11px 14px"}}><button onClick={()=>setPdfPanel(ins.type+" — "+ins.date)} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:7,border:"1px solid "+C.border,background:C.white,color:C.text2,fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>📄 原文を確認</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>}
+        </Card>
+      )}
+      {tab==="memo"&&(
+        <Card>
+          <CardHead title="建物メモ" right={<button onClick={()=>setEditing(!editing)} style={{padding:"5px 14px",borderRadius:8,border:"1px solid "+C.primary,background:editing?"#fff":C.primary,color:editing?C.primary:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>{editing?"保存":"編集"}</button>}/>
+          <div style={{padding:20}}>
+            {editing?<textarea value={memo} onChange={e=>setMemo(e.target.value)} style={{width:"100%",minHeight:160,background:C.bg,border:"1px solid "+C.border,borderRadius:10,padding:"12px 14px",fontSize:12,resize:"vertical",outline:"none",lineHeight:1.8}} placeholder="建物に関するメモを入力してください..."/>
+            :<div style={{fontSize:12,color:memo?C.text:C.text3,lineHeight:1.8,minHeight:80,whiteSpace:"pre-wrap"}}>{memo||"メモがありません。「編集」ボタンから入力してください。"}</div>}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function Issues({deptFilter,initialFilter}) {
+  const [fSev,setFSev]=useState("all");
+  const [fSt,setFSt]=useState(initialFilter||"all");
+  const [fTan,setFTan]=useState("all");
+  const [notifyTarget,setNotifyTarget]=useState(null);
+  const filtered=ISSUES_RAW.filter(i=>{
+    const ms=fSev==="all"||i.sev===fSev;
+    const md=deptFilter==="all"||(BUILDINGS.find(b=>b.id===i.bid)||{}).dept===deptFilter;
+    const mt=fTan==="all"||i.tan===fTan;
+    if(fSt==="stalled") return ms&&md&&mt&&i.days>=3&&i.status!=="完了"&&i.status!=="修繕完了報告済";
+    if(fSt==="open")    return ms&&md&&mt&&i.status!=="完了"&&i.status!=="修繕完了報告済";
+    return ms&&md&&mt&&(fSt==="all"||i.status===fSt);
+  });
+  const stalled=filtered.filter(i=>i.days>=3&&i.status!=="完了"&&i.status!=="修繕完了報告済");
+  return (
+    <div style={{padding:28}}>
+      {notifyTarget&&<NotifyModal target={notifyTarget} bld={(BUILDINGS.find(b=>b.id===notifyTarget.bid)||{}).name||""} onClose={()=>setNotifyTarget(null)}/>}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+        <h1 style={{fontSize:20,fontWeight:800,color:C.text}}>指摘事項管理</h1>
+        {deptFilter!=="all"&&<DeptTag dept={deptFilter}/>}
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+        <select value={fSev} onChange={e=>setFSev(e.target.value)} style={{padding:"7px 12px",border:"1px solid "+C.border,borderRadius:8,fontSize:12,outline:"none",background:"#fff"}}>
+          <option value="all">緊急度：すべて</option><option value="high">重大</option><option value="medium">中程度</option><option value="low">軽微</option>
+        </select>
+        <select value={fSt} onChange={e=>setFSt(e.target.value)} style={{padding:"7px 12px",border:"1px solid "+C.border,borderRadius:8,fontSize:12,outline:"none",background:"#fff"}}>
+          <option value="all">ステータス：すべて</option>
+          <option value="open">未完了のみ</option>
+          <option value="stalled">放置案件（3日超）</option>
+          {STATUS_KEYS.map(k=><option key={k} value={k}>{k}</option>)}
+        </select>
+        <select value={fTan} onChange={e=>setFTan(e.target.value)} style={{padding:"7px 12px",border:"1px solid "+C.border,borderRadius:8,fontSize:12,outline:"none",background:"#fff"}}>
+          <option value="all">担当者：全員</option>
+          {MEMBERS.filter(m=>deptFilter==="all"||m.dept===deptFilter).map(m=><option key={m.name} value={m.name}>{m.name}</option>)}
+        </select>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:12,color:C.text2}}>{filtered.length}件表示</span>
+          {stalled.length>0&&<Tag color="#fff" bg={C.red} style={{padding:"4px 12px"}}>{stalled.length}件 放置アラート</Tag>}
+        </div>
+      </div>
+      <Card>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:"#fafbfc"}}>{["","建物名","指摘内容","緊急度","ステータス","放置","担当","見積","操作"].map(h=><th key={h} style={{padding:"9px 14px",fontSize:11,fontWeight:700,color:C.text2,textAlign:"left",borderBottom:"1px solid "+C.border,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+          <tbody>
+            {filtered.map(iss=>{
+              const bld=BUILDINGS.find(b=>b.id===iss.bid)||{};
+              const isStalled=iss.days>=3&&iss.status!=="完了"&&iss.status!=="修繕完了報告済";
+              return (
+                <tr key={iss.id} style={{borderBottom:"1px solid "+C.border2,background:isStalled?"#fffbf9":C.white}}>
+                  <td style={{padding:"10px 8px 10px 14px"}}><SevDot sev={iss.sev}/></td>
+                  <td style={{padding:"10px 14px",fontSize:12,fontWeight:600,color:C.text,whiteSpace:"nowrap"}}>{bld.name}</td>
+                  <td style={{padding:"10px 14px"}}><div style={{fontSize:12,color:C.text}}>{iss.title}</div>{iss.memo&&<div style={{fontSize:10,color:C.text2,marginTop:1}}>{iss.memo}</div>}</td>
+                  <td style={{padding:"10px 14px"}}><Tag color={iss.sev==="high"?C.red:iss.sev==="medium"?C.orange:C.text2} bg={iss.sev==="high"?C.redL:iss.sev==="medium"?C.orangeL:C.border2}>{iss.sev==="high"?"重大":iss.sev==="medium"?"中程度":"軽微"}</Tag></td>
+                  <td style={{padding:"10px 14px"}}><StatusTag status={iss.status}/></td>
+                  <td style={{padding:"10px 14px"}}>{iss.days>0&&isStalled?<span style={{fontSize:11,fontWeight:700,color:iss.days>=7?C.red:C.orange,background:iss.days>=7?C.redL:C.orangeL,padding:"2px 8px",borderRadius:4}}>{iss.days}日</span>:<span style={{fontSize:11,color:C.text3}}>—</span>}</td>
+                  <td style={{padding:"10px 14px",fontSize:12,color:C.text2,whiteSpace:"nowrap"}}>{iss.tan}</td>
+                  <td style={{padding:"10px 14px",fontSize:12,color:C.text2,whiteSpace:"nowrap"}}>{iss.est}</td>
+                  <td style={{padding:"10px 14px"}}>{isStalled&&<button onClick={()=>setNotifyTarget(iss)} style={{padding:"4px 12px",borderRadius:6,border:"none",background:C.red,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>通知</button>}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
+function BMCheck({deptFilter}) {
+  const [propIdx,setPropIdx]=useState(0);
+  const [inspType,setInspType]=useState("消防設備");
+  const [filter,setFilter]=useState("all");
+  const [expanded,setExpanded]=useState({});
+  const [uploadMode,setUploadMode]=useState("single");
+  const [showRaw,setShowRaw]=useState(false);
+  const [reportText,setReportText]=useState("");
+  const [analyzing,setAnalyzing]=useState(false);
+  const [analyzed,setAnalyzed]=useState(false);
+  const [dragOver,setDragOver]=useState(false);
+  const [pdfLoaded,setPdfLoaded]=useState(false);
+  const [pdfLoading,setPdfLoading]=useState(false);
+  const fileRef=useRef();
+  const props=BUILDINGS.filter(b=>deptFilter==="all"||b.dept===deptFilter).slice(0,6);
+  const prop=props[propIdx]||props[0];
+  const showDefects=analyzed&&prop&&prop.id===1;
+  const filtered=BM_DEFECTS.filter(d=>filter==="all"||d.type===filter);
+
+  function typeText(text){
+    setReportText("");setAnalyzed(false);let i=0;
+    const t=setInterval(function(){i+=3;setReportText(text.slice(0,i));if(i>=text.length){clearInterval(t);setReportText(text);}},8);
+  }
+  function handlePdfClick(){
+    if(pdfLoaded||pdfLoading)return;
+    setPdfLoading(true);
+    setTimeout(function(){setPdfLoading(false);setPdfLoaded(true);typeText(RTEXT);},1200);
+  }
+  function runAnalyze(){
+    if(!reportText.trim())setReportText(RTEXT);
+    setAnalyzing(true);setAnalyzed(false);
+    setTimeout(function(){setAnalyzing(false);setAnalyzed(true);},2200);
+  }
+  function switchProp(i){
+    setPropIdx(i);setFilter("all");setExpanded({});
+    setReportText("");setAnalyzed(false);setAnalyzing(false);
+    setPdfLoaded(false);setPdfLoading(false);
+  }
+  function renderHL(){
+    const marks=[];
+    BM_DEFECTS.forEach(d=>{const idx=RTEXT.indexOf(d.loc);if(idx!==-1)marks.push({start:idx,end:idx+d.loc.length,type:d.type,desc:d.desc});});
+    marks.sort((a,b)=>a.start-b.start);
+    const parts=[];let cur=0;
+    marks.forEach(m=>{if(m.start<cur)return;if(m.start>cur)parts.push({text:RTEXT.slice(cur,m.start),hl:false});parts.push({text:RTEXT.slice(m.start,m.end),hl:true,type:m.type,desc:m.desc});cur=m.end;});
+    if(cur<RTEXT.length)parts.push({text:RTEXT.slice(cur),hl:false});
+    return parts;
+  }
+  return (
+    <div style={{padding:28}}>
+      {showRaw&&<PdfPanel title={(prop||{}).name||""} sub={inspType+" — 2026年3月分"} onClose={()=>setShowRaw(false)}/>}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <h1 style={{fontSize:20,fontWeight:800,color:C.text}}>BMレポートチェック</h1>
+          {deptFilter!=="all"&&<DeptTag dept={deptFilter}/>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          {["single","bulk"].map(m=>(
+            <button key={m} onClick={()=>setUploadMode(m)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(uploadMode===m?C.primary:C.border),background:uploadMode===m?C.primaryL:C.white,color:uploadMode===m?C.primary:C.text2,fontSize:12,fontWeight:uploadMode===m?700:400,cursor:"pointer"}}>
+              {m==="single"?"1件チェック":"一括チェック"}
+            </button>
+          ))}
+        </div>
+      </div>
+      {uploadMode==="bulk"&&<BulkUpload showRaw={()=>setShowRaw(true)}/>}
+      {uploadMode==="single"&&(
+        <div>
+          <div style={{background:C.white,border:"1px solid "+C.border,borderRadius:12,padding:"12px 18px",marginBottom:18,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+            <span style={{fontSize:11,fontWeight:700,color:C.text2}}>建物：</span>
+            {props.map((p,i)=>(
+              <button key={i} onClick={()=>switchProp(i)} style={{padding:"5px 13px",borderRadius:20,border:"1px solid "+(i===propIdx?C.primary:C.border),background:i===propIdx?C.primaryL:C.white,color:i===propIdx?C.primary:C.text2,fontWeight:i===propIdx?700:400,fontSize:11,cursor:"pointer"}}>
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:0,marginBottom:18,borderBottom:"1px solid "+C.border,overflowX:"auto"}}>
+            {INSP_TYPES.map(t=>(
+              <button key={t} onClick={()=>setInspType(t)} style={{padding:"9px 18px",fontSize:12,fontWeight:600,color:inspType===t?C.primary:C.text2,background:"none",border:"none",borderBottom:inspType===t?"2px solid "+C.primary:"2px solid transparent",cursor:"pointer",marginBottom:-1,whiteSpace:"nowrap"}}>
+                {t}{t==="消防設備"&&prop&&prop.id===1&&<span style={{marginLeft:6,fontSize:10,background:C.redL,color:C.red,padding:"1px 5px",borderRadius:10,fontWeight:700}}>3件</span>}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,marginBottom:18}}>
+            <Card>
+              <CardHead title="レポート入力" right={<Tag color={C.primary} bg={C.primaryL}>PDF対応</Tag>}/>
+              <div style={{padding:16}}>
+                <div onDrop={e=>{e.preventDefault();setDragOver(false);handlePdfClick();}} onDragOver={e=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)} onClick={handlePdfClick}
+                  style={{border:"2px dashed "+(pdfLoaded?C.green:dragOver?C.primary:C.border),borderRadius:10,padding:18,textAlign:"center",background:pdfLoaded?C.greenL:dragOver?C.primaryLL:C.bg,cursor:pdfLoaded?"default":"pointer",transition:"all 0.2s"}}>
+                  {pdfLoading&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}><Spinner/><span style={{fontSize:12,color:C.primary,fontWeight:600}}>PDFを読み込み中...</span></div>}
+                  {!pdfLoading&&!pdfLoaded&&<><div style={{fontSize:24,marginBottom:6}}>📄</div><div style={{fontSize:12,color:C.text2}}><strong style={{color:C.primary}}>PDFをここにドロップ</strong><br/>またはクリックして選択</div></>}
+                  {!pdfLoading&&pdfLoaded&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10}}><span style={{fontSize:20}}>✅</span><div style={{textAlign:"left"}}><div style={{fontSize:12,fontWeight:700,color:C.green}}>PDFの読み込みが完了しました</div><div style={{fontSize:11,color:C.text2,marginTop:2}}>📄 {prop&&prop.name}_BMレポート_2026年3月.pdf</div></div></div>}
+                  <input ref={fileRef} type="file" accept=".pdf" style={{display:"none"}}/>
+                </div>
+                <div style={{textAlign:"center",fontSize:11,color:C.text2,margin:"10px 0 6px"}}>または</div>
+                <textarea value={reportText} onChange={e=>{setReportText(e.target.value);setAnalyzed(false);}} style={{width:"100%",minHeight:160,background:C.bg,border:"1px solid "+C.border,borderRadius:10,padding:"11px 13px",color:C.text,fontSize:11,lineHeight:1.8,fontFamily:"monospace",resize:"vertical",outline:"none"}} placeholder="BMレポートのテキストを貼り付けてください..."/>
+                <button onClick={runAnalyze} disabled={analyzing} style={{width:"100%",padding:12,background:analyzing?"#94a3b8":C.primary,border:"none",borderRadius:10,color:"#fff",fontSize:13,fontWeight:700,cursor:analyzing?"not-allowed":"pointer",marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  {analyzing&&<Spinner size={14} color="#fff" trackColor="rgba(255,255,255,0.3)"/>}
+                  {analyzing?"AIが解析中...":"AIで内容チェックを実行する"}
+                </button>
+              </div>
+            </Card>
+            <Card>
+              <CardHead title="AI検知結果" right={
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  {showDefects&&<button onClick={()=>setShowRaw(true)} style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:8,border:"1px solid "+C.border,background:C.white,color:C.text2,fontSize:11,fontWeight:600,cursor:"pointer"}}>📄 レポート原文を確認</button>}
+                  <Tag color={!analyzed?"#94a3b8":showDefects?C.red:C.green} bg={!analyzed?C.border2:showDefects?C.redL:C.greenL}>
+                    {!analyzed?"未実行":showDefects?BM_DEFECTS.length+"件検知":"異常なし"}
+                  </Tag>
+                </div>
+              }/>
+              <div style={{padding:14}}>
+                {analyzing&&<div style={{textAlign:"center",padding:40}}><div style={{width:36,height:36,border:"3px solid "+C.primaryL,borderTopColor:C.primary,borderRadius:"50%",animation:"spin 0.7s linear infinite",margin:"0 auto 14px"}}/><div style={{fontSize:13,fontWeight:700,color:C.primary}}>AIが解析中...</div><div style={{fontSize:11,color:C.text2,marginTop:4}}>数値・記載漏れ・フォーマットを確認しています</div></div>}
+                {!analyzing&&!analyzed&&<div style={{textAlign:"center",padding:40,color:C.text3}}><div style={{fontSize:36,marginBottom:10}}>🔍</div><div style={{fontSize:13}}>レポートを読み込んで<br/>「AIで内容チェックを実行する」を押してください</div></div>}
+                {!analyzing&&analyzed&&!showDefects&&<div style={{textAlign:"center",color:C.green,fontSize:13,padding:40,fontWeight:700}}><div style={{fontSize:36,marginBottom:10}}>✅</div>不具合は検知されませんでした</div>}
+                {!analyzing&&showDefects&&(
+                  <div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
+                      {[{n:BM_DEFECTS.length,l:"合計",c:C.primary,bg:C.primaryL},{n:3,l:"重大",c:C.red,bg:C.redL},{n:3,l:"中程度",c:C.orange,bg:C.orangeL},{n:1,l:"軽微",c:C.purple,bg:C.purpleL}].map(k=>(
+                        <div key={k.l} style={{borderRadius:10,padding:"9px 6px",textAlign:"center",background:k.bg}}><div style={{fontSize:20,fontWeight:800,color:k.c}}>{k.n}</div><div style={{fontSize:10,color:C.text2}}>{k.l}</div></div>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                      {[["all","すべて"],["numeric","数値異常"],["missing","記載漏れ"],["format","フォーマット"]].map(function(arr){
+                        const t=arr[0];const l=arr[1];
+                        const ac=t==="all"?C.primary:t==="numeric"?C.red:t==="missing"?C.orange:C.purple;
+                        const abg=t==="all"?C.primaryL:t==="numeric"?C.redL:t==="missing"?C.orangeL:C.purpleL;
+                        return <button key={t} onClick={()=>setFilter(t)} style={{padding:"4px 11px",borderRadius:20,border:"1px solid "+(filter===t?ac:C.border),background:filter===t?abg:C.white,color:filter===t?ac:C.text2,fontWeight:filter===t?700:400,fontSize:11,cursor:"pointer"}}>{l}</button>;
+                      })}
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:7,maxHeight:280,overflowY:"auto"}}>
+                      {filtered.map(d=>(
+                        <div key={d.id} onClick={()=>setExpanded(function(e){const n={};Object.keys(e).forEach(function(k){n[k]=e[k];});n[d.id]=!e[d.id];return n;})}
+                          style={{borderRadius:10,padding:"11px 13px",border:"1px solid "+TC[d.type].bd,background:TC[d.type].bg,cursor:"pointer",borderLeft:d.sev==="high"?"3px solid "+C.red:undefined}}>
+                          <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5}}>
+                            {d.sev==="high"&&<span>🔴</span>}
+                            <Tag color={TC[d.type].tc} bg={TC[d.type].bg} style={{border:"1px solid "+TC[d.type].bd}}>{d.type==="numeric"?"数値異常":d.type==="missing"?"記載漏れ":"フォーマット"}</Tag>
+                            <span style={{fontSize:10,fontWeight:700,color:d.sev==="high"?C.red:d.sev==="medium"?C.orange:C.text2,marginLeft:"auto"}}>{d.sev==="high"?"重大":d.sev==="medium"?"中程度":"軽微"}</span>
+                            <span style={{fontSize:10,color:C.text2}}>{d.id}</span>
+                          </div>
+                          <div style={{fontSize:11,lineHeight:1.6,marginBottom:4,color:C.text}}>{d.desc}</div>
+                          <span style={{fontSize:10,color:C.text2,fontFamily:"monospace",background:"rgba(0,0,0,0.04)",borderRadius:4,padding:"2px 6px"}}>{d.loc}</span>
+                          {expanded[d.id]&&<div style={{marginTop:8,padding:"8px 10px",background:C.greenL,borderRadius:6,fontSize:11,color:C.green}}>修正提案：{d.sug}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+          {showDefects&&(
+            <Card>
+              <CardHead title="不具合ハイライト表示" right={<span style={{fontSize:10,color:C.text2}}>マウスオーバーで詳細確認</span>}/>
+              <div style={{padding:"14px 16px",fontSize:11,lineHeight:2.2,fontFamily:"monospace",whiteSpace:"pre-wrap",maxHeight:200,overflowY:"auto",background:C.bg}}>
+                {renderHL().map((p,i)=>p.hl?<span key={i} title={p.desc} style={{background:TC[p.type].bg,borderBottom:"2px solid "+TC[p.type].tc,color:TC[p.type].tc,borderRadius:2,padding:"0 2px",cursor:"help"}}>{p.text}</span>:<span key={i}>{p.text}</span>)}
+              </div>
+              <div style={{display:"flex",gap:12,padding:"8px 16px",borderTop:"1px solid "+C.border,flexWrap:"wrap"}}>
+                {[[C.redL,C.red,"数値異常"],[C.orangeL,C.orange,"記載漏れ"],[C.purpleL,C.purple,"フォーマット"]].map(function(arr){
+                  return <div key={arr[2]} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:C.text2}}><div style={{width:10,height:10,borderRadius:2,background:arr[0],border:"1px solid "+arr[1]}}/><span>{arr[2]}</span></div>;
+                })}
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Members({deptFilter}) {
+  const filteredMembers=MEMBERS.filter(m=>deptFilter==="all"||m.dept===deptFilter);
+  const [sel,setSel]=useState((filteredMembers[0]||MEMBERS[0]).name);
+  const myIss=ISSUES_RAW.filter(i=>i.tan===sel);
+  const statusCounts={};STATUS_KEYS.forEach(k=>{statusCounts[k]=0;});myIss.forEach(i=>{if(statusCounts[i.status]!==undefined)statusCounts[i.status]++;});
+  return (
+    <div style={{padding:28}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+        <h1 style={{fontSize:20,fontWeight:800,color:C.text}}>担当者別</h1>
+        {deptFilter!=="all"&&<DeptTag dept={deptFilter}/>}
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {filteredMembers.map(m=>{
+          const open=ISSUES_RAW.filter(i=>i.tan===m.name&&i.status!=="完了"&&i.status!=="修繕完了報告済").length;
+          return (
+            <button key={m.name} onClick={()=>setSel(m.name)} style={{padding:"8px 16px",borderRadius:10,border:"1px solid "+(sel===m.name?C.primary:C.border),background:sel===m.name?C.primaryL:C.white,color:sel===m.name?C.primary:C.text,fontSize:12,fontWeight:sel===m.name?700:400,cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+              <Avatar name={m.name} size={24} color={sel===m.name?C.primary:C.text2} bg={sel===m.name?C.primaryL:C.border2}/>
+              {m.name}<DeptTag dept={m.dept}/>
+              {open>0&&<span style={{fontSize:10,background:C.redL,color:C.red,padding:"1px 7px",borderRadius:10,fontWeight:700}}>{open}</span>}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:18}}>
+        <Kpi label="担当物件数" value={[...new Set(ISSUES_RAW.filter(i=>i.tan===sel).map(i=>i.bid))].length} sub="棟" color={C.primary} icon="🏢"/>
+        <Kpi label="未完了件数" value={myIss.filter(i=>i.status!=="完了"&&i.status!=="修繕完了報告済").length} sub="件" color={C.red} icon="⚠️"/>
+        <Kpi label="放置案件（3日超）" value={myIss.filter(i=>i.days>=3&&i.status!=="完了"&&i.status!=="修繕完了報告済").length} sub="件" color={C.orange} icon="⏰"/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}>
+        <Card>
+          <CardHead title="ステータス内訳"/>
+          <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:10}}>
+            {STATUS_KEYS.map(k=>{
+              const cnt=statusCounts[k];const pct=myIss.length>0?Math.round(cnt/myIss.length*100):0;const s=STATUS[k];
+              return <div key={k}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:12,color:C.text}}>{k}</span><span style={{fontSize:12,fontWeight:700,color:s.color}}>{cnt}件</span></div><div style={{background:C.border2,borderRadius:99,height:6,overflow:"hidden"}}><div style={{height:"100%",borderRadius:99,background:s.color,width:pct+"%"}}/></div></div>;
+            })}
+          </div>
+        </Card>
+        <Card>
+          <CardHead title="担当指摘事項一覧"/>
+          <div style={{maxHeight:320,overflowY:"auto"}}>
+            {myIss.length===0?<div style={{padding:32,textAlign:"center",color:C.text2,fontSize:13}}>指摘事項はありません</div>
+            :myIss.map(iss=>{const bld=BUILDINGS.find(b=>b.id===iss.bid)||{};return(
+              <div key={iss.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 18px",borderBottom:"1px solid "+C.border2}}>
+                <SevDot sev={iss.sev}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,color:C.text2,marginBottom:1}}>{bld.name}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{iss.title}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
+                  <StatusTag status={iss.status}/>
+                  {iss.days>=3&&iss.status!=="完了"&&iss.status!=="修繕完了報告済"&&<span style={{fontSize:10,fontWeight:700,color:C.red}}>{iss.days}日放置</span>}
+                </div>
+              </div>
+            );})}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [page,setPage]=useState("dashboard");
+  const [selBld,setSelBld]=useState(null);
+  const [deptFilter,setDeptFilter]=useState("all");
+  const [issueFilter,setIssueFilter]=useState("all");
+  function renderPage(){
+    if(page==="building_detail") return React.createElement(BuildingDetail,{buildingId:selBld,goBack:()=>setPage("buildings")});
+    if(page==="dashboard")  return React.createElement(Dashboard,{setPage,setIssueFilter,deptFilter});
+    if(page==="buildings")  return React.createElement(Buildings,{setPage,setSelBld,deptFilter});
+    if(page==="issues")     return React.createElement(Issues,{deptFilter,initialFilter:issueFilter});
+    if(page==="bm")         return React.createElement(BMCheck,{deptFilter});
+    if(page==="members")    return React.createElement(Members,{deptFilter});
+    return null;
+  }
+  return (
+    <div style={{fontFamily:"'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif",display:"flex",minHeight:"100vh",background:C.bg}}>
+      <Sidebar page={page} setPage={setPage} deptFilter={deptFilter} setDeptFilter={setDeptFilter}/>
+      <div style={{marginLeft:220,flex:1,minHeight:"100vh",overflowY:"auto"}}>{renderPage()}</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
