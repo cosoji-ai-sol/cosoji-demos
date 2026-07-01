@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI コールセンター — デモ</title>
+<style>
+/* ── Reset & Base ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0E2A47;--navy2:#1B3B63;--blue:#1A6FBF;--blueL:#E8F2FC;--blueM:#4A90D9;
+  --teal:#0A8C7E;--tealL:#E0F5F2;--tealM:#14B8A6;
+  --orange:#E8720C;--orangeL:#FEF0E6;
+  --green:#27500A;--greenL:#EAF3DE;--greenM:#3B8C1A;
+  --red:#A32D2D;--redL:#FEF2F2;
+  --purple:#534AB7;--purpleL:#EEEDFE;
+  --gold:#C8950F;--goldL:#FDF6E0;
+  --slate:#6B85A0;--slateL:#94A3B8;
+  --border:#D8E4F0;--border2:#E8EFF8;
+  --bg:#F4F7FB;--bg2:#FAFBFD;
+  --text:#1A2E4A;--text2:#3D5166;--text3:#6B85A0;
+  --white:#FFFFFF;
+  --sidebar:240px;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans",sans-serif;
+  background:var(--bg);color:var(--text);font-size:13px;height:100vh;overflow:hidden;display:flex}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar);background:var(--navy);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo-mark{font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.sb-logo-icon{width:28px;height:28px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px}
+.sb-logo-sub{font-size:9px;color:#4A6580;margin-top:3px;font-weight:500;letter-spacing:.04em}
+.sb-nav{padding:8px 0;flex:1;overflow-y:auto}
+.sb-section{padding:12px 16px 4px;font-size:9px;font-weight:700;color:#334D66;text-transform:uppercase;letter-spacing:.07em}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;color:#7A96B0;font-size:12px;font-weight:500;border-left:2px solid transparent;transition:all .12s;user-select:none}
+.sb-item:hover{color:#CBD5E1;background:rgba(255,255,255,.04)}
+.sb-item.active{color:#fff;background:rgba(59,130,246,.14);border-left-color:var(--blue)}
+.sb-item svg{width:15px;height:15px;flex-shrink:0;opacity:.65}
+.sb-item.active svg{opacity:1}
+.sb-badge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,.1);color:#64748B}
+.sb-item.active .sb-badge{background:var(--blue);color:#fff}
+.sb-company{padding:10px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-co-label{font-size:9px;color:#334D66;margin-bottom:6px;font-weight:700;text-transform:uppercase}
+.sb-co-item{display:flex;align-items:center;gap:7px;padding:5px 0;cursor:pointer}
+.sb-co-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sb-co-name{font-size:11px;color:#7A96B0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-co-count{font-size:10px;color:#4A6580}
+.sb-foot{padding:10px 16px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user{font-size:11px;color:#7A96B0}
+.sb-user strong{display:block;color:#CBD5E1;font-size:11px}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:50px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:14px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.lang-sel{display:flex;gap:3px;padding:3px;background:var(--bg);border-radius:7px;border:1px solid var(--border)}
+.lang-btn{padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;color:var(--slate);border:none;background:transparent;transition:all .12s}
+.lang-btn.active{background:var(--white);color:var(--blue);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:4px 11px;border-radius:20px}
+.pill-on{background:var(--greenL);color:var(--green)}
+.pill-busy{background:var(--orangeL);color:var(--orange)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot-on{background:#3B8C1A}
+.dot-busy{background:var(--orange);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Pages ── */
+.pages{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.active{display:flex}
+
+/* ════ CALL PAGE ════ */
+.call-layout{display:flex;flex:1;overflow:hidden}
+.call-left{width:272px;flex-shrink:0;border-right:1px solid var(--border);background:var(--white);display:flex;flex-direction:column;overflow-y:auto}
+.call-center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);border-right:1px solid var(--border)}
+.call-right{width:300px;flex-shrink:0;background:var(--white);display:flex;flex-direction:column;overflow:hidden}
+
+/* Scenario picker */
+.sc-head{padding:14px 14px 8px;border-bottom:1px solid var(--border2)}
+.sc-group-label{font-size:9px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.sc-list{display:flex;flex-direction:column;gap:5px}
+.sc-btn{padding:9px 11px;border-radius:8px;font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);text-align:left;line-height:1.45;transition:all .12s}
+.sc-btn:hover{background:#EFF4FA;border-color:#B8CEEA}
+.sc-btn.active{border-color:var(--green);background:var(--greenL);color:#173404}
+.sc-btn.active-broker{border-color:var(--purple);background:var(--purpleL);color:#26215C}
+.sc-tag{display:inline-block;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:4px;margin-bottom:3px}
+.tag-faq{background:#C0DD97;color:#173404}
+.tag-urg{background:#FAC775;color:#412402}
+.tag-cmp{background:#F09595;color:#501313}
+.tag-ngt{background:#B5D4F4;color:#0B2E5A}
+.tag-bkr{background:#CECBF6;color:#26215C}
+.sc-sep{height:1px;background:var(--border2);margin:10px 14px}
+
+/* Identify panel */
+.id-section{padding:12px 14px}
+.id-title{font-size:9px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.id-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:11px 12px}
+.id-company-row{display:flex;align-items:center;gap:9px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--border2)}
+.co-badge{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.co-name{font-size:12px;font-weight:600;color:var(--text)}
+.co-id{font-size:9px;color:var(--slate);margin-top:1px}
+.id-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px}
+.id-f{background:var(--white);border:1px solid var(--border);border-radius:5px;padding:5px 8px}
+.id-fl{font-size:8.5px;color:var(--slateL);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+.id-fv{font-size:11.5px;font-weight:500;color:var(--text)}
+.id-fv.green{color:var(--green)}
+.id-fv.purple{color:var(--purple)}
+.id-alert{padding:6px 9px;border-radius:5px;font-size:10px;font-weight:500}
+.id-ok{background:var(--greenL);color:var(--green)}
+.id-warn{background:var(--orangeL);color:var(--orange)}
+
+/* Call center */
+.call-incoming{padding:12px 18px;background:var(--greenL);border-bottom:1px solid #C0DD97;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ring-circle{width:38px;height:38px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;animation:ring .55s infinite alternate;flex-shrink:0}
+@keyframes ring{from{transform:scale(1)}to{transform:scale(1.12)}}
+.ring-num{font-size:15px;font-weight:600;font-family:monospace;color:var(--text)}
+.ring-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.call-header{padding:12px 18px;border-bottom:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.call-status-text{font-size:13px;font-weight:600;color:var(--text)}
+.call-status-sub{font-size:10px;color:var(--slate);margin-top:2px}
+
+/* Waveform */
+.waveform-wrap{padding:8px 18px;flex-shrink:0;height:44px;display:flex;align-items:center;gap:2px}
+.waveform-wrap.hidden{display:none}
+.wv-bar{width:3px;border-radius:3px;background:var(--blue);opacity:.7;transition:height .1s}
+
+/* Transcript */
+.transcript{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:9px}
+.msg{display:flex;gap:9px}
+.msg-av{width:27px;height:27px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.av-caller{background:#E6F1FB;color:#0C447C}
+.av-ai{background:var(--greenL);color:var(--green)}
+.av-op{background:var(--orangeL);color:var(--orange)}
+.bubble{padding:9px 12px;border-radius:9px;font-size:12.5px;line-height:1.58;flex:1;max-width:520px}
+.bubble-caller{background:var(--bg);border:1px solid var(--border);color:var(--text)}
+.bubble-ai{background:var(--greenL);border:1px solid #C0DD97;color:#173404}
+.bubble-op{background:var(--orangeL);border:1px solid #FAC775;color:#412402}
+.bubble-sys{background:var(--white);border:1px solid var(--border2);color:var(--slate);font-size:11px;font-style:italic;text-align:center;flex:1;padding:7px 12px}
+.typing span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin:0 2px;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+.esc-banner{margin:0 18px 6px;padding:8px 12px;background:var(--orangeL);border:1px solid #FAC775;border-radius:8px;font-size:11px;color:var(--orange);font-weight:500;display:flex;align-items:center;gap:7px}
+
+/* Call footer */
+.call-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0;background:var(--white)}
+.btn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s}
+.btn:active{opacity:.78}
+.btn-primary{background:var(--blue);color:#E6F1FB;border-color:var(--blue)}
+.btn-primary:hover{background:#1560A8}
+.btn-red{background:var(--red);color:#FCEBEB;border-color:var(--red)}
+.btn-ghost{background:var(--white);color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+
+/* Right panel */
+.rp-kpis{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kpi{background:var(--bg);border-radius:8px;padding:8px 10px}
+.kpi-l{font-size:9px;color:var(--slate);margin-bottom:2px}
+.kpi-v{font-size:19px;font-weight:600}
+.kv-blue{color:var(--blue)}.kv-green{color:var(--green)}.kv-amber{color:#854F0B}
+.log-head{padding:8px 14px;border-bottom:1px solid var(--border2);font-size:11px;font-weight:600;color:var(--text);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.log-body{flex:1;overflow-y:auto}
+.log-row{display:flex;align-items:flex-start;gap:7px;padding:8px 14px;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s}
+.log-row:hover{background:var(--bg2)}
+.log-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0;margin-top:1px}
+.lav-ai{background:var(--greenL);color:var(--green)}
+.lav-hm{background:var(--orangeL);color:var(--orange)}
+.log-info{flex:1;min-width:0}
+.log-co{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:10px;display:inline-block;margin-bottom:2px}
+.log-name{font-size:11.5px;font-weight:500;color:var(--text)}
+.log-q{font-size:10px;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.log-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.badge{font-size:8.5px;font-weight:600;padding:2px 6px;border-radius:20px}
+.b-ai{background:var(--greenL);color:var(--green)}
+.b-esc{background:var(--orangeL);color:#854F0B}
+.b-hm{background:var(--orangeL);color:var(--orange)}
+.b-bkr{background:var(--purpleL);color:var(--purple)}
+.log-time{font-size:9px;color:var(--slateL)}
+
+/* ════ DASHBOARD PAGE ════ */
+.dash-scroll{flex:1;overflow-y:auto;padding:18px 20px}
+.dash-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.dk{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.dk-l{font-size:10px;color:var(--slate);margin-bottom:5px}
+.dk-v{font-size:28px;font-weight:600}
+.dk-sub{font-size:10px;color:var(--slateL);margin-top:4px}
+.dk-trend{font-size:10px;font-weight:600;margin-top:3px}
+.trend-up{color:var(--green)}.trend-dn{color:var(--red)}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.dash-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.dash-card-head{padding:11px 15px;border-bottom:1px solid var(--border2);font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between}
+.dash-card-body{padding:13px 15px}
+.co-row{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--border2)}
+.co-row:last-child{border:none}
+.co-dot{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff;flex-shrink:0}
+.co-name{flex:1;font-size:12px;font-weight:500;color:var(--text)}
+.co-bar-wrap{flex:2;height:6px;background:var(--bg);border-radius:3px;overflow:hidden}
+.co-bar{height:100%;border-radius:3px;transition:width .6s}
+.co-count{font-size:12px;font-weight:600;color:var(--blue);width:30px;text-align:right;flex-shrink:0}
+.bar-list{display:flex;flex-direction:column;gap:9px}
+.bar-item{display:flex;align-items:center;gap:9px}
+.bar-label{font-size:11px;color:var(--text2);width:110px;flex-shrink:0}
+.bar-track{flex:1;height:16px;background:var(--bg);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:8px;font-size:9.5px;font-weight:600;color:#fff}
+.bar-num{font-size:11px;color:var(--slate);width:28px;text-align:right;flex-shrink:0}
+/* Mini donut chart */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:7px}
+.dleg{display:flex;align-items:center;gap:6px}
+.dleg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dleg-lbl{font-size:11px;color:var(--text2)}
+.dleg-val{font-size:11px;font-weight:600;color:var(--text);margin-left:auto}
+
+/* ════ HISTORY PAGE ════ */
+.hist-toolbar{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--white);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 11px;min-width:200px;flex:1}
+.search-box input{border:none;background:transparent;outline:none;font-size:12px;color:var(--text);width:100%}
+.search-box input::placeholder{color:var(--slateL)}
+.filter-btn{padding:4px 11px;border:1px solid var(--border);border-radius:20px;background:var(--white);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .12s;white-space:nowrap}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue)}
+.filter-btn.on{background:var(--blueL);border-color:var(--blue);color:var(--blue);font-weight:600}
+.hist-table{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.hist-head{display:grid;grid-template-columns:90px 110px 120px 160px 1fr 100px 28px;gap:8px;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border2);font-size:9.5px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.hist-body{flex:1;overflow-y:auto}
+.hist-row{display:grid;grid-template-columns:90px 110px 120px 160px 1fr 100px 28px;gap:8px;padding:9px 16px;border-bottom:1px solid var(--border2);align-items:center;cursor:pointer;transition:background .1s;font-size:12px}
+.hist-row:hover{background:var(--bg2)}
+.hist-row:last-child{border:none}
+.caller-info{display:flex;flex-direction:column;gap:1px}
+.caller-name{font-size:12px;font-weight:500;color:var(--text)}
+.caller-tel{font-size:10px;color:var(--slate);font-family:monospace}
+.caller-type{font-size:9.5px;color:var(--slateL)}
+.chevron{color:var(--slateL);font-size:12px}
+/* Detail drawer */
+.drawer{position:fixed;top:0;right:0;width:440px;height:100vh;background:var(--white);border-left:1px solid var(--border);z-index:200;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 24px rgba(0,0,0,.07)}
+.drawer.open{transform:translateX(0)}
+.drawer-head{padding:14px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-id{font-size:10px;color:var(--slate);font-weight:600}
+.drawer-title{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
+.drawer-close{width:27px;height:27px;border-radius:6px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;color:var(--slate);display:flex;align-items:center;justify-content:center}
+.drawer-body{flex:1;overflow-y:auto;padding:16px 18px}
+.d-section{margin-bottom:18px}
+.d-section-title{font-size:9px;font-weight:700;color:var(--slateL);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.d-grid{display:grid;grid-template-columns:80px 1fr;gap:6px 12px;font-size:12px}
+.d-key{color:var(--slateL)}
+.d-val{color:var(--text);font-weight:500}
+.d-conv{background:var(--bg2);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.d-msg{display:flex;gap:7px}
+.d-av{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.d-bubble{padding:7px 10px;border-radius:8px;font-size:11.5px;line-height:1.55;flex:1}
+.d-bub-caller{background:var(--white);border:1px solid var(--border);color:var(--text)}
+.d-bub-ai{background:var(--greenL);border:1px solid #C0DD97;color:#173404}
+.d-bub-op{background:var(--orangeL);border:1px solid #FAC775;color:#412402}
+.d-bub-sys{font-size:10.5px;color:var(--slate);font-style:italic;background:var(--white);border:1px solid var(--border2);text-align:center;flex:1;padding:6px 10px}
+.meta-box{border-radius:7px;padding:9px 12px;font-size:11px}
+.meta-ok{background:var(--greenL);border:1px solid #C0DD97;color:var(--green)}
+.meta-warn{background:var(--orangeL);border:1px solid #FAC775;color:var(--orange)}
+
+/* ════ SETTINGS PAGE ════ */
+.settings-layout{display:flex;flex:1;overflow:hidden}
+.settings-nav{width:180px;border-right:1px solid var(--border);background:var(--white);padding:12px 0;flex-shrink:0}
+.sn-item{padding:8px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .12s}
+.sn-item:hover{color:var(--text);background:var(--bg2)}
+.sn-item.active{color:var(--blue);background:var(--blueL);border-left-color:var(--blue)}
+.settings-body{flex:1;overflow-y:auto;padding:20px 24px}
+.settings-section{max-width:700px}
+.settings-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px}
+.settings-sub{font-size:12px;color:var(--slate);margin-bottom:20px}
+.co-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.co-card-head{display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid var(--border2)}
+.co-card-body{padding:13px 15px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.co-field{display:flex;flex-direction:column;gap:3px}
+.co-field label{font-size:10px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.04em}
+.co-field span{font-size:12px;color:var(--text);font-weight:500}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)}
+.toggle-row:last-child{border:none}
+.toggle-info{flex:1}
+.toggle-label{font-size:12px;font-weight:500;color:var(--text)}
+.toggle-desc{font-size:10.5px;color:var(--slate);margin-top:2px}
+.toggle{position:relative;width:38px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#CBD5E1;border-radius:11px;cursor:pointer;transition:.25s}
+.toggle-slider:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
+.toggle input:checked + .toggle-slider{background:var(--blue)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(16px)}
+.add-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px dashed var(--border);border-radius:var(--radius);background:transparent;color:var(--slate);font-size:12px;font-weight:500;cursor:pointer;transition:all .12s;width:100%;justify-content:center;margin-top:8px}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blueL)}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.plan-card{border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 16px;background:var(--white);position:relative}
+.plan-card.recommended{border-color:var(--blue);background:var(--blueL)}
+.plan-rec-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:9px;font-weight:700;padding:3px 12px;border-radius:10px;white-space:nowrap}
+.plan-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.plan-price{font-size:24px;font-weight:700;color:var(--blue);margin-bottom:12px}
+.plan-price span{font-size:12px;font-weight:400;color:var(--slate)}
+.plan-features{display:flex;flex-direction:column;gap:5px}
+.plan-feature{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.plan-feature::before{content:"✓";color:var(--green);font-weight:700;font-size:10px}
+
+/* Overlay/backdrop */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.15);z-index:199;display:none}
+.backdrop.show{display:block}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--slateL)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-logo-icon">📞</div>
+      AI コールセンター
+    </div>
+    <div class="sb-logo-sub">不動産管理会社向けプラットフォーム</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">メイン</div>
+    <div class="sb-item active" onclick="goto('call',this)">
+      <svg fill="none" viewBox="0 0 16 16"><path d="M3 3a1 1 0 011-1h1.5a1 1 0 011 .9l.5 2.5a1 1 0 01-.5 1.1L5.8 6.9A8 8 0 008.1 9.2l.7-.5a1 1 0 011-.5l2.5.5A1 1 0 0113 9.5V11a1 1 0 01-1 1C5.9 12 2 8.1 2 4a1 1 0 011-1z" fill="currentColor"/></svg>
+      受電デモ
+      <span class="sb-badge" id="sb-call-badge">0</span>
+    </div>
+    <div class="sb-item" onclick="goto('dash',this)">
+      <svg fill="none" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor"/></svg>
+      ダッシュボード
+    </div>
+    <div class="sb-item" onclick="goto('history',this)">
+      <svg fill="none" viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      対応履歴
+      <span class="sb-badge" id="sb-hist-badge">18</span>
+    </div>
+    <div class="sb-item" onclick="goto('settings',this)">
+      <svg fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.9 3.9l.7.7M11.4 11.4l.7.7M3.9 12.1l.7-.7M11.4 4.6l.7-.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      設定
+    </div>
+    <div class="sb-section">管理会社</div>
+    <div id="sb-companies"></div>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-avatar">管</div>
+    <div class="sb-user"><strong>管理者</strong>COSOJI × LOM</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="page-title">受電デモ</div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-sel">
+        <button class="lang-btn active" onclick="setLang('ja',this)">日本語</button>
+        <button class="lang-btn" onclick="setLang('en',this)">English</button>
+        <button class="lang-btn" onclick="setLang('zh',this)">中文</button>
+      </div>
+      <div class="status-pill pill-on" id="sys-pill">
+        <span class="dot dot-on"></span>
+        <span id="sys-label">稼働中</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pages">
+
+    <!-- ══ CALL PAGE ══ -->
+    <div class="page active" id="page-call">
+    <div class="call-layout">
+
+      <!-- Left -->
+      <div class="call-left">
+        <div class="sc-head">
+          <div class="sc-group-label" id="lbl-resident">入居者からの問い合わせ</div>
+          <div class="sc-list">
+            <button class="sc-btn active" id="sc0" onclick="pick(0)">
+              <span class="sc-tag tag-faq">FAQ</span><br>
+              <span id="sc0-text">管理費の口座変更を確認したい</span>
+            </button>
+            <button class="sc-btn" id="sc1" onclick="pick(1)">
+              <span class="sc-tag tag-urg">緊急</span><br>
+              <span id="sc1-text">水漏れが発生した（緊急）</span>
+            </button>
+            <button class="sc-btn" id="sc2" onclick="pick(2)">
+              <span class="sc-tag tag-cmp">クレーム</span><br>
+              <span id="sc2-text">騒音が3ヶ月続いている</span>
+            </button>
+            <button class="sc-btn" id="sc3" onclick="pick(3)">
+              <span class="sc-tag tag-ngt">深夜</span><br>
+              <span id="sc3-text">深夜の設備トラブル対応</span>
+            </button>
+          </div>
+          <div class="sc-sep"></div>
+          <div class="sc-group-label" id="lbl-broker">仲介業者からの問い合わせ</div>
+          <div class="sc-list">
+            <button class="sc-btn" id="sc4" onclick="pick(4)">
+              <span class="sc-tag tag-bkr">仲介</span><br>
+              <span id="sc4-text">空室・駐車場・鍵・契約条件の確認</span>
+            </button>
+            <button class="sc-btn" id="sc5" onclick="pick(5)">
+              <span class="sc-tag tag-bkr">仲介</span><br>
+              <span id="sc5-text">外国語対応（英語）内見希望</span>
+            </button>
+          </div>
+        </div>
+        <div class="id-section" id="id-section" style="display:none">
+          <div class="id-title" id="id-title">契約者情報 — 自動特定</div>
+          <div class="id-card">
+            <div class="id-company-row">
+              <div class="co-badge" id="id-badge">日</div>
+              <div>
+                <div class="co-name" id="id-coname">日本住宅管理</div>
+                <div class="co-id" id="id-coid">MGR-0042</div>
+              </div>
+            </div>
+            <div class="id-grid">
+              <div class="id-f"><div class="id-fl" id="lbl-name">氏名</div><div class="id-fv" id="id-name">田中 恵子</div></div>
+              <div class="id-f"><div class="id-fl" id="lbl-prop">物件名</div><div class="id-fv" id="id-prop">ひばりが丘MN</div></div>
+              <div class="id-f"><div class="id-fl" id="lbl-room">部屋番号</div><div class="id-fv" id="id-room">302号室</div></div>
+              <div class="id-f"><div class="id-fl" id="lbl-status">状況</div><div class="id-fv green" id="id-status">契約中</div></div>
+            </div>
+            <div class="id-alert" id="id-alert">本人確認済 — 過去12ヶ月 2件</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center -->
+      <div class="call-center">
+        <div class="call-incoming" id="call-incoming" style="display:none">
+          <div class="ring-circle">
+            <svg width="18" height="18" fill="none" viewBox="0 0 16 16"><path d="M3 3a1 1 0 011-1h1.5a1 1 0 011 .9l.5 2.5a1 1 0 01-.5 1.1L5.8 6.9A8 8 0 008.1 9.2l.7-.5a1 1 0 011-.5l2.5.5A1 1 0 0113 9.5V11a1 1 0 01-1 1C5.9 12 2 8.1 2 4a1 1 0 011-1z" fill="#EAF3DE"/></svg>
+          </div>
+          <div>
+            <div class="ring-num" id="ring-num">090-XXXX-1234</div>
+            <div class="ring-sub" id="ring-sub">着信中 — AI一次受付が自動応答</div>
+          </div>
+        </div>
+        <div class="call-header">
+          <div>
+            <div class="call-status-text" id="call-status">待機中</div>
+            <div class="call-status-sub" id="call-status-sub">シナリオを選択して着信ボタンを押してください</div>
+          </div>
+        </div>
+        <div class="waveform-wrap hidden" id="waveform">
+          <!-- bars generated by JS -->
+        </div>
+        <div class="transcript" id="transcript"></div>
+        <div id="esc-area"></div>
+        <div class="call-footer">
+          <button class="btn btn-primary" id="btn-start" onclick="startCall()">📞　着信シミュレーション開始</button>
+          <button class="btn btn-red" id="btn-end" onclick="endCall()" style="display:none">通話終了</button>
+          <button class="btn btn-ghost" id="btn-reset" onclick="resetCall()" style="display:none">リセット</button>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div class="call-right">
+        <div class="rp-kpis">
+          <div class="kpi-grid">
+            <div class="kpi"><div class="kpi-l" id="lbl-today">本日対応</div><div class="kpi-v kv-blue" id="k-total">18</div></div>
+            <div class="kpi"><div class="kpi-l" id="lbl-airate">AI対応率</div><div class="kpi-v kv-green" id="k-rate">83%</div></div>
+            <div class="kpi"><div class="kpi-l" id="lbl-companies">管理会社数</div><div class="kpi-v kv-blue">5社</div></div>
+            <div class="kpi"><div class="kpi-l" id="lbl-esc">エスカレ</div><div class="kpi-v kv-amber" id="k-esc">3</div></div>
+          </div>
+        </div>
+        <div class="log-head"><span id="lbl-history">対応履歴</span><span style="font-size:10px;color:var(--slate);font-weight:400" id="lbl-latest">本日 最新順</span></div>
+        <div class="log-body" id="log-list">
+          <div class="log-row"><div class="log-av lav-ai">AI</div><div class="log-info"><div><span class="log-co" style="background:var(--greenL);color:var(--green)">日本住宅管理</span></div><div class="log-name">山本 裕子 様</div><div class="log-q">管理費の振込先を教えてください</div></div><div class="log-meta"><span class="badge b-ai">AI自動</span><span class="log-time">14:21</span></div></div>
+          <div class="log-row"><div class="log-av lav-hm">有</div><div class="log-info"><div><span class="log-co" style="background:var(--blueL);color:var(--blue)">東都コミュニティ</span></div><div class="log-name">佐藤 健二 様</div><div class="log-q">隣室の騒音がひどい、対応してほしい</div></div><div class="log-meta"><span class="badge b-esc">エスカレ</span><span class="log-time">14:08</span></div></div>
+          <div class="log-row"><div class="log-av lav-ai">AI</div><div class="log-info"><div><span class="log-co" style="background:var(--orangeL);color:var(--orange)">グリーン管理</span></div><div class="log-name">中村 美佳 様</div><div class="log-q">駐車場の空き状況を確認したい</div></div><div class="log-meta"><span class="badge b-ai">AI自動</span><span class="log-time">13:55</span></div></div>
+          <div class="log-row"><div class="log-av lav-ai">AI</div><div class="log-info"><div><span class="log-co" style="background:var(--purpleL);color:var(--purple)">サンライズPM</span></div><div class="log-name">伊藤 誠 様</div><div class="log-q">粗大ゴミの収集日を教えてください</div></div><div class="log-meta"><span class="badge b-ai">AI自動</span><span class="log-time">13:40</span></div></div>
+          <div class="log-row"><div class="log-av lav-hm">有</div><div class="log-info"><div><span class="log-co" style="background:var(--greenL);color:var(--green)">日本住宅管理</span></div><div class="log-name">渡辺 幸子 様</div><div class="log-q">水漏れが発生、至急対応を</div></div><div class="log-meta"><span class="badge b-hm">有人</span><span class="log-time">13:22</span></div></div>
+          <div class="log-row"><div class="log-av lav-ai">AI</div><div class="log-info"><div><span class="log-co" style="background:#FAECE7;color:#712B13">リビングサポート</span></div><div class="log-name">木村 和也 様</div><div class="log-q">宅配ボックスの使い方を教えてほしい</div></div><div class="log-meta"><span class="badge b-ai">AI自動</span><span class="log-time">12:58</span></div></div>
+          <div class="log-row"><div class="log-av lav-ai">AI</div><div class="log-info"><div><span class="log-co" style="background:var(--purpleL);color:var(--purple)">仲介業者</span></div><div class="log-name">田村 エージェント</div><div class="log-q">502号室の空室・契約条件を確認</div></div><div class="log-meta"><span class="badge b-bkr">仲介AI</span><span class="log-time">12:31</span></div></div>
+        </div>
+      </div>
+
+    </div>
+    </div>
+
+    <!-- ══ DASHBOARD PAGE ══ -->
+    <div class="page" id="page-dash">
+    <div class="dash-scroll">
+      <div class="dash-kpis">
+        <div class="dk"><div class="dk-l" id="dk-total-l">今月の総対応件数</div><div class="dk-v" style="color:var(--blue)">312</div><div class="dk-sub">5管理会社合計</div><div class="dk-trend trend-up">↑ 前月比 +14%</div></div>
+        <div class="dk"><div class="dk-l" id="dk-ai-l">AI自動対応率</div><div class="dk-v" style="color:var(--green)">83%</div><div class="dk-sub">目標 75% 達成</div><div class="dk-trend trend-up">↑ +4pt</div></div>
+        <div class="dk"><div class="dk-l" id="dk-esc-l">エスカレーション</div><div class="dk-v" style="color:#854F0B">53件</div><div class="dk-sub">有人対応</div><div class="dk-trend trend-dn">↓ -8件</div></div>
+        <div class="dk"><div class="dk-l" id="dk-resp-l">平均応答時間</div><div class="dk-v" style="color:var(--blue)">3秒</div><div class="dk-sub">AI一次受付</div><div class="dk-trend trend-up">↑ 前月比改善</div></div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-card">
+          <div class="dash-card-head"><span id="dk-co-head">管理会社別 対応件数</span><span style="font-size:10px;color:var(--slate);font-weight:400">今月累計</span></div>
+          <div class="dash-card-body">
+            <div class="co-row"><div class="co-dot" style="background:var(--green)">日</div><div class="co-name">日本住宅管理</div><div class="co-bar-wrap"><div class="co-bar" style="width:88%;background:var(--green)"></div></div><div class="co-count">88</div></div>
+            <div class="co-row"><div class="co-dot" style="background:var(--blue)">東</div><div class="co-name">東都コミュニティ</div><div class="co-bar-wrap"><div class="co-bar" style="width:72%;background:var(--blue)"></div></div><div class="co-count">72</div></div>
+            <div class="co-row"><div class="co-dot" style="background:var(--orange)">グ</div><div class="co-name">グリーン管理</div><div class="co-bar-wrap"><div class="co-bar" style="width:58%;background:var(--orange)"></div></div><div class="co-count">58</div></div>
+            <div class="co-row"><div class="co-dot" style="background:var(--purple)">サ</div><div class="co-name">サンライズPM</div><div class="co-bar-wrap"><div class="co-bar" style="width:44%;background:var(--purple)"></div></div><div class="co-count">44</div></div>
+            <div class="co-row"><div class="co-dot" style="background:#993C1D">リ</div><div class="co-name">リビングサポート</div><div class="co-bar-wrap"><div class="co-bar" style="width:32%;background:#993C1D"></div></div><div class="co-count">32</div></div>
+            <div class="co-row"><div class="co-dot" style="background:var(--teal)">仲</div><div class="co-name">仲介業者（合計）</div><div class="co-bar-wrap"><div class="co-bar" style="width:18%;background:var(--teal)"></div></div><div class="co-count">18</div></div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-head"><span id="dk-ai-split-head">AI / 有人 内訳</span></div>
+          <div class="dash-card-body">
+            <div class="donut-wrap">
+              <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="40" fill="none" stroke="#E8EFF8" stroke-width="18"/>
+                <!-- AI 83% = 251.3/303 circumference -->
+                <circle cx="55" cy="55" r="40" fill="none" stroke="var(--green)" stroke-width="18"
+                  stroke-dasharray="208 43" stroke-dashoffset="63" stroke-linecap="round"/>
+                <circle cx="55" cy="55" r="40" fill="none" stroke="var(--orange)" stroke-width="18"
+                  stroke-dasharray="43 208" stroke-dashoffset="-145" stroke-linecap="round"/>
+                <text x="55" y="51" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">83%</text>
+                <text x="55" y="64" text-anchor="middle" font-size="9" fill="var(--slate)">AI対応</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="dleg"><div class="dleg-dot" style="background:var(--green)"></div><div class="dleg-lbl">AI自動完結</div><div class="dleg-val" style="margin-left:12px">259件</div></div>
+                <div class="dleg"><div class="dleg-dot" style="background:var(--orange)"></div><div class="dleg-lbl">有人エスカレ</div><div class="dleg-val" style="margin-left:12px">53件</div></div>
+                <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">
+                  <div class="dleg"><div class="dleg-dot" style="background:var(--blue)"></div><div class="dleg-lbl">緊急対応</div><div class="dleg-val" style="margin-left:12px">18件</div></div>
+                  <div class="dleg"><div class="dleg-dot" style="background:var(--purple)"></div><div class="dleg-lbl">仲介業者対応</div><div class="dleg-val" style="margin-left:12px">28件</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-row">
+        <div class="dash-card">
+          <div class="dash-card-head"><span id="dk-cat-head">カテゴリ別件数</span></div>
+          <div class="dash-card-body">
+            <div class="bar-list">
+              <div class="bar-item"><div class="bar-label">設備・修繕依頼</div><div class="bar-track"><div class="bar-fill" style="width:82%;background:var(--green)">82件</div></div><div class="bar-num">82</div></div>
+              <div class="bar-item"><div class="bar-label">管理費・支払</div><div class="bar-track"><div class="bar-fill" style="width:66%;background:var(--blue)">66件</div></div><div class="bar-num">66</div></div>
+              <div class="bar-item"><div class="bar-label">空室・仲介問合せ</div><div class="bar-track"><div class="bar-fill" style="width:56%;background:var(--teal)">56件</div></div><div class="bar-num">56</div></div>
+              <div class="bar-item"><div class="bar-label">騒音・近隣</div><div class="bar-track"><div class="bar-fill" style="width:44%;background:var(--orange)">44件</div></div><div class="bar-num">44</div></div>
+              <div class="bar-item"><div class="bar-label">緊急対応</div><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--red)">22件</div></div><div class="bar-num">22</div></div>
+              <div class="bar-item"><div class="bar-label">その他</div><div class="bar-track"><div class="bar-fill" style="width:15%;background:#888780">15件</div></div><div class="bar-num">15</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-head"><span id="dk-ai-score-head">AIスコア（全社平均）</span></div>
+          <div class="dash-card-body">
+            <div class="bar-list">
+              <div class="bar-item"><div class="bar-label">AI応答精度</div><div class="bar-track"><div class="bar-fill" style="width:93%;background:var(--green)">93%</div></div><div class="bar-num">93</div></div>
+              <div class="bar-item"><div class="bar-label">顧客満足度</div><div class="bar-track"><div class="bar-fill" style="width:87%;background:var(--blue)">87%</div></div><div class="bar-num">87</div></div>
+              <div class="bar-item"><div class="bar-label">一次完結率</div><div class="bar-track"><div class="bar-fill" style="width:83%;background:var(--teal)">83%</div></div><div class="bar-num">83</div></div>
+              <div class="bar-item"><div class="bar-label">エスカレ判定精度</div><div class="bar-track"><div class="bar-fill" style="width:96%;background:var(--purple)">96%</div></div><div class="bar-num">96</div></div>
+              <div class="bar-item"><div class="bar-label">多言語対応率</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--orange)">100%</div></div><div class="bar-num">100</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ══ HISTORY PAGE ══ -->
+    <div class="page" id="page-history">
+      <div class="hist-toolbar">
+        <div class="search-box">
+          <svg width="13" height="13" fill="none" viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.5" stroke="var(--slateL)" stroke-width="1.3"/><path d="M10 10l2.5 2.5" stroke="var(--slateL)" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <input type="text" id="hist-search" placeholder="問い合わせ内容・名前で検索..." oninput="filterHist()">
+        </div>
+        <button class="filter-btn on" onclick="setHistFilter('all',this)">すべて</button>
+        <button class="filter-btn" onclick="setHistFilter('ai',this)">AI自動</button>
+        <button class="filter-btn" onclick="setHistFilter('esc',this)">エスカレ</button>
+        <button class="filter-btn" onclick="setHistFilter('broker',this)">仲介業者</button>
+      </div>
+      <div class="hist-table">
+        <div class="hist-head">
+          <div>日時</div><div>管理会社</div><div>カテゴリ</div><div>発信者</div><div>問い合わせ内容</div><div>対応方法</div><div></div>
+        </div>
+        <div class="hist-body" id="hist-body"></div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS PAGE ══ -->
+    <div class="page" id="page-settings">
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <div class="sn-item active" onclick="setSNav('companies',this)">管理会社</div>
+        <div class="sn-item" onclick="setSNav('notifications',this)">通知設定</div>
+        <div class="sn-item" onclick="setSNav('plans',this)">プラン</div>
+        <div class="sn-item" onclick="setSNav('ai',this)">AI設定</div>
+      </div>
+      <div class="settings-body" id="settings-body"></div>
+    </div>
+    </div>
+
+  </div><!-- /pages -->
+</div><!-- /main -->
+
+<!-- Detail Drawer -->
+<div class="backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div><div class="drawer-id" id="d-id"></div><div class="drawer-title" id="d-title"></div></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const COMPANIES = [
+  {id:'C1', name:'日本住宅管理', color:'#27500A', count:88},
+  {id:'C2', name:'東都コミュニティ', color:'#1A6FBF', count:72},
+  {id:'C3', name:'グリーン管理', color:'#E8720C', count:58},
+  {id:'C4', name:'サンライズPM', color:'#534AB7', count:44},
+  {id:'C5', name:'リビングサポート', color:'#993C1D', count:32},
+];
+
+const I18N = {
+  ja:{
+    callPage:'受電デモ', dashPage:'ダッシュボード', histPage:'対応履歴', settPage:'設定',
+    lbl_resident:'入居者からの問い合わせ', lbl_broker:'仲介業者からの問い合わせ',
+    sc0:'管理費の口座変更を確認したい', sc1:'水漏れが発生した（緊急）',
+    sc2:'騒音が3ヶ月続いている', sc3:'深夜の設備トラブル対応',
+    sc4:'空室・駐車場・鍵・契約条件の確認', sc5:'外国語対応（英語）内見希望',
+    lbl_today:'本日対応', lbl_airate:'AI対応率', lbl_companies:'管理会社数', lbl_esc:'エスカレ',
+    lbl_history:'対応履歴', lbl_latest:'本日 最新順',
+    lbl_name:'氏名', lbl_prop:'物件名', lbl_room:'部屋番号', lbl_status:'状況',
+    id_title:'契約者情報 — 自動特定', pill_on:'稼働中', pill_busy:'対応中',
+    btn_start:'📞　着信シミュレーション開始', btn_end:'通話終了', btn_reset:'リセット',
+    ring_sub:'着信中 — AI一次受付が自動応答',
+    status_idle:'待機中', status_idle_sub:'シナリオを選択して着信ボタンを押してください',
+  },
+  en:{
+    callPage:'Call Demo', dashPage:'Dashboard', histPage:'Call History', settPage:'Settings',
+    lbl_resident:'Resident Inquiries', lbl_broker:'Broker Inquiries',
+    sc0:'Changing bank account for management fee', sc1:'Water leak emergency',
+    sc2:'Noise complaint (3 months)', sc3:'Late-night equipment failure',
+    sc4:'Vacancy, parking, key & contract inquiry', sc5:'English-speaking tenant viewing request',
+    lbl_today:"Today's Calls", lbl_airate:'AI Rate', lbl_companies:'Companies', lbl_esc:'Escalated',
+    lbl_history:'Call History', lbl_latest:'Today, Latest First',
+    lbl_name:'Name', lbl_prop:'Property', lbl_room:'Room', lbl_status:'Status',
+    id_title:'Caller Identified', pill_on:'Online', pill_busy:'In Call',
+    btn_start:'📞　Start Call Simulation', btn_end:'End Call', btn_reset:'Reset',
+    ring_sub:'Incoming — AI answering',
+    status_idle:'Standby', status_idle_sub:'Select a scenario and press Start',
+  },
+  zh:{
+    callPage:'来电演示', dashPage:'仪表板', histPage:'通话记录', settPage:'设置',
+    lbl_resident:'住户咨询', lbl_broker:'中介咨询',
+    sc0:'更改管理费银行账户', sc1:'漏水紧急情况',
+    sc2:'噪音投诉（持续3个月）', sc3:'深夜设备故障',
+    sc4:'空房·停车·钥匙·合同条款确认', sc5:'英语接待·预约看房',
+    lbl_today:'今日来电', lbl_airate:'AI响应率', lbl_companies:'管理公司', lbl_esc:'升级',
+    lbl_history:'通话记录', lbl_latest:'今日 最新',
+    lbl_name:'姓名', lbl_prop:'物业', lbl_room:'房间号', lbl_status:'状态',
+    id_title:'来电方已识别', pill_on:'运行中', pill_busy:'通话中',
+    btn_start:'📞　开始来电模拟', btn_end:'结束通话', btn_reset:'重置',
+    ring_sub:'来电中 — AI正在接听',
+    status_idle:'待机', status_idle_sub:'请选择场景并按开始',
+  },
+};
+
+let lang = 'ja';
+function t(k){ return (I18N[lang]||I18N.ja)[k] || k; }
+
+function setLang(l, el){
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active', b===el));
+  applyI18n();
+}
+
+function applyI18n(){
+  const map = {
+    'page-title': ()=>t(currentPage+'Page')||document.getElementById('page-title').textContent,
+    'lbl-resident': ()=>t('lbl_resident'),
+    'lbl-broker': ()=>t('lbl_broker'),
+    'sc0-text': ()=>t('sc0'), 'sc1-text': ()=>t('sc1'),
+    'sc2-text': ()=>t('sc2'), 'sc3-text': ()=>t('sc3'),
+    'sc4-text': ()=>t('sc4'), 'sc5-text': ()=>t('sc5'),
+    'lbl-today': ()=>t('lbl_today'), 'lbl-airate': ()=>t('lbl_airate'),
+    'lbl-companies': ()=>t('lbl_companies'), 'lbl-esc': ()=>t('lbl_esc'),
+    'lbl-history': ()=>t('lbl_history'), 'lbl-latest': ()=>t('lbl_latest'),
+    'lbl-name': ()=>t('lbl_name'), 'lbl-prop': ()=>t('lbl_prop'),
+    'lbl-room': ()=>t('lbl_room'), 'lbl-status': ()=>t('lbl_status'),
+    'id-title': ()=>t('id_title'), 'sys-label': ()=>t(isRunning?'pill_busy':'pill_on'),
+    'btn-start': ()=>t('btn_start'), 'btn-end': ()=>t('btn_end'), 'btn-reset': ()=>t('btn_reset'),
+    'ring-sub': ()=>t('ring_sub'),
+    'call-status': ()=>isRunning?document.getElementById('call-status').textContent:t('status_idle'),
+    'call-status-sub': ()=>isRunning?document.getElementById('call-status-sub').textContent:t('status_idle_sub'),
+  };
+  Object.entries(map).forEach(([id,fn])=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=fn();
+  });
+}
+
+// ── SCENES ──────────────────────────────────────────
+const SCENES = [
+  // 0: FAQ
+  {phone:'090-XXXX-1234', coBadge:'日', coBg:'#27500A', coName:'日本住宅管理株式会社', coId:'管理会社ID: MGR-0042',
+   name:'田中 恵子', prop:'ひばりが丘マンション', room:'302号室', status:'契約中', statusClass:'green',
+   alert:'本人確認済 — 過去12ヶ月の問い合わせ: 2件', alertClass:'id-ok',
+   idTitle:'契約者情報 — 自動特定', type:'ai',
+   logCoStyle:'background:var(--greenL);color:var(--green)', logCoName:'日本住宅管理',
+   logName:'田中 恵子 様', logQ:'管理費口座変更の手続き', logBadge:'b-ai', logLabel:'AI自動',
+   steps:[
+     {d:600,w:'sys',t:'着信を検知 — 電話番号から契約者情報を照合中...'},
+     {d:1100,w:'sys',t:'契約者特定完了。日本住宅管理 / 田中 恵子 様（302号室）'},
+     {d:800,w:'ai',t:'お電話ありがとうございます。日本住宅管理のAI窓口でございます。田中様、いつもありがとうございます。本日はどのようなご用件でしょうか？'},
+     {d:1200,w:'caller',t:'管理費の引き落とし口座を変えたいんですが。'},
+     {d:1300,w:'ai',t:'口座変更のお手続きですね。書面でのご申請が必要となります。変更依頼書をメールまたは郵送でお送りしますが、どちらがよろしいでしょうか？'},
+     {d:900,w:'caller',t:'メールでお願いします。'},
+     {d:1100,w:'ai',t:'かしこまりました。ご登録のアドレスへ本日中にお送りします。他にご不明な点はございますか？'},
+     {d:800,w:'caller',t:'ありがとうございました。'},
+     {d:600,w:'sys',t:'対応完了 — AI自動完結 ／ DBに保存 ／ 対応時間: 8秒'},
+   ]},
+  // 1: 緊急
+  {phone:'080-XXXX-5678', coBadge:'東', coBg:'#1A6FBF', coName:'東都コミュニティ株式会社', coId:'管理会社ID: MGR-0017',
+   name:'鈴木 健一', prop:'グリーンハイツ', room:'501号室', status:'契約中', statusClass:'green',
+   alert:'⚡ 過去6ヶ月に緊急連絡 1件あり — 優先対応', alertClass:'id-warn',
+   idTitle:'契約者情報 — 自動特定', type:'esc',
+   logCoStyle:'background:var(--blueL);color:var(--blue)', logCoName:'東都コミュニティ',
+   logName:'鈴木 健一 様', logQ:'キッチンからの水漏れ（緊急）', logBadge:'b-esc', logLabel:'エスカレ',
+   steps:[
+     {d:600,w:'sys',t:'着信を検知 — 電話番号から契約者情報を照合中...'},
+     {d:1100,w:'sys',t:'契約者特定完了。東都コミュニティ / 鈴木 健一 様（501号室）'},
+     {d:800,w:'ai',t:'お電話ありがとうございます。東都コミュニティのAI窓口です。鈴木様、ご用件をどうぞ。'},
+     {d:900,w:'caller',t:'キッチンの下から水が漏れてるんです！今すぐ来てください！'},
+     {d:800,w:'ai',t:'大変失礼いたします。水漏れとのこと、緊急対応が必要と判断しました。ただいまオペレーターへ転送いたします。'},
+     {d:600,w:'sys',t:'🚨 緊急判定 — オペレーターへ転送中 ／ AI要約・契約者情報を自動共有'},
+     {d:1200,w:'op',t:'お待たせしました、担当の山田です。状況を引き継いでおります。まずキッチン下の止水栓を閉めてください。業者を今すぐ手配します。'},
+     {d:800,w:'caller',t:'わかりました、閉めました。'},
+     {d:900,w:'op',t:'ありがとうございます。30分以内に業者が伺います。'},
+     {d:600,w:'sys',t:'有人対応完了 — 業者手配済み ／ ログをDBに保存'},
+   ]},
+  // 2: クレーム
+  {phone:'070-XXXX-9012', coBadge:'グ', coBg:'#E8720C', coName:'グリーン管理株式会社', coId:'管理会社ID: MGR-0031',
+   name:'高橋 美穂', prop:'サンライズコート', room:'201号室', status:'契約中', statusClass:'green',
+   alert:'⚠ 同内容の申告 2件あり — クレーム継続中', alertClass:'id-warn',
+   idTitle:'契約者情報 — 自動特定', type:'esc',
+   logCoStyle:'background:var(--orangeL);color:var(--orange)', logCoName:'グリーン管理',
+   logName:'高橋 美穂 様', logQ:'騒音クレーム（継続3ヶ月）', logBadge:'b-esc', logLabel:'エスカレ',
+   steps:[
+     {d:600,w:'sys',t:'着信を検知 — 電話番号から契約者情報を照合中...'},
+     {d:1100,w:'sys',t:'契約者特定完了。グリーン管理 / 高橋 美穂 様 — クレーム履歴あり'},
+     {d:800,w:'ai',t:'お電話ありがとうございます。グリーン管理のAI窓口です。高橋様、ご用件をどうぞ。'},
+     {d:900,w:'caller',t:'また上の階の音がひどいんです！何回言っても改善されない！'},
+     {d:800,w:'ai',t:'大変ご不便をおかけして申し訳ございません。過去のご申告も把握しております。担当者に引き継ぎます。'},
+     {d:600,w:'sys',t:'クレーム継続案件 — 感情レベル: 高 ／ エスカレ転送 ／ 履歴サマリー共有'},
+     {d:1200,w:'op',t:'お待たせしました、担当の佐々木です。経緯を引き継いでおります。本日中に上階の方へ書面で警告いたします。'},
+     {d:900,w:'caller',t:'今まで何もしてくれなかったじゃないですか…'},
+     {d:1000,w:'op',t:'誠に申し訳ございませんでした。今週中に進捗をご報告いたします。フォロー日程を登録しました。'},
+     {d:600,w:'sys',t:'対応完了 — フォロー日程自動登録 ／ 感情スコアをDBに保存'},
+   ]},
+  // 3: 深夜
+  {phone:'090-XXXX-3344', coBadge:'サ', coBg:'#534AB7', coName:'サンライズPM株式会社', coId:'管理会社ID: MGR-0055',
+   name:'松本 大輔', prop:'ビューパレス三鷹', room:'407号室', status:'契約中', statusClass:'green',
+   alert:'深夜帯着信 — 管理事務所は閉鎖中 / AI対応モード', alertClass:'id-warn',
+   idTitle:'契約者情報 — 自動特定', type:'ai',
+   logCoStyle:'background:var(--purpleL);color:var(--purple)', logCoName:'サンライズPM',
+   logName:'松本 大輔 様', logQ:'深夜 — 給湯器エラー（AI自動対応）', logBadge:'b-ai', logLabel:'AI自動',
+   steps:[
+     {d:600,w:'sys',t:'着信を検知 — 23:42 深夜帯 ／ 管理事務所閉鎖中 ／ AI24h対応モード'},
+     {d:1100,w:'sys',t:'契約者特定完了。サンライズPM / 松本 大輔 様（407号室）'},
+     {d:800,w:'ai',t:'お電話ありがとうございます。サンライズPMの24時間AIサポートです。深夜のご連絡、承りました。ご用件をどうぞ。'},
+     {d:1000,w:'caller',t:'給湯器がエラーになってお湯が出ないんですが…E632って表示が出ています。'},
+     {d:1200,w:'ai',t:'E632はガス供給停止のエラーです。まずガスメーターの復帰ボタンを押してください。メーターは玄関扉の外、または洗面台下にございます。'},
+     {d:900,w:'caller',t:'玄関外にありました。ボタン押したら復帰しました！'},
+     {d:900,w:'ai',t:'解決しましたね。お湯が出ることをご確認ください。なお、今回のエラーは地震等による自動停止です。詳細を管理事務所へ報告し、明朝担当者よりご連絡いたします。'},
+     {d:700,w:'caller',t:'お湯出ました！ありがとうございます、助かりました。'},
+     {d:600,w:'sys',t:'深夜AI対応完了 ／ 翌朝フォロー自動スケジュール ／ DBに保存'},
+   ]},
+  // 4: 仲介業者 日本語
+  {phone:'03-XXXX-8800', coBadge:'仲', coBg:'#534AB7', coName:'株式会社センチュリー不動産', coId:'業者ID: BRK-0218',
+   name:'木下 誠（営業担当）', prop:'—', room:'—', status:'仲介業者', statusClass:'purple',
+   alert:'認証済み仲介業者 — 物件情報の照会権限あり', alertClass:'id-ok',
+   idTitle:'仲介業者情報 — 自動特定', type:'ai',
+   logCoStyle:'background:var(--purpleL);color:var(--purple)', logCoName:'仲介業者',
+   logName:'木下 様（センチュリー不動産）', logQ:'空室・駐車場・鍵・契約条件の確認', logBadge:'b-bkr', logLabel:'仲介AI',
+   steps:[
+     {d:600,w:'sys',t:'着信を検知 — 電話番号から仲介業者情報を照合中...'},
+     {d:1100,w:'sys',t:'仲介業者特定完了。株式会社センチュリー不動産 / 木下 誠 様（認証済み）'},
+     {d:800,w:'ai',t:'お電話ありがとうございます。AIインフォメーションセンターです。センチュリー不動産の木下様、いつもお世話になっております。'},
+     {d:1000,w:'caller',t:'ひばりが丘マンションの空室状況を教えてもらえますか？503号室が気になっています。'},
+     {d:1200,w:'ai',t:'503号室の情報です。現在空室で募集中。2LDK・55㎡・賃料12万円（管理費5,000円別）。入居可能日は来月1日からです。'},
+     {d:900,w:'caller',t:'駐車場の空きはありますか？'},
+     {d:1000,w:'ai',t:'現在、平置き1台分（月額8,000円）が空いております。503号室とセットでご案内可能です。'},
+     {d:900,w:'caller',t:'内見の鍵はどうすれば取れますか？'},
+     {d:1100,w:'ai',t:'キーボックス方式です。ご予約いただければ前日中に4桁の解錠番号をSMSでお送りします。ご希望の日時はありますか？'},
+     {d:800,w:'caller',t:'明日の14時はどうでしょう？'},
+     {d:900,w:'ai',t:'明日14時、承りました。解錠番号は本日中にご連絡します。契約条件もご案内しますか？'},
+     {d:600,w:'caller',t:'お願いします。'},
+     {d:1000,w:'ai',t:'敷金2ヶ月・礼金1ヶ月・仲介手数料は賃料1ヶ月分です。詳細資料をメールでお送りします。'},
+     {d:600,w:'sys',t:'仲介業者対応完了 — AI自動完結 ／ 物件照会ログをDBに保存'},
+   ]},
+  // 5: 仲介業者 英語
+  {phone:'090-XXXX-7777', coBadge:'仲', coBg:'#0A8C7E', coName:'Tokyo Living Co., Ltd.', coId:'BRK-ID: BRK-0445',
+   name:'Michael Chen (Agent)', prop:'—', room:'—', status:'Broker', statusClass:'purple',
+   alert:'Verified broker — Property inquiry access granted', alertClass:'id-ok',
+   idTitle:'Broker Identified — Auto Match', type:'ai',
+   logCoStyle:'background:var(--tealL);color:var(--teal)', logCoName:'Broker (EN)',
+   logName:'Michael Chen', logQ:'English: apartment viewing, contract terms', logBadge:'b-bkr', logLabel:'AI (EN)',
+   steps:[
+     {d:600,w:'sys',t:'Incoming call detected — Identifying broker...'},
+     {d:1100,w:'sys',t:'Broker identified: Tokyo Living Co. / Michael Chen (Verified)'},
+     {d:800,w:'ai',t:"Hello, thank you for calling. This is the AI Information Center. Good to hear from you, Michael. How can I help you today?"},
+     {d:1000,w:'caller',t:"Hi, I'm looking for a 2-bedroom apartment for a client. Do you have anything available in Hibarioka Mansion?"},
+     {d:1200,w:'ai',t:"Yes! Unit 503 is currently available. It's a 2LDK, 55 sqm, rent ¥120,000/month plus ¥5,000 management fee. Move-in available from the 1st of next month."},
+     {d:900,w:'caller',t:"Great. Is parking available?"},
+     {d:900,w:'ai',t:"Yes, one outdoor parking space is available at ¥8,000/month. It can be arranged together with unit 503."},
+     {d:800,w:'caller',t:"Can we schedule a viewing tomorrow afternoon?"},
+     {d:1000,w:'ai',t:"Absolutely. I'll arrange a key box access for you. Please give me your preferred time and I'll send the 4-digit unlock code via SMS by tonight."},
+     {d:700,w:'caller',t:"2pm tomorrow works for me."},
+     {d:900,w:'ai',t:"Perfect. 2pm tomorrow is confirmed. I'll also send the full contract details — deposit 2 months, key money 1 month — to your registered email. Anything else I can help with?"},
+     {d:600,w:'caller',t:"That's all. Thank you!"},
+     {d:500,w:'sys',t:'Call complete — AI handled in English / Logged to DB'},
+   ]},
+];
+
+// ── HISTORY DATA ──────────────────────────────────────
+const HIST = [
+  {id:'#2847',date:'2026/04/27',time:'14:32',co:'日本住宅管理',coStyle:'background:var(--greenL);color:var(--green)',cat:'FAQ',caller:'田中 恵子',tel:'090-XXXX-1234',type:'入居者',q:'管理費口座変更の手続きを教えてほしい',method:'ai',label:'AI自動',dur:'8秒'},
+  {id:'#2846',date:'2026/04/27',time:'14:18',co:'東都コミュニティ',coStyle:'background:var(--blueL);color:var(--blue)',cat:'緊急',caller:'鈴木 健一',tel:'080-XXXX-5678',type:'入居者',q:'キッチンから水漏れが発生している',method:'esc',label:'エスカレ',dur:'4分12秒'},
+  {id:'#2845',date:'2026/04/27',time:'13:55',co:'グリーン管理',coStyle:'background:var(--orangeL);color:var(--orange)',cat:'FAQ',caller:'中村 美佳',tel:'070-XXXX-3456',type:'入居者',q:'駐車場の空き状況を確認したい',method:'ai',label:'AI自動',dur:'6秒'},
+  {id:'#2844',date:'2026/04/27',time:'13:40',co:'サンライズPM',coStyle:'background:var(--purpleL);color:var(--purple)',cat:'FAQ',caller:'伊藤 誠',tel:'090-XXXX-4567',type:'入居者',q:'粗大ゴミの収集日を教えてください',method:'ai',label:'AI自動',dur:'5秒'},
+  {id:'#2843',date:'2026/04/27',time:'13:22',co:'日本住宅管理',coStyle:'background:var(--greenL);color:var(--green)',cat:'クレーム',caller:'渡辺 幸子',tel:'090-XXXX-5678',type:'入居者',q:'水漏れが発生している、至急対応を',method:'hm',label:'有人対応',dur:'6分30秒'},
+  {id:'#2842',date:'2026/04/27',time:'12:58',co:'リビングサポート',coStyle:'background:#FAECE7;color:#712B13',cat:'FAQ',caller:'木村 和也',tel:'080-XXXX-6789',type:'入居者',q:'宅配ボックスの使い方を教えてほしい',method:'ai',label:'AI自動',dur:'7秒'},
+  {id:'#2841',date:'2026/04/27',time:'12:31',co:'仲介業者',coStyle:'background:var(--purpleL);color:var(--purple)',cat:'空室照会',caller:'田村 エージェント',tel:'03-XXXX-9900',type:'仲介業者',q:'503号室の空室・契約条件を確認したい',method:'ai',label:'仲介AI',dur:'2分15秒'},
+  {id:'#2840',date:'2026/04/27',time:'11:44',co:'東都コミュニティ',coStyle:'background:var(--blueL);color:var(--blue)',cat:'FAQ',caller:'佐藤 花子',tel:'070-XXXX-7890',type:'入居者',q:'管理費の振込先口座を教えてください',method:'ai',label:'AI自動',dur:'5秒'},
+  {id:'#2839',date:'2026/04/27',time:'11:20',co:'グリーン管理',coStyle:'background:var(--orangeL);color:var(--orange)',cat:'クレーム',caller:'高橋 美穂',tel:'070-XXXX-9012',type:'入居者',q:'上の階の騒音が3ヶ月続いている',method:'esc',label:'エスカレ',dur:'8分44秒'},
+  {id:'#2838',date:'2026/04/27',time:'10:55',co:'仲介業者',coStyle:'background:var(--tealL);color:var(--teal)',cat:'英語対応',caller:'Michael Chen',tel:'090-XXXX-7777',type:'仲介業者',q:'Unit 503 viewing appointment & contract terms',method:'ai',label:'AI (EN)',dur:'3分08秒'},
+  {id:'#2837',date:'2026/04/26',time:'23:42',co:'サンライズPM',coStyle:'background:var(--purpleL);color:var(--purple)',cat:'深夜緊急',caller:'松本 大輔',tel:'090-XXXX-3344',type:'入居者',q:'深夜 — 給湯器エラーE632でお湯が出ない',method:'ai',label:'深夜AI',dur:'4分22秒'},
+  {id:'#2836',date:'2026/04/26',time:'18:30',co:'日本住宅管理',coStyle:'background:var(--greenL);color:var(--green)',cat:'FAQ',caller:'小林 真理子',tel:'080-XXXX-1122',type:'入居者',q:'ゴミ収集日を教えてください',method:'ai',label:'AI自動',dur:'5秒'},
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let currentPage = 'call';
+let currentScene = 0;
+let isRunning = false;
+let timers = [];
+let totalCalls = 18;
+let escCalls = 3;
+let waveInterval = null;
+let histFilter = 'all';
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+function goto(page, el){
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={call:'callPage',dash:'dashPage',history:'histPage',settings:'settPage'};
+  document.getElementById('page-title').textContent = t(titles[page]);
+  if(page==='history') renderHist();
+  if(page==='settings') renderSettings('companies');
+}
+
+// Build sidebar companies
+function buildSbCompanies(){
+  const el = document.getElementById('sb-companies');
+  el.innerHTML = COMPANIES.map(c=>`
+    <div class="sb-co-item" style="padding:4px 16px">
+      <div class="sb-co-dot" style="background:${c.color}"></div>
+      <div class="sb-co-name">${c.name}</div>
+      <div class="sb-co-count">${c.count}</div>
+    </div>`).join('');
+}
+buildSbCompanies();
+
+// ═══════════════════════════════════════════════════
+// CALL PAGE
+// ═══════════════════════════════════════════════════
+function pick(i){
+  if(isRunning) return;
+  currentScene = i;
+  document.querySelectorAll('.sc-btn').forEach((b,j)=>{
+    b.classList.remove('active','active-broker');
+    if(j===i) b.classList.add(i>=4?'active-broker':'active');
+  });
+}
+
+function addMsg(who, text){
+  const t2 = document.getElementById('transcript');
+  const row = document.createElement('div');
+  row.className = 'msg';
+  if(who==='sys'){
+    row.innerHTML = `<div class="bubble bubble-sys">${text}</div>`;
+  } else {
+    const avMap = {caller:['av-caller','来'],ai:['av-ai','AI'],op:['av-op','有人']};
+    const bubMap = {caller:'bubble-caller',ai:'bubble-ai',op:'bubble-op'};
+    const [avC,avL] = avMap[who];
+    row.innerHTML = `<div class="msg-av ${avC}">${avL}</div><div class="bubble ${bubMap[who]}">${text}</div>`;
+  }
+  t2.appendChild(row);
+  t2.scrollTop = t2.scrollHeight;
+}
+
+function showTyping(who){
+  const t2 = document.getElementById('transcript');
+  const row = document.createElement('div');
+  row.className = 'msg'; row.id = 'typing-row';
+  const avMap = {ai:['av-ai','AI'],op:['av-op','有人']};
+  const bubMap = {ai:'bubble-ai',op:'bubble-op'};
+  const [avC,avL] = avMap[who]||['av-ai','AI'];
+  row.innerHTML = `<div class="msg-av ${avC}">${avL}</div><div class="bubble ${bubMap[who]}"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  t2.appendChild(row);
+  t2.scrollTop = t2.scrollHeight;
+}
+function removeTyping(){ const e=document.getElementById('typing-row');if(e)e.remove(); }
+
+// Waveform
+function buildWaveform(){
+  const w = document.getElementById('waveform');
+  w.innerHTML = '';
+  for(let i=0;i<38;i++){
+    const b = document.createElement('div');
+    b.className = 'wv-bar';
+    b.style.height = '4px';
+    w.appendChild(b);
+  }
+}
+function animateWave(){
+  const bars = document.querySelectorAll('.wv-bar');
+  waveInterval = setInterval(()=>{
+    bars.forEach(b=>{
+      const h = Math.random()*24+2;
+      b.style.height = h+'px';
+    });
+  }, 120);
+}
+function stopWave(){
+  clearInterval(waveInterval);
+  document.querySelectorAll('.wv-bar').forEach(b=>b.style.height='4px');
+}
+
+function startCall(){
+  if(isRunning) return;
+  isRunning = true;
+  const sc = SCENES[currentScene];
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-end').style.display = 'inline-block';
+  document.getElementById('call-incoming').style.display = 'flex';
+  document.getElementById('ring-num').textContent = sc.phone;
+  document.getElementById('ring-sub').textContent = t('ring_sub');
+  document.getElementById('call-status').textContent = '着信中';
+  document.getElementById('call-status-sub').textContent = 'AI一次受付が応答しています';
+  document.getElementById('sys-pill').className = 'status-pill pill-busy';
+  document.getElementById('sys-label').textContent = t('pill_busy');
+  // waveform
+  buildWaveform();
+  document.getElementById('waveform').classList.remove('hidden');
+  animateWave();
+
+  let elapsed = 0;
+  sc.steps.forEach((step, i)=>{
+    elapsed += step.d;
+    timers.push(setTimeout(()=>{
+      if(i===1) showIdentify(sc);
+      if(step.w==='ai'||step.w==='op'){
+        showTyping(step.w);
+        setTimeout(()=>{ removeTyping(); addMsg(step.w, step.t); },800);
+      } else {
+        addMsg(step.w, step.t);
+        if(step.t.includes('エスカレ')||step.t.includes('クレーム継続')||step.t.includes('緊急判定')){
+          document.getElementById('call-status').textContent = 'エスカレーション中';
+          const eb = document.createElement('div');
+          eb.className = 'esc-banner';
+          eb.textContent = '⚡ 緊急 / クレーム検知 — LOMオペレーターへ自動転送中';
+          document.getElementById('esc-area').appendChild(eb);
+        }
+      }
+      if(i===sc.steps.length-1) setTimeout(()=>finalizeCall(sc), 1000);
+    }, elapsed));
+  });
+}
+
+function showIdentify(sc){
+  document.getElementById('id-section').style.display = 'block';
+  document.getElementById('id-title').textContent = sc.idTitle;
+  document.getElementById('id-badge').textContent = sc.coBadge;
+  document.getElementById('id-badge').style.background = sc.coBg;
+  document.getElementById('id-coname').textContent = sc.coName;
+  document.getElementById('id-coid').textContent = sc.coId;
+  document.getElementById('id-name').textContent = sc.name;
+  document.getElementById('id-prop').textContent = sc.prop;
+  document.getElementById('id-room').textContent = sc.room;
+  document.getElementById('id-status').textContent = sc.status;
+  document.getElementById('id-status').className = 'id-fv ' + sc.statusClass;
+  document.getElementById('id-alert').textContent = sc.alert;
+  document.getElementById('id-alert').className = 'id-alert ' + sc.alertClass;
+}
+
+function finalizeCall(sc){
+  stopWave();
+  document.getElementById('waveform').classList.add('hidden');
+  document.getElementById('btn-end').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'inline-block';
+  document.getElementById('call-status').textContent = sc.type==='ai'?'対応完了 — AI自動完結':'対応完了 — オペレーター対応';
+  document.getElementById('call-status-sub').textContent = '対応履歴をDBに自動保存しました';
+  document.getElementById('sys-pill').className = 'status-pill pill-on';
+  document.getElementById('sys-label').textContent = t('pill_on');
+  // Update KPIs
+  totalCalls++;
+  if(sc.type==='esc') escCalls++;
+  const rate = Math.round(((totalCalls-escCalls)/totalCalls)*100);
+  document.getElementById('k-total').textContent = totalCalls;
+  document.getElementById('k-rate').textContent = rate+'%';
+  document.getElementById('k-esc').textContent = escCalls;
+  document.getElementById('sb-call-badge').textContent = totalCalls-18;
+  // Add to log
+  const list = document.getElementById('log-list');
+  const row = document.createElement('div');
+  row.className = 'log-row';
+  const avC = sc.type==='ai'?'lav-ai':'lav-hm';
+  const avL = sc.type==='ai'?'AI':'有';
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  row.innerHTML = `<div class="log-av ${avC}">${avL}</div><div class="log-info"><div><span class="log-co" style="${sc.logCoStyle}">${sc.logCoName}</span></div><div class="log-name">${sc.logName}</div><div class="log-q">${sc.logQ}</div></div><div class="log-meta"><span class="badge ${sc.logBadge}">${sc.logLabel}</span><span class="log-time">${timeStr}</span></div>`;
+  list.insertBefore(row, list.firstChild);
+  document.getElementById('sb-hist-badge').textContent = parseInt(document.getElementById('sb-hist-badge').textContent)+1;
+}
+
+function endCall(){ timers.forEach(clearTimeout); timers=[]; isRunning=false; stopWave(); resetCall(); }
+function resetCall(){
+  timers.forEach(clearTimeout); timers=[]; isRunning=false; stopWave();
+  document.getElementById('call-incoming').style.display='none';
+  document.getElementById('id-section').style.display='none';
+  document.getElementById('transcript').innerHTML='';
+  document.getElementById('esc-area').innerHTML='';
+  document.getElementById('waveform').classList.add('hidden');
+  document.getElementById('btn-start').style.display='inline-block';
+  document.getElementById('btn-end').style.display='none';
+  document.getElementById('btn-reset').style.display='none';
+  document.getElementById('call-status').textContent=t('status_idle');
+  document.getElementById('call-status-sub').textContent=t('status_idle_sub');
+  document.getElementById('sys-pill').className='status-pill pill-on';
+  document.getElementById('sys-label').textContent=t('pill_on');
+}
+
+// ═══════════════════════════════════════════════════
+// HISTORY PAGE
+// ═══════════════════════════════════════════════════
+function setHistFilter(f, el){
+  histFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderHist();
+}
+function filterHist(){ renderHist(); }
+
+function renderHist(){
+  const kw = (document.getElementById('hist-search')||{value:''}).value.toLowerCase();
+  const filtered = HIST.filter(h=>{
+    if(histFilter==='ai' && h.method!=='ai') return false;
+    if(histFilter==='esc' && h.method!=='esc') return false;
+    if(histFilter==='broker' && h.type!=='仲介業者') return false;
+    if(kw && !h.q.toLowerCase().includes(kw) && !h.caller.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  const methodBadge = {ai:'<span class="badge b-ai">AI自動</span>',esc:'<span class="badge b-esc">エスカレ</span>',hm:'<span class="badge b-hm">有人対応</span>'};
+  document.getElementById('hist-body').innerHTML = filtered.map(h=>`
+    <div class="hist-row" onclick="openDrawer('${h.id}')">
+      <div style="font-size:11px;color:var(--slate)">${h.date}<br>${h.time}</div>
+      <div><span class="log-co" style="${h.coStyle}">${h.co}</span></div>
+      <div><span class="badge" style="background:var(--bg);border:1px solid var(--border);color:var(--text2)">${h.cat}</span></div>
+      <div class="caller-info">
+        <div class="caller-name">${h.caller}</div>
+        <div class="caller-tel">${h.tel}</div>
+        <div class="caller-type">${h.type}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.q}</div>
+      <div style="display:flex;align-items:center;gap:6px">${methodBadge[h.method]||''}<span style="font-size:10px;color:var(--slate)">${h.dur}</span></div>
+      <div class="chevron">›</div>
+    </div>`).join('') || '<div style="padding:40px;text-align:center;color:var(--slateL)">該当する記録がありません</div>';
+}
+
+function openDrawer(id){
+  const h = HIST.find(x=>x.id===id);
+  if(!h) return;
+  document.getElementById('d-id').textContent = h.id + ' ｜ ' + h.co;
+  document.getElementById('d-title').textContent = h.q.substring(0,36)+(h.q.length>36?'...':'');
+  const sc = SCENES.find(s=>s.logName.includes(h.caller.split(' ')[0]))||SCENES[0];
+  document.getElementById('d-body').innerHTML = `
+    <div class="d-section">
+      <div class="d-section-title">基本情報</div>
+      <div class="d-grid">
+        <div class="d-key">日時</div><div class="d-val">${h.date} ${h.time}</div>
+        <div class="d-key">管理会社</div><div class="d-val">${h.co}</div>
+        <div class="d-key">発信者</div><div class="d-val">${h.caller}</div>
+        <div class="d-key">電話番号</div><div class="d-val" style="font-family:monospace">${h.tel}</div>
+        <div class="d-key">種別</div><div class="d-val">${h.type}</div>
+        <div class="d-key">カテゴリ</div><div class="d-val">${h.cat}</div>
+        <div class="d-key">対応方法</div><div class="d-val">${h.label}</div>
+        <div class="d-key">対応時間</div><div class="d-val">${h.dur}</div>
+      </div>
+    </div>
+    <div class="d-section">
+      <div class="d-section-title">対応ログ（抜粋）</div>
+      <div class="d-conv">
+        <div class="d-msg"><div class="d-av av-caller">来</div><div class="d-bubble d-bub-caller">${h.q}</div></div>
+        <div class="d-msg"><div class="d-av av-ai">AI</div><div class="d-bubble d-bub-ai">ご連絡ありがとうございます。${h.cat==='緊急'||h.cat==='深夜緊急'?'緊急対応が必要と判断しました。オペレーターへ転送いたします。':'内容を確認し対応いたしました。詳細は管理会社へ共有済みです。'}</div></div>
+        ${h.method==='esc'?`<div class="d-msg"><div class="d-av av-op">有人</div><div class="d-bubble d-bub-op">オペレーターが引き継ぎ、適切に対応いたしました。</div></div>`:''}
+        <div class="d-msg"><div class="d-bubble d-bub-sys">対応完了 ／ DBに自動保存</div></div>
+      </div>
+    </div>
+    <div class="${h.method==='ai'?'meta-box meta-ok':'meta-box meta-warn'}">
+      ${h.method==='ai'?`✓ AI自動対応完了 — 対応時間 ${h.dur}　|　ログ自動保存`:`⚠ 有人対応 — オペレーター対応後、ログ保存済み`}
+    </div>`;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════
+// SETTINGS PAGE
+// ═══════════════════════════════════════════════════
+let currentSNav = 'companies';
+function setSNav(section, el){
+  currentSNav = section;
+  document.querySelectorAll('.sn-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  renderSettings(section);
+}
+
+function renderSettings(section){
+  const body = document.getElementById('settings-body');
+  if(section==='companies'){
+    body.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-title">管理会社一覧</div>
+        <div class="settings-sub">登録された管理会社とその設定を管理します</div>
+        ${COMPANIES.map(c=>`
+        <div class="co-card">
+          <div class="co-card-head">
+            <div class="co-dot" style="width:32px;height:32px;border-radius:8px;background:${c.color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff">${c.name[0]}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">${c.name}</div>
+              <div style="font-size:10px;color:var(--slate)">${c.id} — 今月 ${c.count}件</div>
+            </div>
+            <span class="badge b-ai" style="font-size:10px">稼働中</span>
+          </div>
+          <div class="co-card-body">
+            <div class="co-field"><label>AI対応モード</label><span>24時間自動対応</span></div>
+            <div class="co-field"><label>エスカレ先</label><span>LOM オペレーター</span></div>
+            <div class="co-field"><label>通知チャネル</label><span>Teams / メール</span></div>
+            <div class="co-field"><label>多言語対応</label><span>日本語 / English / 中文</span></div>
+          </div>
+        </div>`).join('')}
+        <button class="add-btn">＋ 管理会社を追加</button>
+      </div>`;
+  } else if(section==='notifications'){
+    body.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-title">通知設定</div>
+        <div class="settings-sub">エスカレーション・緊急対応時の通知方法を設定します</div>
+        <div class="co-card" style="padding:0 15px">
+          ${[
+            ['Teams自動通知','エスカレーション時にTeamsへ自動通知',true],
+            ['Slack通知','Slackへのリアルタイム通知',true],
+            ['緊急SMS通知','緊急案件発生時に担当者へSMS送信',true],
+            ['深夜帯メール報告','深夜対応の翌朝レポートをメール送信',true],
+            ['月次レポート自動送付','月末に集計レポートを自動送付',false],
+            ['仲介業者照会アラート','新規仲介業者からの着信時に通知',false],
+          ].map(([l,d,c])=>`
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-label">${l}</div><div class="toggle-desc">${d}</div></div>
+            <label class="toggle"><input type="checkbox" ${c?'checked':''}><span class="toggle-slider"></span></label>
+          </div>`).join('')}
+        </div>
+      </div>`;
+  } else if(section==='plans'){
+    body.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-title">料金プラン</div>
+        <div class="settings-sub">現在のプランとアップグレードオプションを確認できます</div>
+        <div class="plan-grid">
+          <div class="plan-card">
+            <div class="plan-name">Starter</div>
+            <div class="plan-price">¥29,800<span>/月</span></div>
+            <div class="plan-features">
+              ${['AI自動対応（月500件）','管理会社 3社まで','基本ダッシュボード','メール通知'].map(f=>`<div class="plan-feature">${f}</div>`).join('')}
+            </div>
+          </div>
+          <div class="plan-card recommended">
+            <div class="plan-rec-badge">現在のプラン</div>
+            <div class="plan-name">Business</div>
+            <div class="plan-price" style="color:var(--blue)">¥98,000<span>/月</span></div>
+            <div class="plan-features">
+              ${['AI自動対応（無制限）','管理会社 無制限','個社カスタムDashboard','Teams/Slack通知','仲介業者対応','多言語対応（3言語）','24h深夜対応モード'].map(f=>`<div class="plan-feature">${f}</div>`).join('')}
+            </div>
+          </div>
+          <div class="plan-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price">要相談<span></span></div>
+            <div class="plan-features">
+              ${['Businessの全機能','オンプレ / プライベートクラウド','専任CSM','SLA保証 99.9%','API連携・カスタム開発','社内研修サポート'].map(f=>`<div class="plan-feature">${f}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  } else if(section==='ai'){
+    body.innerHTML = `
+      <div class="settings-section">
+        <div class="settings-title">AI設定</div>
+        <div class="settings-sub">AIの動作・対応モード・エスカレ判定の設定を行います</div>
+        <div class="co-card" style="padding:0 15px">
+          ${[
+            ['FAQ自動完結モード','定型問い合わせをAIが自動完結する',true],
+            ['感情スコア分析','通話内容から感情レベルを自動判定',true],
+            ['クレーム自動検知','クレームワード検知時に即座にエスカレ',true],
+            ['多言語自動切替','英語・中国語着信時に言語を自動判定',true],
+            ['深夜24hモード','管理事務所閉鎖中もAIが対応',true],
+            ['仲介業者専用フロー','認証済み仲介業者に物件照会権限を付与',true],
+            ['通話録音・文字起こし','全通話を録音しテキスト化してDB保存',false],
+          ].map(([l,d,c])=>`
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-label">${l}</div><div class="toggle-desc">${d}</div></div>
+            <label class="toggle"><input type="checkbox" ${c?'checked':''}><span class="toggle-slider"></span></label>
+          </div>`).join('')}
+        </div>
+      </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+renderHist();
+renderSettings('companies');
+</script>
+</body>
+</html>
