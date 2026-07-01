@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COSOJI AI — 商業施設 AIソリューション デモ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans",sans-serif;background:#F1F5F9;color:#0F172A;font-size:14px}
+/* ── Layout ── */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:230px;background:#0F172A;flex-shrink:0;display:flex;flex-direction:column}
+.s-logo{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.brand{font-size:15px;font-weight:700;color:#fff}.brand em{color:#2DD4BF;font-style:normal}
+.brand-sub{font-size:10px;color:#475569;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.nav{padding:8px 0;flex:1}
+.nav-section{padding:14px 18px 5px;font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.07em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;color:#94A3B8;font-size:12px;transition:all .12s;border-left:2px solid transparent}
+.nav-item:hover{color:#CBD5E1;background:rgba(255,255,255,.04)}
+.nav-item.active{color:#fff;background:rgba(45,212,191,.08);border-left-color:#2DD4BF}
+.nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,.1);color:#64748B}
+.nav-item.active .nav-badge{background:#2DD4BF;color:#0F172A;font-weight:700}
+.s-foot{padding:12px 18px;border-top:1px solid rgba(255,255,255,.07)}
+.fac-pill{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:9px 11px}
+.fac-name{font-size:12px;font-weight:600;color:#E2E8F0}
+.fac-sub{font-size:10px;color:#475569;margin-top:2px}
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid #E2E8F0;height:52px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-title{font-size:15px;font-weight:600}
+.tb-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
+.status-pill{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px}
+.s-dot{width:6px;height:6px;background:#10B981;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.content{flex:1;overflow-y:auto;padding:22px}
+/* ── Pages ── */
+.page{display:none}.page.active{display:block}
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px}
+.kpi-label{font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:700;line-height:1.1}
+.c-teal{color:#0D9488}.c-green{color:#15803D}.c-orange{color:#EA580C}.c-slate{color:#0F172A}.c-red{color:#DC2626}
+.kpi-sub{font-size:11px;color:#94A3B8;margin-top:4px}
+/* ── Cards ── */
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;color:#0F172A}
+.card-sub{font-size:11px;color:#94A3B8}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+/* ── Table ── */
+.tbl-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin-bottom:14px}
+.tbl-toolbar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid #F1F5F9;flex-wrap:wrap}
+.sw{display:flex;align-items:center;gap:6px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:7px;padding:5px 10px;flex:1;min-width:160px;max-width:260px}
+.sw input{border:none;background:transparent;outline:none;font-size:12px;color:#0F172A;width:100%}
+.sw input::placeholder{color:#94A3B8}
+.fb{padding:4px 10px;border:1px solid #E2E8F0;border-radius:20px;background:#fff;font-size:11px;font-weight:500;color:#475569;cursor:pointer;transition:all .12s;white-space:nowrap}
+.fb:hover{border-color:#0D9488;color:#0D9488}
+.fb.on{background:#F0FDFA;border-color:#0D9488;color:#0F766E;font-weight:600}
+.tbl-head{display:grid;padding:8px 14px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.04em}
+.hi{grid-template-columns:90px 110px 140px 1fr 110px 28px}
+.tr{display:grid;padding:10px 14px;border-bottom:1px solid #F8FAFC;align-items:center;cursor:pointer;transition:background .1s;font-size:12px}
+.tr.hi{grid-template-columns:90px 110px 140px 1fr 110px 28px}
+.tr:hover{background:#F8FAFC}.tr:last-child{border:none}
+.tbl-body{max-height:440px;overflow-y:auto}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.bg-teal{background:#F0FDFA;color:#0F766E}.bg-slate{background:#F1F5F9;color:#475569}
+.bg-orange{background:#FFF7ED;color:#C2410C}.bg-blue{background:#EFF6FF;color:#1D4ED8}
+.bg-green{background:#F0FDF4;color:#15803D}.bg-red{background:#FEF2F2;color:#991B1B}
+.dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:4px}
+.dot-g{background:#10B981}.dot-a{background:#F59E0B}
+.pg{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-top:1px solid #F1F5F9}
+.pg-info{font-size:11px;color:#94A3B8}.pg-btns{display:flex;gap:3px}
+.pg-btn{padding:3px 8px;border:1px solid #E2E8F0;border-radius:5px;background:#fff;font-size:11px;color:#475569;cursor:pointer}
+.pg-btn:hover{border-color:#0D9488;color:#0D9488}.pg-btn.on{background:#0D9488;color:#fff;border-color:#0D9488}
+/* ── Detail Panel ── */
+.dp{position:fixed;top:0;right:0;width:480px;height:100vh;background:#fff;border-left:1px solid #E2E8F0;z-index:300;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 24px rgba(0,0,0,.06)}
+.dp.open{transform:translateX(0)}
+.dp-header{padding:14px 18px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dp-id{font-size:11px;color:#94A3B8;font-weight:600}
+.dp-title{font-size:13px;font-weight:600;color:#0F172A;margin-top:2px}
+.dp-tabs{display:flex;border-bottom:1px solid #E2E8F0;padding:0 18px;flex-shrink:0}
+.dp-tab{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#64748B;transition:all .12s}
+.dp-tab.active{color:#0D9488;border-bottom-color:#0D9488;font-weight:600}
+.dp-close{width:28px;height:28px;border-radius:6px;border:1px solid #E2E8F0;background:#fff;cursor:pointer;font-size:14px;color:#64748B;display:flex;align-items:center;justify-content:center}
+.dp-body{flex:1;overflow-y:auto;padding:16px 18px}
+.dp-sec{margin-bottom:18px}
+.dp-sec-title{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
+.dp-grid{display:grid;grid-template-columns:74px 1fr;gap:6px 10px;font-size:12px}
+.dp-key{color:#94A3B8;padding-top:1px}.dp-val{color:#0F172A;line-height:1.5}
+.conv{background:#F8FAFC;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.cv{display:flex;gap:8px}
+.av{width:25px;height:25px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.av-u{background:#E0E7FF;color:#3730A3}.av-ai{background:#CCFBF1;color:#0F766E}.av-st{background:#FEF3C7;color:#92400E}
+.bub{padding:8px 11px;border-radius:9px;font-size:12px;line-height:1.55;flex:1}
+.bub-u{background:#fff;border:1px solid #E2E8F0}.bub-ai{background:#F0FDFA;border:1px solid #99F6E4}.bub-st{background:#FFFBEB;border:1px solid #FDE68A}
+.meta-box{border-radius:7px;padding:9px 12px;font-size:12px;margin-top:8px}
+.meta-g{background:#F0FDF4;border:1px solid #BBF7D0}.meta-a{background:#FFFBEB;border:1px solid #FDE68A}
+.tl{position:relative;padding-left:16px}
+.tl::before{content:'';position:absolute;left:5px;top:4px;bottom:4px;width:1px;background:#E2E8F0}
+.tl-item{position:relative;padding-bottom:12px;padding-left:13px}
+.tl-item::before{content:'';position:absolute;left:-6px;top:4px;width:7px;height:7px;border-radius:50%;background:#E2E8F0;border:2px solid #fff}
+.tl-item.done::before{background:#10B981}.tl-item.now::before{background:#0D9488;box-shadow:0 0 0 3px rgba(13,148,136,.2)}
+.tl-t{font-size:10px;color:#94A3B8;margin-bottom:1px}.tl-txt{font-size:12px;color:#0F172A}
+.tr-area{background:#0F172A;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;line-height:1.9;color:#CBD5E1;white-space:pre-wrap;max-height:280px;overflow-y:auto}
+/* ── Callback btn ── */
+.cb-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#F0FDFA;border:1px solid #99F6E4;border-radius:20px;font-size:10px;font-weight:600;color:#0F766E;cursor:pointer;transition:all .12s}
+.cb-btn:hover{background:#0D9488;color:#fff;border-color:#0D9488}
+/* ── Backdrop ── */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.15);z-index:299;display:none}
+.backdrop.show{display:block}
+/* ── Info Terminal (インフォメーションAI) ── */
+.info-layout{display:grid;grid-template-columns:1fr 420px;gap:16px}
+.info-panel{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden}
+.info-header{background:linear-gradient(135deg,#028090,#00A896);padding:16px 20px;color:#fff}
+.info-header-title{font-size:16px;font-weight:700;margin-bottom:3px}
+.info-header-sub{font-size:11px;opacity:.8}
+.info-live{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.9;margin-top:6px}
+.info-live-dot{width:7px;height:7px;background:#fff;border-radius:50%;animation:pulse 1.5s infinite}
+.chat-frame{height:420px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#F8FAFC}
+.chat-in{display:flex;gap:8px;align-self:flex-start;max-width:85%}
+.chat-out{display:flex;gap:8px;flex-direction:row-reverse;align-self:flex-end;max-width:85%}
+.chat-av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.chat-av-ai{background:#028090;color:#fff}.chat-av-u{background:#334155;color:#fff}
+.chat-bubble{padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.55}
+.chat-bubble-ai{background:#fff;border:1px solid #E2E8F0;border-radius:12px 12px 12px 3px}
+.chat-bubble-u{background:#028090;color:#fff;border-radius:12px 12px 3px 12px}
+.chat-label{font-size:10px;color:#94A3B8;margin-bottom:3px}
+.chat-label-r{text-align:right}
+.typing-dots{display:flex;gap:4px;padding:4px 0}
+.typing-dots span{width:6px;height:6px;background:#94A3B8;border-radius:50%;animation:tdot 1s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.chat-input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid #E2E8F0}
+.chat-input-row input{flex:1;font-size:13px;padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;outline:none}
+.chat-input-row input:focus{border-color:#028090}
+.chat-input-row button{padding:8px 16px;background:#028090;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600}
+.quick-tags{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid #F1F5F9}
+.q-tag{padding:4px 11px;font-size:11px;border:1px solid #E2E8F0;border-radius:20px;background:#fff;color:#475569;cursor:pointer;transition:all .12s}
+.q-tag:hover{border-color:#028090;color:#028090;background:#F0FDFA}
+/* ── Info right panel ── */
+.info-right{display:flex;flex-direction:column;gap:14px}
+.info-stat-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px}
+.info-stat-title{font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F8FAFC;font-size:12px}
+.stat-row:last-child{border:none}
+.stat-label{color:#475569}
+.stat-val{font-weight:700;color:#0F172A}
+.stat-val.teal{color:#0D9488}.stat-val.green{color:#15803D}
+/* ── Module Promo ── */
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.mod-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px;opacity:.55;position:relative}
+.mod-card.active{opacity:1;border-color:#0D9488}
+.mod-icon{font-size:24px;margin-bottom:8px}
+.mod-title{font-size:12px;font-weight:700;color:#0F172A;margin-bottom:3px}
+.mod-desc{font-size:10px;color:#64748B;line-height:1.5}
+.mod-soon{position:absolute;top:8px;right:8px;font-size:9px;padding:1px 6px;background:#F1F5F9;color:#64748B;border-radius:10px;font-weight:600}
+.mod-active-badge{position:absolute;top:8px;right:8px;font-size:9px;padding:1px 6px;background:#F0FDFA;color:#0F766E;border-radius:10px;font-weight:600;border:1px solid #99F6E4}
+/* ── Call Center specific ── */
+.call-status-row{display:flex;gap:10px;margin-bottom:16px}
+.call-status-card{flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center}
+.call-live-indicator{width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;margin-right:5px;animation:pulse 1.5s infinite}
+.empty{padding:40px;text-align:center;color:#94A3B8;font-size:13px}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="s-logo">
+    <div class="brand"><em>COSOJI</em> AI</div>
+    <div class="brand-sub">商業施設 AIソリューション</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">ダッシュボード</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor"/></svg>
+      全体ダッシュボード
+    </div>
+    <div class="nav-section">稼働中モジュール</div>
+    <div class="nav-item" onclick="showPage('callcenter',this)">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M2 2a1 1 0 011-1h1.5a.9.9 0 01.9.8l.4 2.2a.9.9 0 01-.43.93l-.72.43a6.5 6.5 0 002.97 2.97l.43-.72a.9.9 0 01.93-.43l2.2.4A.9.9 0 0112 8.5V10a1 1 0 01-1 1C4.925 11 1 7.075 1 3a1 1 0 011-1z" fill="currentColor"/></svg>
+      AIコールセンター
+      <span class="nav-badge" id="nb-calls">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('infoai',this)">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.4"/><path d="M7 6v4M7 4.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      インフォメーションAI
+      <span class="nav-badge">Live</span>
+    </div>
+    <div class="nav-section">今後追加予定</div>
+    <div class="nav-item" style="opacity:.45;cursor:default">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      落とし物DBモジュール
+      <span class="nav-badge">準備中</span>
+    </div>
+    <div class="nav-item" style="opacity:.45;cursor:default">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      設備手配モジュール
+      <span class="nav-badge">準備中</span>
+    </div>
+    <div class="nav-item" style="opacity:.45;cursor:default">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      テナントQAモジュール
+      <span class="nav-badge">準備中</span>
+    </div>
+  </nav>
+  <div class="s-foot">
+    <div class="fac-pill">
+      <div class="fac-name">ブルメール舞多聞</div>
+      <div class="fac-sub">兵庫県神戸市垂水区</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-title" id="page-title">全体ダッシュボード</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="status-pill"><span class="s-dot"></span>AI稼働中</div>
+      <span style="font-size:11px;color:#94A3B8">Powered by COSOJI</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">本日の着信件数</div><div class="kpi-val c-teal" id="k-today">9件</div><div class="kpi-sub">稼働中</div></div>
+        <div class="kpi"><div class="kpi-label">AI自動対応率</div><div class="kpi-val c-green">87%</div><div class="kpi-sub">有人対応 13%のみ</div></div>
+        <div class="kpi"><div class="kpi-label">平均応答時間</div><div class="kpi-val c-teal">2秒</div><div class="kpi-sub">従来比 98%短縮</div></div>
+        <div class="kpi"><div class="kpi-label">稼働中モジュール</div><div class="kpi-val c-slate">2 <span style="font-size:14px;color:#94A3B8">/ 5</span></div><div class="kpi-sub">残り3つ順次追加予定</div></div>
+      </div>
+
+      <div class="chart-row">
+        <div class="card"><div class="card-header"><div class="card-title">問い合わせ種別（3〜4月）</div><div class="card-sub">実データ</div></div><div style="position:relative;height:180px"><canvas id="catChart"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">AI対応 vs 有人対応</div></div><div style="position:relative;height:180px"><canvas id="aiChart"></canvas></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">日別件数（3月）</div></div>
+        <div style="position:relative;height:130px"><canvas id="dayChart"></canvas></div>
+      </div>
+
+      <!-- Module overview -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">モジュール稼働状況</div></div>
+        <div class="module-grid">
+          <div class="mod-card active">
+            <div class="mod-active-badge">稼働中</div>
+            <div class="mod-icon">📞</div>
+            <div class="mod-title">AIコールセンター</div>
+            <div class="mod-desc">外線・内線の電話対応を自動化。AI基盤が問い合わせ内容を判断し自動応答</div>
+          </div>
+          <div class="mod-card active">
+            <div class="mod-active-badge">稼働中</div>
+            <div class="mod-icon">💬</div>
+            <div class="mod-title">インフォメーションAI</div>
+            <div class="mod-desc">受付カウンターのAI化。来館者の問い合わせにリアルタイムで自動応答</div>
+          </div>
+          <div class="mod-card">
+            <div class="mod-soon">準備中</div>
+            <div class="mod-icon">🔑</div>
+            <div class="mod-title">落とし物DBモジュール</div>
+            <div class="mod-desc">落とし物情報をDB化。AIが自動照合・引渡し案内まで対応</div>
+          </div>
+          <div class="mod-card">
+            <div class="mod-soon">準備中</div>
+            <div class="mod-icon">⚙️</div>
+            <div class="mod-title">設備手配モジュール</div>
+            <div class="mod-desc">テナントからの設備連絡をAIが受け付けBM会社へ自動手配</div>
+          </div>
+          <div class="mod-card">
+            <div class="mod-soon">準備中</div>
+            <div class="mod-icon">🏪</div>
+            <div class="mod-title">テナントQAモジュール</div>
+            <div class="mod-desc">テナントからの契約・申請・手続きに関する問い合わせを自動化</div>
+          </div>
+          <div class="mod-card" style="border-style:dashed">
+            <div class="mod-icon">＋</div>
+            <div class="mod-title">カスタムモジュール追加</div>
+            <div class="mod-desc">施設固有のニーズに合わせて独自モジュールを追加可能</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CALL CENTER ══ -->
+    <div class="page" id="page-callcenter">
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-label">本日の着信</div><div class="kpi-val c-teal" id="cc-today">9件</div></div>
+        <div class="kpi"><div class="kpi-label">AI自動対応</div><div class="kpi-val c-green" id="cc-ai">7件</div><div class="kpi-sub">77.8%</div></div>
+        <div class="kpi"><div class="kpi-label">有人転送</div><div class="kpi-val c-orange" id="cc-human">2件</div></div>
+        <div class="kpi"><div class="kpi-label">平均応答</div><div class="kpi-val c-teal">2秒</div></div>
+      </div>
+
+      <div class="tbl-card">
+        <div class="tbl-toolbar">
+          <div class="sw">
+            <svg width="12" height="12" fill="none" viewBox="0 0 14 14"><circle cx="6" cy="6" r="4.5" stroke="#94A3B8" stroke-width="1.3"/><path d="M10 10l2.5 2.5" stroke="#94A3B8" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <input type="text" id="cc-search" placeholder="問い合わせ内容・名前で検索..." oninput="filterCC()">
+          </div>
+          <button class="fb on" onclick="setCCFilter('all',this)">すべて</button>
+          <button class="fb" onclick="setCCFilter('ai',this)">AI対応</button>
+          <button class="fb" onclick="setCCFilter('human',this)">有人転送</button>
+          <button class="fb" onclick="setCCFilter('テナント場所案内',this)">場所案内</button>
+          <button class="fb" onclick="setCCFilter('施設設備',this)">施設設備</button>
+        </div>
+        <div class="tbl-head hi"><div>日時</div><div>カテゴリ</div><div>受電者情報</div><div>問い合わせ内容</div><div>対応方法</div><div></div></div>
+        <div class="tbl-body" id="cc-table"></div>
+        <div class="pg"><div class="pg-info" id="cc-pginfo"></div><div class="pg-btns" id="cc-pgbtns"></div></div>
+      </div>
+    </div>
+
+    <!-- ══ INFO AI ══ -->
+    <div class="page" id="page-infoai">
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="kpi-label">本日の対話数</div><div class="kpi-val c-teal" id="ia-today">12回</div><div class="kpi-sub">自動対応中</div></div>
+        <div class="kpi"><div class="kpi-label">平均対話時間</div><div class="kpi-val c-green">38秒</div><div class="kpi-sub">従来2.5分→大幅短縮</div></div>
+        <div class="kpi"><div class="kpi-label">解決率</div><div class="kpi-val c-teal">94%</div><div class="kpi-sub">有人転送 6%のみ</div></div>
+      </div>
+
+      <div class="info-layout">
+        <!-- Left: Chat UI -->
+        <div class="info-panel">
+          <div class="info-header">
+            <div class="info-header-title">インフォメーション AI</div>
+            <div class="info-header-sub">ブルメール舞多聞 — 受付カウンター</div>
+            <div class="info-live"><span class="info-live-dot"></span>AIが対応中 — 24時間稼働</div>
+          </div>
+          <div class="quick-tags">
+            <div class="q-tag" onclick="sendInfo('ATMはどこにありますか？')">ATMの場所</div>
+            <div class="q-tag" onclick="sendInfo('トイレはどこですか？')">トイレ</div>
+            <div class="q-tag" onclick="sendInfo('落とし物をしました')">落とし物</div>
+            <div class="q-tag" onclick="sendInfo('セリアはありますか？')">テナント案内</div>
+            <div class="q-tag" onclick="sendInfo('駐車場は有料ですか？')">駐車場</div>
+            <div class="q-tag" onclick="sendInfo('営業時間を教えてください')">営業時間</div>
+            <div class="q-tag" onclick="sendInfo('タクシーを呼んでください')">タクシー</div>
+            <div class="q-tag" onclick="sendInfo('喫煙所はどこですか？')">喫煙所</div>
+          </div>
+          <div class="chat-frame" id="chat-frame"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="問い合わせ内容を入力..." onkeypress="if(event.key==='Enter')sendInfo()">
+            <button onclick="sendInfo()">送信</button>
+          </div>
+        </div>
+
+        <!-- Right: Stats -->
+        <div class="info-right">
+          <div class="info-stat-card">
+            <div class="info-stat-title">本日の対応状況</div>
+            <div class="stat-row"><span class="stat-label">場所・テナント案内</span><span class="stat-val teal">7件</span></div>
+            <div class="stat-row"><span class="stat-label">施設設備案内</span><span class="stat-val teal">3件</span></div>
+            <div class="stat-row"><span class="stat-label">その他</span><span class="stat-val">2件</span></div>
+            <div class="stat-row"><span class="stat-label">有人転送</span><span class="stat-val" style="color:#F59E0B">1件</span></div>
+          </div>
+          <div class="info-stat-card">
+            <div class="info-stat-title">よく聞かれる質問 TOP5</div>
+            <div class="stat-row"><span class="stat-label">1. ATMの場所</span><span class="stat-val teal">89件/月</span></div>
+            <div class="stat-row"><span class="stat-label">2. 店舗の場所案内</span><span class="stat-val teal">76件/月</span></div>
+            <div class="stat-row"><span class="stat-label">3. トイレの場所</span><span class="stat-val teal">52件/月</span></div>
+            <div class="stat-row"><span class="stat-label">4. 落とし物</span><span class="stat-val teal">38件/月</span></div>
+            <div class="stat-row"><span class="stat-label">5. 駐車場</span><span class="stat-val teal">24件/月</span></div>
+          </div>
+          <div class="info-stat-card">
+            <div class="info-stat-title">施設情報（AI応答データ）</div>
+            <div class="stat-row"><span class="stat-label">物販営業時間</span><span class="stat-val">10:00〜21:00</span></div>
+            <div class="stat-row"><span class="stat-label">飲食営業時間</span><span class="stat-val">10:00〜22:00</span></div>
+            <div class="stat-row"><span class="stat-label">駐車場</span><span class="stat-val green">終日無料</span></div>
+            <div class="stat-row"><span class="stat-label">管理事務所</span><span class="stat-val">9:30〜18:00</span></div>
+            <div class="stat-row"><span class="stat-label">休館日</span><span class="stat-val">年中無休</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Backdrop -->
+<div class="backdrop" id="backdrop" onclick="closeDP()"></div>
+
+<!-- Detail Panel -->
+<div class="dp" id="dp">
+  <div class="dp-header">
+    <div><div class="dp-id" id="dp-id"></div><div class="dp-title" id="dp-title"></div></div>
+    <button class="dp-close" onclick="closeDP()">✕</button>
+  </div>
+  <div class="dp-tabs">
+    <div class="dp-tab active" onclick="switchDpTab('detail',this)">対応詳細</div>
+    <div class="dp-tab" onclick="switchDpTab('transcript',this)">通話録音</div>
+    <div class="dp-tab" onclick="switchDpTab('similar',this)">類似案件</div>
+  </div>
+  <div class="dp-body" id="dp-body"></div>
+</div>
+
+<script>
+// ═══ DATA ═══
+const INQ = [
+  {id:'INQ-0001',date:'2026/3/01',time:'11:13',gender:'女',age:'40代',question:'100均（セリア）はありますか?',answer:'2階 アカチャンホンポ横にセリアがある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0002',date:'2026/3/01',time:'12:26',gender:'女',age:'60代',question:'お茶できる所はありますか?',answer:'1階 ドトール、ファクトリーシン、ウェンディーズファーストキッチンをご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0003',date:'2026/3/01',time:'13:39',gender:'女',age:'20代',question:'ATMはありますか?',answer:'1階 ドトール横にATMコーナーがある事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0004',date:'2026/3/01',time:'14:52',gender:'男',age:'30代',question:'喫煙コーナーはありますか?',answer:'1階 エディオン前の駐輪場横をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0005',date:'2026/3/01',time:'16:05',gender:'女',age:'70代',question:'携帯が無いのでタクシーを呼んで下さい。',answer:'山陽タクシーの手配を致しました。',category:'特殊対応',ai_ok:false,resp_sec:7,writer:'島田'},
+  {id:'INQ-0006',date:'2026/3/01',time:'10:18',gender:'男',age:'20代',question:'トイレはどこにありますか?',answer:'1階 au前の通路にある事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0007',date:'2026/3/02',time:'11:31',gender:'女',age:'60代',question:'ドリームはどこにありますか?',answer:'2階 アバンティブックセンター前にある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0008',date:'2026/3/02',time:'13:44',gender:'女',age:'20代',question:'関西スーパーはどこにありますか?',answer:'1階 西フロアー突き当りにある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0009',date:'2026/3/02',time:'15:57',gender:'男',age:'50代',question:'駐車券はあるのですか?',answer:'駐車場は終日無料でご利用頂ける事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0010',date:'2026/3/03',time:'10:10',gender:'男',age:'40代',question:'小型家電のリサイクルボックスはどこですか?',answer:'現在は無い事をお伝えし、小束山グルメシティに移設した事をご案内。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0011',date:'2026/3/03',time:'12:23',gender:'女',age:'50代',question:'エディオンはどこにありますか?',answer:'1階 東フロアー突き当りにある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0012',date:'2026/3/04',time:'11:36',gender:'男',age:'20代',question:'お宝発見はどこにありますか?',answer:'エディオンの2階にある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0013',date:'2026/3/04',time:'14:49',gender:'女',age:'30代',question:'ATMはどこですか?',answer:'1階 ドトール横にATMコーナーがある事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0014',date:'2026/3/05',time:'10:02',gender:'女',age:'40代',question:'しまむらはどこにありますか?',answer:'2階 西フロアー突き当りにある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0015',date:'2026/3/05',time:'12:15',gender:'女',age:'50代',question:'大阪王将はどこにありますか?',answer:'2階 家族亭横にある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0016',date:'2026/3/06',time:'11:28',gender:'男',age:'30代',question:'どこの銀行のATMがありますか?',answer:'三井住友・みなと・セブン銀行のATMがある事をご案内。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0017',date:'2026/3/07',time:'10:41',gender:'女',age:'60代',question:'飲食店はありますか?',answer:'1階にドトール・ウェンディーズ、2階に家族亭・サイゼリヤ・大阪王将をご案内。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0018',date:'2026/3/08',time:'13:54',gender:'女',age:'70代',question:'大吉はどこにありますか?',answer:'1階 ウェンディーズ横、駐車場側に入口がある事をご案内。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0019',date:'2026/3/09',time:'11:07',gender:'男',age:'40代',question:'タクシーを呼んでもらえますか?',answer:'山陽タクシーへ手配を致しました。',category:'特殊対応',ai_ok:false,resp_sec:8,writer:'篠田'},
+  {id:'INQ-0020',date:'2026/3/10',time:'14:20',gender:'女',age:'50代',question:'落とし物をしました。財布を探しています。',answer:'管理事務所でお預かりの落とし物を確認。財布のお預かりがございましたことをご案内。',category:'特殊対応',ai_ok:false,resp_sec:9,writer:'島田'},
+  {id:'INQ-0021',date:'2026/3/11',time:'10:33',gender:'男',age:'30代',question:'駐車場は有料ですか?',answer:'終日無料でご利用いただけます。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0022',date:'2026/3/12',time:'12:46',gender:'女',age:'20代',question:'アカチャンホンポはどこですか?',answer:'2階 エスカレーターを上がって右手にある事をご案内。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0023',date:'2026/3/13',time:'11:59',gender:'男',age:'60代',question:'今日はイベントをやっていますか?',answer:'本日のイベント情報をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0024',date:'2026/4/01',time:'10:12',gender:'女',age:'30代',question:'ATMはどこにありますか?',answer:'1階 ドトール横にATMコーナーがある事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'小林'},
+  {id:'INQ-0025',date:'2026/4/02',time:'13:25',gender:'男',age:'40代',question:'トイレはどこですか?',answer:'1階 au前の通路にある事をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0026',date:'2026/4/03',time:'11:38',gender:'女',age:'20代',question:'営業時間を教えてください。',answer:'専門店10時〜21時、関西スーパー9時〜22時をご案内。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0027',date:'2026/4/04',time:'14:51',gender:'女',age:'50代',question:'落とし物をしました。財布を探しています。',answer:'管理事務所にてお預かりしております旨をご案内。',category:'特殊対応',ai_ok:false,resp_sec:10,writer:'小林'},
+  {id:'INQ-0028',date:'2026/4/05',time:'10:04',gender:'男',age:'30代',question:'駐車場は有料ですか?',answer:'終日無料でご利用いただけます。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'篠田'},
+  {id:'INQ-0029',date:'2026/4/06',time:'12:17',gender:'女',age:'40代',question:'セリアはありますか?',answer:'2階 アカチャンホンポ横にある事をご案内致しました。',category:'テナント場所案内',ai_ok:true,resp_sec:2,writer:'島田'},
+  {id:'INQ-0030',date:'2026/4/07',time:'11:30',gender:'男',age:'20代',question:'喫煙コーナーはどこですか?',answer:'1階 エディオン前の駐輪場横をご案内致しました。',category:'施設設備',ai_ok:true,resp_sec:2,writer:'小林'},
+];
+
+const CAT_COLOR={'テナント場所案内':'#0D9488','施設設備':'#3B82F6','特殊対応':'#F59E0B','その他':'#94A3B8'};
+const CAT_BADGE={'テナント場所案内':'bg-teal','施設設備':'bg-blue','特殊対応':'bg-orange','その他':'bg-slate'};
+const CALLER_NAMES=['田村 恵子','山本 裕子','佐藤 美咲','鈴木 一郎','中田 幸子','橋本 健太','藤井 直子','加藤 浩二','松本 陽子','伊藤 康平','高橋 洋子','岡田 千恵','中村 真一','小林 明子','渡辺 俊介'];
+const CALLER_PHONES=['090-XXXX-XXXX','080-XXXX-XXXX','070-XXXX-XXXX','06-XXXX-XXXX','078-XXX-XXXX'];
+
+function getCaller(id){
+  const i=parseInt(id.replace(/\D/g,''))%CALLER_NAMES.length;
+  if(parseInt(id.replace(/\D/g,''))%8===0) return {name:'非通知',tel:'—',anon:true};
+  return {name:CALLER_NAMES[i],tel:CALLER_PHONES[i%5],anon:false};
+}
+
+// ═══ Navigation ═══
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={dashboard:'全体ダッシュボード',callcenter:'AIコールセンター',infoai:'インフォメーションAI'};
+  document.getElementById('page-title').textContent=titles[name]||name;
+  if(name==='callcenter') renderCC();
+  closeDP();
+}
+
+// ═══ Call Center ═══
+let ccFilter='all', ccPage=1, ccFiltered=[...INQ];
+const CC_PER=15;
+
+function setCCFilter(f,el){
+  ccFilter=f; ccPage=1;
+  document.querySelectorAll('#page-callcenter .fb').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  filterCC();
+}
+
+function filterCC(){
+  const kw=(document.getElementById('cc-search')||{value:''}).value.toLowerCase();
+  ccFiltered=INQ.filter(d=>{
+    if(ccFilter==='ai'&&!d.ai_ok)return false;
+    if(ccFilter==='human'&&d.ai_ok)return false;
+    if(['テナント場所案内','施設設備'].includes(ccFilter)&&d.category!==ccFilter)return false;
+    if(kw&&!d.question.toLowerCase().includes(kw)&&!d.answer.toLowerCase().includes(kw)&&!getCaller(d.id).name.toLowerCase().includes(kw))return false;
+    return true;
+  });
+  ccPage=1; renderCC();
+}
+
+function renderCC(){
+  const s=(ccPage-1)*CC_PER, e=s+CC_PER;
+  const pg=ccFiltered.slice(s,e);
+  const el=document.getElementById('cc-table');
+  el.innerHTML=pg.length ? pg.map(rowHtml).join('') : '<div class="empty">該当なし</div>';
+  const total=ccFiltered.length, totalPg=Math.ceil(total/CC_PER);
+  document.getElementById('cc-pginfo').textContent=`${s+1}–${Math.min(e,total)} / ${total}件`;
+  let h='';
+  if(ccPage>1)h+=`<button class="pg-btn" onclick="goCC(${ccPage-1})">‹</button>`;
+  for(let i=Math.max(1,ccPage-2);i<=Math.min(totalPg,ccPage+2);i++)
+    h+=`<button class="pg-btn${i===ccPage?' on':''}" onclick="goCC(${i})">${i}</button>`;
+  if(ccPage<totalPg)h+=`<button class="pg-btn" onclick="goCC(${ccPage+1})">›</button>`;
+  document.getElementById('cc-pgbtns').innerHTML=h;
+  // KPI
+  const ai=INQ.filter(d=>d.ai_ok).length;
+  document.getElementById('cc-today').textContent=INQ.length+'件';
+  document.getElementById('cc-ai').textContent=ai+'件';
+  document.getElementById('cc-human').textContent=(INQ.length-ai)+'件';
+}
+function goCC(p){ccPage=p;renderCC();}
+
+function rowHtml(d){
+  const c=getCaller(d.id);
+  const callerCell=c.anon
+    ?`<div style="color:#94A3B8;font-size:12px">非通知<br><span style="font-size:10px">${d.gender}/${d.age}</span></div>`
+    :`<div>
+        <div style="font-size:12px;font-weight:500">${c.name}</div>
+        <div style="font-size:10px;color:#64748B;font-family:monospace">${c.tel}</div>
+        <div style="font-size:10px;color:#94A3B8">${d.gender}/${d.age}</div>
+        <div class="cb-btn" style="margin-top:3px" onclick="doCallback('${d.id}','${c.name}','${c.tel}');event.stopPropagation()">
+          <svg width="9" height="9" fill="none" viewBox="0 0 12 12"><path d="M2 2a1 1 0 011-1h1.5a1 1 0 011 .894l.5 2.5a1 1 0 01-.48 1.025L4.8 5.9A8 8 0 007.1 8.2l.48-.72a1 1 0 011.025-.48l2.5.5A1 1 0 0111 8.5V10a1 1 0 01-1 1C4.477 11 1 7.523 1 3a1 1 0 011-1z" fill="currentColor"/></svg>
+          折り返す
+        </div>
+      </div>`;
+  return `<div class="tr hi" onclick="openDP('${d.id}')">
+    <div style="font-size:11px;color:#475569">${d.date}<br><span style="color:#94A3B8">${d.time}</span></div>
+    <div><span class="badge ${CAT_BADGE[d.category]||'bg-slate'}" style="font-size:9px">${d.category}</span></div>
+    ${callerCell}
+    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${d.question}</div>
+    <div>${d.ai_ok
+      ?'<span style="color:#10B981;font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px"><span class="dot dot-g"></span>AI自動</span>'
+      :'<span style="color:#F59E0B;font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px"><span class="dot dot-a"></span>有人対応</span>'}</div>
+    <div style="color:#0D9488;font-size:14px">›</div>
+  </div>`;
+}
+
+// ═══ Detail Panel ═══
+let curDpId=null, curDpTab='detail';
+function openDP(id){
+  curDpId=id; curDpTab='detail';
+  document.querySelectorAll('.dp-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  const d=INQ.find(x=>x.id===id); if(!d)return;
+  document.getElementById('dp-id').textContent=d.id;
+  document.getElementById('dp-title').textContent=d.question.substring(0,30)+(d.question.length>30?'...':'');
+  renderDpTab(d,'detail');
+  document.getElementById('dp').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+}
+function switchDpTab(tab,el){
+  curDpTab=tab;
+  document.querySelectorAll('.dp-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const d=INQ.find(x=>x.id===curDpId); if(d) renderDpTab(d,tab);
+}
+function renderDpTab(d,tab){
+  const body=document.getElementById('dp-body');
+  const c=getCaller(d.id);
+  if(tab==='detail'){
+    const cb=c.anon
+      ?`<div class="dp-key">受電者</div><div class="dp-val" style="color:#94A3B8">非通知</div>`
+      :`<div class="dp-key">受電者名</div><div class="dp-val" style="font-weight:600">${c.name}</div>
+        <div class="dp-key">電話番号</div><div class="dp-val"><span style="font-family:monospace">${c.tel}</span>&nbsp;<span class="cb-btn" onclick="doCallback('${d.id}','${c.name}','${c.tel}')">折り返す</span></div>
+        <div class="dp-key">属性</div><div class="dp-val">${d.gender} / ${d.age}</div>`;
+    body.innerHTML=`
+      <div class="dp-sec">
+        <div class="dp-sec-title">受電者情報</div>
+        <div class="dp-grid" style="background:#F8FAFC;border-radius:8px;padding:11px;border:1px solid #E2E8F0">${cb}</div>
+      </div>
+      <div class="dp-sec">
+        <div class="dp-sec-title">基本情報</div>
+        <div class="dp-grid">
+          <div class="dp-key">受付日時</div><div class="dp-val">${d.date} ${d.time}</div>
+          <div class="dp-key">カテゴリ</div><div class="dp-val"><span class="badge ${CAT_BADGE[d.category]||'bg-slate'}">${d.category}</span></div>
+          <div class="dp-key">対応方法</div><div class="dp-val">${d.ai_ok?'<span style="color:#10B981;font-weight:600">AI自動対応</span>':'<span style="color:#F59E0B;font-weight:600">有人対応</span>'}</div>
+          <div class="dp-key">応答時間</div><div class="dp-val">${d.ai_ok?'約'+d.resp_sec+'秒':'約'+d.resp_sec+'分'}</div>
+          <div class="dp-key">担当者</div><div class="dp-val">${d.ai_ok?'AIシステム（記録：'+d.writer+'）':d.writer}</div>
+        </div>
+      </div>
+      <div class="dp-sec">
+        <div class="dp-sec-title">対応ログ</div>
+        <div class="conv">
+          <div class="cv"><div class="av av-u">来</div><div><div style="font-size:10px;color:#94A3B8;margin-bottom:2px">来館者${c.anon?'':' ('+c.name+')'}</div><div class="bub bub-u">${d.question}</div></div></div>
+          <div class="cv"><div class="av ${d.ai_ok?'av-ai':'av-st'}">${d.ai_ok?'AI':d.writer[0]}</div><div><div style="font-size:10px;color:#94A3B8;margin-bottom:2px">${d.ai_ok?'AI自動応答':'担当者 '+d.writer}</div><div class="bub ${d.ai_ok?'bub-ai':'bub-st'}">${d.answer}</div></div></div>
+        </div>
+        <div class="meta-box ${d.ai_ok?'meta-g':'meta-a'}" style="margin-top:8px">
+          <div style="font-weight:600;color:${d.ai_ok?'#15803D':'#B45309'};margin-bottom:2px">${d.ai_ok?'✓ AI自動対応完了':'⚠ 有人対応'}</div>
+          <div style="font-size:11px;color:#475569">${d.ai_ok?'応答時間 約'+d.resp_sec+'秒 ｜ 人員不要 ｜ ログ自動保存':'担当者 '+d.writer+' が対応 ｜ 対応時間 約'+d.resp_sec+'分'}</div>
+        </div>
+      </div>
+      <div class="dp-sec">
+        <div class="dp-sec-title">対応タイムライン</div>
+        <div class="tl">
+          <div class="tl-item done"><div class="tl-t">${d.time}</div><div class="tl-txt">電話着信 AI受付${c.anon?'（非通知）':' — '+c.name}</div></div>
+          <div class="tl-item done"><div class="tl-t">${d.time}</div><div class="tl-txt">${d.ai_ok?'AI回答生成・自動応答':'担当者 '+d.writer+' へ転送'}</div></div>
+          <div class="tl-item now"><div class="tl-t">${d.time}</div><div class="tl-txt">対応完了・ログ保存</div></div>
+        </div>
+      </div>`;
+  } else if(tab==='transcript'){
+    const lines=genTr(d);
+    body.innerHTML=`<div class="dp-sec">
+      <div class="dp-sec-title">通話録音テキスト</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="badge bg-green">● 録音済</span><span style="font-size:11px;color:#94A3B8">通話時間 約${d.ai_ok?d.resp_sec+'秒':d.resp_sec+'分'} | ${d.date} ${d.time}</span></div>
+      <div class="tr-area">${fmtTr(lines)}</div>
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-title">AI解析</div>
+      <div class="dp-grid">
+        <div class="dp-key">感情分析</div><div class="dp-val">満足（推定 8.2/10）</div>
+        <div class="dp-key">カテゴリ</div><div class="dp-val">${d.category}</div>
+        <div class="dp-key">解決状況</div><div class="dp-val"><span class="badge bg-green">解決済</span></div>
+      </div>
+    </div>`;
+  } else {
+    const sim=INQ.filter(x=>x.category===d.category&&x.id!==d.id).slice(0,5);
+    body.innerHTML=`<div class="dp-sec"><div class="dp-sec-title">類似案件（${sim.length}件）</div>
+      ${sim.map(s=>`<div onclick="openDP('${s.id}')" style="padding:9px 12px;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:7px;cursor:pointer;transition:all .1s" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='#fff'">
+        <div style="font-size:12px;font-weight:500;margin-bottom:3px">${s.question}</div>
+        <div style="font-size:11px;color:#64748B">${s.answer.substring(0,55)}...</div>
+        <div style="font-size:10px;color:#94A3B8;margin-top:3px">${s.date} | ${s.ai_ok?'AI対応':'有人対応'}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+}
+
+function genTr(d){
+  const [h,m]=d.time.split(':').map(Number);
+  const fmt=a=>`${String(h).padStart(2,'0')}:${String(m+a).padStart(2,'0')}`;
+  const c=getCaller(d.id);
+  const lines=[
+    {t:fmt(0),s:'SYSTEM',txt:'【着信】外線電話受付 ブルメール舞多聞'},
+    {t:fmt(0),s:'AI',txt:'こちらはブルメール舞多聞インフォメーションです。ご用件をどうぞ。'},
+    {t:fmt(0),s:'USER',txt:d.question},
+  ];
+  if(d.ai_ok){
+    lines.push({t:fmt(0),s:'AI',txt:d.answer},{t:fmt(0),s:'AI',txt:'他にご不明な点はございますか？'},{t:fmt(1),s:'USER',txt:'ありがとうございます。'},{t:fmt(1),s:'AI',txt:'ありがとうございました。またのご来館をお待ちしております。'},{t:fmt(1),s:'SYSTEM',txt:'【通話終了】AI自動対応 応答：'+d.resp_sec+'秒'});
+  } else {
+    lines.push({t:fmt(0),s:'AI',txt:'少々お待ちください。担当者におつなぎします。'},{t:fmt(1),s:'SYSTEM',txt:'【転送】担当者 '+d.writer+' へ転送'},{t:fmt(1),s:'STAFF',txt:d.writer+'です。'+d.answer},{t:fmt(3),s:'USER',txt:'ありがとうございました。'},{t:fmt(3),s:'SYSTEM',txt:'【通話終了】有人対応 '+d.resp_sec+'分'});
+  }
+  return lines;
+}
+function fmtTr(lines){
+  const c={AI:'#2DD4BF',USER:'#fff',STAFF:'#FCD34D',SYSTEM:'#475569'};
+  const l={AI:'[AI]     ',USER:'[来館者]  ',STAFF:'[担当者]  ',SYSTEM:'[SYSTEM] '};
+  return lines.map(ln=>`<span style="color:#475569">${ln.t}  </span><span style="color:${c[ln.s]||'#CBD5E1'}">${l[ln.s]||ln.s}  ${ln.txt}</span>`).join('\n');
+}
+
+function closeDP(){
+  document.getElementById('dp').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+  curDpId=null;
+}
+
+function doCallback(id,name,tel){
+  if(tel==='—'){alert('非通知のため折り返しできません。');return;}
+  const o=document.createElement('div');
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center';
+  o.innerHTML=`<div style="background:#fff;border-radius:14px;padding:22px 26px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:4px">折り返し電話</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:14px">以下の番号に発信します</div>
+    <div style="background:#F8FAFC;border-radius:9px;padding:11px 14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600">${name}</div>
+      <div style="font-size:17px;font-weight:700;color:#0D9488;margin-top:3px;font-family:monospace">${tel}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:8px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;font-size:13px;cursor:pointer">キャンセル</button>
+      <a href="tel:${tel.replace(/-/g,'')}" style="flex:1;padding:8px;border:none;border-radius:8px;background:#0D9488;font-size:13px;color:#fff;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;font-weight:600" onclick="this.closest('div[style]').remove()">発信する</a>
+    </div>
+  </div>`;
+  o.addEventListener('click',e=>{if(e.target===o)o.remove();});
+  document.body.appendChild(o);
+}
+
+// ═══ Info AI Chat ═══
+const INFO_RESPONSES = {
+  'ATM':        '1階 ドトール横にATMコーナーがございます。三井住友銀行・みなと銀行・セブン銀行のATMがご利用いただけます。',
+  'トイレ':     '1階 au前の通路にトイレがございます。2階西フロアーにもございます。車いす対応トイレも完備しています。',
+  'セリア':     '2階 アカチャンホンポ横にセリアがございます。エスカレーターで2階へお上がりください。',
+  '落とし物':   'ご不便をおかけして申し訳ございません。管理事務所にてお預かりしている場合がございます。お名前とお落としになった品物の特徴をお聞かせいただけますか？',
+  'タクシー':   '山陽タクシーへご連絡いたします。正面入口でお待ちください。おおよそ10〜15分でご到着の予定です。',
+  '駐車':       '当施設の駐車場は終日無料でご利用いただけます。北側・南側の2カ所に入口がございます。',
+  '喫煙':       '1階 エディオン前の駐輪場横に喫煙コーナーがございます。',
+  '営業時間':   '専門店は10時〜21時、飲食店は10時〜22時、関西スーパーは9時〜22時となっております。年中無休でございます。',
+  '関西スーパー':'1階 西フロアー突き当りに関西スーパーがございます。',
+  'エディオン':  '1階 東フロアー突き当りにエディオンがございます。',
+  'しまむら':   '2階 西フロアー突き当りにしまむらがございます。',
+  'サイゼ':     '2階 家族亭横にサイゼリヤがございます。',
+  '大阪王将':   '2階 家族亭横にございます。',
+  '飲食':       '1階にドトール・ウェンディーズファーストキッチン、2階に家族亭・サイゼリヤ・大阪王将がございます。',
+  'アカチャン':  '2階 エスカレーターを上がって右手にアカチャンホンポがございます。',
+  'どこ':       'どちらのお店をお探しでしょうか？お店の名前や種類をお聞かせください。',
+};
+function getInfoRes(text){
+  for(const [k,v] of Object.entries(INFO_RESPONSES)) if(text.includes(k)) return {text:v,auto:true};
+  if(text.includes('ありますか')||text.includes('教えて')) return {text:'ご案内いたします。もう少し詳しくお聞かせいただけますか？',auto:true};
+  return {text:'ただいまスタッフにおつなぎいたします。少々お待ちください。',auto:false};
+}
+
+let infoMsgs=[{role:'ai',text:'こんにちは！ブルメール舞多聞インフォメーションです。ご用件をどうぞ。',auto:true}];
+function renderChat(){
+  const frame=document.getElementById('chat-frame');
+  frame.innerHTML=infoMsgs.map(m=>`
+    <div class="chat-${m.role==='user'?'out':'in'}">
+      <div class="chat-av chat-av-${m.role==='user'?'u':'ai'}">${m.role==='user'?'来':'AI'}</div>
+      <div>
+        <div class="chat-label${m.role==='user'?' chat-label-r':''}">${m.role==='user'?'来館者':'AI インフォメーション'+(m.auto!==false?' <span style="font-size:9px;padding:1px 5px;background:#F0FDFA;color:#0F766E;border-radius:8px;border:1px solid #99F6E4">自動対応</span>':'')}</div>
+        <div class="chat-bubble chat-bubble-${m.role==='user'?'u':'ai'}">${m.text}</div>
+      </div>
+    </div>`).join('');
+  frame.scrollTop=frame.scrollHeight;
+}
+
+function sendInfo(preset){
+  const inp=document.getElementById('chat-input');
+  const text=preset||inp.value.trim();
+  if(!text)return;
+  inp.value='';
+  infoMsgs.push({role:'user',text});
+  renderChat();
+  // typing indicator
+  const frame=document.getElementById('chat-frame');
+  const typing=document.createElement('div');
+  typing.className='chat-in'; typing.id='typing-ind';
+  typing.innerHTML='<div class="chat-av chat-av-ai">AI</div><div><div class="chat-label">AI インフォメーション</div><div class="chat-bubble chat-bubble-ai"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>';
+  frame.appendChild(typing);
+  frame.scrollTop=frame.scrollHeight;
+  setTimeout(()=>{
+    document.getElementById('typing-ind')?.remove();
+    const res=getInfoRes(text);
+    infoMsgs.push({role:'ai',text:res.text,auto:res.auto});
+    renderChat();
+  },700);
+}
+
+// ═══ Charts ═══
+function initCharts(){
+  const total=INQ.length, ai=INQ.filter(d=>d.ai_ok).length;
+  document.getElementById('nb-calls').textContent=total;
+  document.getElementById('k-today').textContent=total+'件';
+
+  const catMap={};
+  INQ.forEach(d=>catMap[d.category]=(catMap[d.category]||0)+1);
+  new Chart(document.getElementById('catChart'),{
+    type:'bar',
+    data:{labels:Object.keys(catMap),datasets:[{data:Object.values(catMap),backgroundColor:Object.keys(catMap).map(c=>CAT_COLOR[c]||'#94A3B8'),borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#64748B'}},y:{ticks:{font:{size:10},color:'#64748B'},grid:{color:'rgba(0,0,0,0.04)'}}}}
+  });
+  new Chart(document.getElementById('aiChart'),{
+    type:'doughnut',
+    data:{labels:['AI自動対応','有人対応'],datasets:[{data:[ai,total-ai],backgroundColor:['#10B981','#F59E0B'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:12},boxWidth:11,padding:14}},tooltip:{callbacks:{label:c=>` ${c.label}：${c.parsed}件 (${Math.round(c.parsed/total*100)}%)`}}},cutout:'65%'}
+  });
+  const days=Array.from({length:31},(_,i)=>i+1);
+  const dc=days.map(d=>INQ.filter(x=>x.date.endsWith('/'+String(d).padStart(2,'0'))&&x.date.startsWith('2026/3')).length);
+  new Chart(document.getElementById('dayChart'),{
+    type:'line',
+    data:{labels:days.map(d=>d+'日'),datasets:[{data:dc,borderColor:'#0D9488',backgroundColor:'rgba(13,148,136,.08)',fill:true,tension:.35,pointRadius:2,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#94A3B8',maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{min:0,ticks:{font:{size:10},color:'#94A3B8'},grid:{color:'rgba(0,0,0,0.04)'}}}}
+  });
+}
+
+initCharts();
+renderCC();
+renderChat();
+</script>
+</body>
+</html>
