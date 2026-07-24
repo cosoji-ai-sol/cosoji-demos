@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI統合物件検索 | COSOJI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2D4E; --navy-light:#2a3f6b; --navy-deep:#141f36;
+  --teal:#4BBFB8; --teal-light:#D6F0EE; --teal-dark:#379791;
+  --coral:#E8645A;
+  --gray-50:#f8f9fa; --gray-100:#f1f3f5; --gray-200:#e9ecef; --gray-400:#ced4da; --gray-600:#6c757d; --gray-800:#343a40;
+  --white:#fff;
+  --shadow:0 4px 24px rgba(30,45,78,0.10);
+  --shadow-lg:0 10px 40px rgba(30,45,78,0.18);
+  --riapro:#2E6DA4; --itandi:#F0932B; --athome:#C0392B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#eef2f7;color:var(--navy);min-height:100vh;}
+
+header{background:var(--navy);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25);}
+.logo{font-family:'Inter',sans-serif;font-weight:700;font-size:20px;color:#fff;display:flex;align-items:center;gap:10px;}
+.logo-badge{background:var(--teal);color:#fff;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.05em;}
+.header-sub{color:#9fb0cc;font-size:12px;letter-spacing:.02em;}
+
+.stepbar{background:#fff;border-bottom:1px solid var(--gray-200);padding:18px 0;position:sticky;top:64px;z-index:99;}
+.stepbar-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Inter',sans-serif;font-size:13px;color:var(--gray-400);flex-wrap:wrap;padding:0 20px;}
+.step-item{display:flex;align-items:center;gap:8px;transition:color .3s;}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--gray-200);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s;flex-shrink:0;}
+.step-item.done .step-num{background:var(--teal);color:#fff;}
+.step-item.active .step-num{background:var(--navy);color:#fff;}
+.step-item.active,.step-item.done{color:var(--navy);font-weight:600;}
+.step-dot{color:var(--gray-400);}
+
+main{max-width:980px;margin:0 auto;padding:36px 20px 80px;}
+.panel{display:none;animation:fadeUp .45s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:32px;margin-bottom:20px;}
+h1.title{font-size:22px;font-weight:700;margin-bottom:6px;}
+p.subtitle{color:var(--gray-600);font-size:13.5px;margin-bottom:24px;}
+
+/* STEP0: mail / documents */
+.mail-mock{border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;}
+.mail-head{background:var(--gray-50);padding:14px 18px;border-bottom:1px solid var(--gray-200);font-size:13px;}
+.mail-head b{color:var(--navy);}
+.mail-head .row{margin-bottom:4px;color:var(--gray-600);}
+.mail-body{padding:18px;font-size:13.5px;line-height:1.9;color:var(--gray-800);}
+.attachments{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;}
+.attach{display:flex;align-items:center;gap:10px;border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;background:var(--gray-50);font-size:12.5px;}
+.attach-icon{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;}
+.attach-icon.pdf{background:#D9534F;}
+.attach-icon.xlsx{background:#1D7044;}
+
+.btn{background:var(--navy);color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+.btn:hover{background:var(--navy-light);transform:translateY(-1px);}
+.btn.teal{background:var(--teal);}
+.btn.teal:hover{background:var(--teal-dark);}
+.btn:disabled{background:var(--gray-400);cursor:not-allowed;transform:none;}
+.btn-row{margin-top:26px;display:flex;justify-content:flex-end;gap:10px;}
+
+/* STEP1: AI analysis */
+.analyze-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:760px){.analyze-wrap{grid-template-columns:1fr;}}
+.log-box{background:var(--navy-deep);border-radius:10px;padding:18px;font-family:'Inter',monospace;font-size:12px;color:#8fd6d0;height:340px;overflow-y:auto;line-height:1.9;}
+.log-line{opacity:0;animation:logIn .3s forwards;}
+.log-line .ok{color:var(--teal);}
+@keyframes logIn{to{opacity:1;}}
+.extract-box{border:1px solid var(--gray-200);border-radius:10px;padding:18px;}
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px;color:var(--gray-600);display:block;margin-bottom:5px;font-weight:600;}
+.field input{width:100%;border:1px solid var(--gray-200);border-radius:6px;padding:9px 11px;font-size:13.5px;font-family:'Noto Sans JP',sans-serif;color:var(--navy);background:var(--gray-50);opacity:0;transition:opacity .4s;}
+.field input.shown{opacity:1;background:var(--teal-light);border-color:var(--teal);}
+
+/* STEP2: unified search */
+.sources-row{display:flex;gap:16px;margin-bottom:26px;flex-wrap:wrap;}
+.source-card{flex:1;min-width:150px;border:1px solid var(--gray-200);border-radius:10px;padding:16px;text-align:center;position:relative;transition:all .3s;}
+.source-card .src-name{font-weight:700;font-size:14px;margin-bottom:6px;font-family:'Inter',sans-serif;}
+.source-card .src-status{font-size:11.5px;color:var(--gray-600);}
+.source-card.searching{border-color:var(--teal);}
+.spinner{width:16px;height:16px;border:2px solid var(--gray-200);border-top-color:var(--teal);border-radius:50%;display:inline-block;animation:spin .7s linear infinite;margin-right:6px;vertical-align:-3px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.source-card.done{border-color:var(--teal);background:var(--teal-light);}
+
+.result-table-wrap{opacity:0;transition:opacity .5s;}
+.result-table-wrap.shown{opacity:1;}
+table.results{width:100%;border-collapse:collapse;font-size:12.8px;}
+table.results th{background:var(--gray-50);color:var(--gray-600);font-weight:600;padding:10px 8px;text-align:left;border-bottom:2px solid var(--gray-200);font-size:11.5px;}
+table.results td{padding:10px 8px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+.badge-src{font-size:10.5px;font-weight:700;color:#fff;padding:3px 8px;border-radius:12px;white-space:nowrap;}
+.badge-riapro{background:var(--riapro);}
+.badge-itandi{background:var(--itandi);}
+.badge-athome{background:var(--athome);}
+.badge-match{background:var(--teal-light);color:var(--teal-dark);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:12px;}
+.badge-over{background:#fbe4e2;color:var(--coral);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:12px;}
+tr.selected{background:var(--teal-light);}
+.count-note{font-size:12px;color:var(--gray-600);margin-top:10px;}
+
+/* STEP3: download */
+.folder-anim{background:var(--gray-50);border-radius:10px;padding:26px;min-height:280px;}
+.folder-root{font-family:'Inter',sans-serif;font-size:13px;}
+.folder-line{display:flex;align-items:center;gap:8px;padding:6px 0;opacity:0;animation:logIn .35s forwards;}
+.indent1{margin-left:22px;}
+.indent2{margin-left:44px;}
+.folder-icon{color:#e0a03c;}
+.file-icon{color:var(--gray-600);font-size:11px;}
+.progress-outer{height:8px;background:var(--gray-200);border-radius:6px;overflow:hidden;margin:20px 0 8px;}
+.progress-inner{height:100%;background:var(--teal);width:0%;transition:width 1.4s ease;}
+.done-banner{display:none;background:var(--teal-light);border:1px solid var(--teal);border-radius:10px;padding:18px 20px;margin-top:20px;align-items:center;gap:14px;}
+.done-banner.show{display:flex;}
+.done-icon{width:36px;height:36px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+
+.checklist-note{font-size:12px;color:var(--gray-600);background:var(--gray-50);border-radius:8px;padding:12px 16px;margin-top:18px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">COSOJI <span class="logo-badge">AI POC</span></div>
+  <div class="header-sub">AI統合物件検索 - 借り上げ社宅仲介デモ</div>
+</header>
+
+<div class="stepbar">
+  <div class="stepbar-inner" id="stepbarInner">
+    <div class="step-item active" data-step="0"><div class="step-num">1</div>依頼受信</div>
+    <span class="step-dot">●</span>
+    <div class="step-item" data-step="1"><div class="step-num">2</div>AI解析</div>
+    <span class="step-dot">●</span>
+    <div class="step-item" data-step="2"><div class="step-num">3</div>統合検索</div>
+    <span class="step-dot">●</span>
+    <div class="step-item" data-step="3"><div class="step-num">4</div>図面取得</div>
+  </div>
+</div>
+
+<main>
+
+  <!-- STEP 0 -->
+  <div class="panel active" id="panel0">
+    <div class="card">
+      <h1 class="title">STEP1｜物件検索依頼の受信</h1>
+      <p class="subtitle">取引先企業から借り上げ社宅仲介の依頼書がメールで届いた状態を再現しています（PDF・Excel添付／サンプルデータ）。</p>
+
+      <div class="mail-mock">
+        <div class="mail-head">
+          <div class="row"><b>件名：</b>【借り上げ社宅】名古屋エリア　入居者募集条件のご相談</div>
+          <div class="row"><b>差出人：</b>株式会社サンライズテクノロジー　人事総務部　中村様</div>
+          <div class="row"><b>宛先：</b>COSOJI株式会社　御中</div>
+        </div>
+        <div class="mail-body">
+          いつもお世話になっております。<br>
+          このたび名古屋オフィスへの単身赴任者向けに、借り上げ社宅の仲介をお願いしたくご連絡いたしました。<br>
+          詳細条件は添付の依頼書（PDF）と物件リクエストシート（Excel）にまとめておりますので、ご確認のほどよろしくお願いいたします。
+          <div class="attachments">
+            <div class="attach"><div class="attach-icon pdf">PDF</div>借り上げ社宅_依頼書.pdf</div>
+            <div class="attach"><div class="attach-icon xlsx">XLS</div>物件リクエストシート.xlsx</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="goStep(1)">依頼書をAIで解析する →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="panel" id="panel1">
+    <div class="card">
+      <h1 class="title">STEP2｜AIによる依頼書の自動解析</h1>
+      <p class="subtitle">PDF・Excelの2つの依頼書をAIが読み取り、検索条件として自動抽出します。</p>
+
+      <div class="analyze-wrap">
+        <div class="log-box" id="logBox"></div>
+        <div class="extract-box">
+          <div class="field"><label>依頼元企業</label><input id="f_company" readonly></div>
+          <div class="field"><label>希望エリア（沿線・駅）</label><input id="f_area" readonly></div>
+          <div class="field"><label>駅からの徒歩分</label><input id="f_walk" readonly></div>
+          <div class="field"><label>予算上限（家賃＋管理費目安）</label><input id="f_budget" readonly></div>
+          <div class="field"><label>希望間取り</label><input id="f_madori" readonly></div>
+          <div class="field"><label>必要戸数</label><input id="f_units" readonly></div>
+          <div class="field"><label>入居希望日</label><input id="f_movein" readonly></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn teal" id="btnToStep2" onclick="goStep(2)" disabled>この条件で3サイトを統合検索する →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="panel" id="panel2">
+    <div class="card">
+      <h1 class="title">STEP3｜3サイト統合検索</h1>
+      <p class="subtitle">抽出した条件を、リアプロ・イタンジ・アットホームの3サイトへ同時に投げ、結果を1つの一覧に統合します。</p>
+
+      <div class="sources-row" id="sourcesRow">
+        <div class="source-card" data-src="riapro"><div class="src-name" style="color:var(--riapro)">リアプロ</div><div class="src-status">待機中</div></div>
+        <div class="source-card" data-src="itandi"><div class="src-name" style="color:var(--itandi)">イタンジ</div><div class="src-status">待機中</div></div>
+        <div class="source-card" data-src="athome"><div class="src-name" style="color:var(--athome)">アットホーム</div><div class="src-status">待機中</div></div>
+      </div>
+
+      <div class="result-table-wrap" id="resultWrap">
+        <table class="results">
+          <thead><tr>
+            <th></th><th>物件名</th><th>掲載元</th><th>最寄駅</th><th>間取り／面積</th><th>家賃／管理費</th><th>築年数</th><th>入居</th><th>条件</th>
+          </tr></thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+        <div class="count-note" id="countNote"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn teal" id="btnToStep3" onclick="goStep(3)" disabled>選択した図面を一括ダウンロードする →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="panel" id="panel3">
+    <div class="card">
+      <h1 class="title">STEP4｜図面の一括取得（フォルダ自動格納）</h1>
+      <p class="subtitle">選択した物件の図面を、掲載サイトごとのフォルダに自動振り分けしながら一括取得します。</p>
+
+      <div class="folder-anim">
+        <div class="folder-root" id="folderTree"></div>
+        <div class="progress-outer"><div class="progress-inner" id="progInner"></div></div>
+        <div id="progLabel" style="font-size:12px;color:var(--gray-600);"></div>
+      </div>
+
+      <div class="done-banner" id="doneBanner">
+        <div class="done-icon">✓</div>
+        <div>
+          <div style="font-weight:700;font-size:14.5px;">図面一式のダウンロードが完了しました</div>
+          <div style="font-size:12.5px;color:var(--gray-600);margin-top:2px;">案件フォルダ「サンライズテクノロジー_名古屋_202609」としてZIP形式で出力しています（サンプル図面）。</div>
+        </div>
+      </div>
+
+      <div class="checklist-note">
+        ※ 本デモの「統合検索」「図面取得」はPoC段階のためサンプルデータでの再現です。実運用時は各社との連携方式（API提供の有無・利用許諾）を個別に確認したうえで実装します。
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+/* ---------- DATA ---------- */
+const request = {
+  company:"株式会社サンライズテクノロジー（人事総務部）",
+  area:"名古屋駅／伏見駅／丸の内駅　周辺",
+  walk:"徒歩10分以内",
+  budget:"家賃・管理費合計 120,000円以内",
+  madori:"1K〜1LDK",
+  units:"2戸",
+  movein:"2026年9月1日"
+};
+
+const properties = [
+  {name:"名古屋グランドレジデンス 501", src:"riapro", station:"名古屋駅 徒歩6分", madori:"1LDK", area:"38.2㎡", rent:98000, kanri:6000, age:"築8年", movein:"即入居可"},
+  {name:"パークサイド納屋橋 302", src:"riapro", station:"伏見駅 徒歩9分", madori:"1K", area:"26.5㎡", rent:72000, kanri:4000, age:"築15年", movein:"2026/09/01"},
+  {name:"ステイシア丸の内 805", src:"riapro", station:"丸の内駅 徒歩4分", madori:"1LDK", area:"40.1㎡", rent:115000, kanri:7500, age:"築3年", movein:"即入居可"},
+  {name:"レジデンス納屋橋テラス 210", src:"itandi", station:"国際センター駅 徒歩7分", madori:"1K", area:"25.8㎡", rent:68000, kanri:3000, age:"築20年", movein:"即入居可"},
+  {name:"アーバンコート名駅南 604", src:"itandi", station:"名古屋駅 徒歩11分", madori:"1LDK", area:"36.0㎡", rent:92000, kanri:5000, age:"築10年", movein:"2026/09/15"},
+  {name:"グランツ大須観音 112", src:"itandi", station:"大須観音駅 徒歩5分", madori:"1K", area:"24.0㎡", rent:65000, kanri:3500, age:"築25年", movein:"即入居可"},
+  {name:"プレミア伏見ステーションズ 703", src:"athome", station:"伏見駅 徒歩3分", madori:"1LDK", area:"42.3㎡", rent:120000, kanri:8000, age:"築5年", movein:"即入居可"},
+  {name:"コンフォート名駅前 508", src:"athome", station:"名古屋駅 徒歩8分", madori:"1K", area:"27.0㎡", rent:78000, kanri:4500, age:"築12年", movein:"即入居可"},
+  {name:"リバーサイド亀島 405", src:"athome", station:"亀島駅 徒歩10分", madori:"1LDK", area:"38.8㎡", rent:105000, kanri:6000, age:"築7年", movein:"2026/09/01"}
+];
+const srcLabel = {riapro:"リアプロ", itandi:"イタンジ", athome:"アットホーム"};
+const srcBadge = {riapro:"badge-riapro", itandi:"badge-itandi", athome:"badge-athome"};
+
+let selected = new Set();
+
+/* ---------- STEP NAV ---------- */
+function goStep(n){
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active', i===n));
+  document.querySelectorAll('.step-item').forEach(el=>{
+    const s = parseInt(el.dataset.step);
+    el.classList.toggle('active', s===n);
+    el.classList.toggle('done', s<n);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n===1) runAnalysis();
+  if(n===2) runUnifiedSearch();
+  if(n===3) runDownload();
+}
+
+/* ---------- STEP1: analysis animation ---------- */
+function runAnalysis(){
+  const logBox = document.getElementById('logBox');
+  logBox.innerHTML = '';
+  const lines = [
+    "📄 借り上げ社宅_依頼書.pdf を読み込み中...",
+    "📊 物件リクエストシート.xlsx を読み込み中...",
+    "🔍 依頼元企業名を抽出... <span class='ok'>OK</span>",
+    "🔍 希望エリア（沿線・最寄駅）を抽出... <span class='ok'>OK</span>",
+    "🔍 徒歩分数の条件を抽出... <span class='ok'>OK</span>",
+    "🔍 予算条件（家賃・管理費）を抽出... <span class='ok'>OK</span>",
+    "🔍 希望間取りを抽出... <span class='ok'>OK</span>",
+    "🔍 必要戸数を抽出... <span class='ok'>OK</span>",
+    "🔍 入居希望日を抽出... <span class='ok'>OK</span>",
+    "✅ 検索条件フォームへ自動反映しました"
+  ];
+  const fieldMap = [null,null,'f_company','f_area','f_walk','f_budget','f_madori','f_units','f_movein',null];
+  const fieldVal = {f_company:request.company, f_area:request.area, f_walk:request.walk, f_budget:request.budget, f_madori:request.madori, f_units:request.units, f_movein:request.movein};
+
+  lines.forEach((l,i)=>{
+    setTimeout(()=>{
+      const d = document.createElement('div');
+      d.className = 'log-line';
+      d.style.animationDelay='0s';
+      d.innerHTML = l;
+      logBox.appendChild(d);
+      logBox.scrollTop = logBox.scrollHeight;
+      const fid = fieldMap[i];
+      if(fid){
+        const inp = document.getElementById(fid);
+        inp.value = fieldVal[fid];
+        inp.classList.add('shown');
+      }
+      if(i===lines.length-1){
+        document.getElementById('btnToStep2').disabled=false;
+      }
+    }, i*480);
+  });
+}
+
+/* ---------- STEP2: unified search ---------- */
+function runUnifiedSearch(){
+  document.getElementById('resultsBody').innerHTML='';
+  document.getElementById('resultWrap').classList.remove('shown');
+  document.getElementById('countNote').textContent='';
+  document.getElementById('btnToStep3').disabled = true;
+  selected = new Set();
+
+  const cards = document.querySelectorAll('.source-card');
+  cards.forEach(c=>{c.classList.remove('searching','done'); c.querySelector('.src-status').innerHTML='待機中';});
+
+  cards.forEach((c,i)=>{
+    setTimeout(()=>{
+      c.classList.add('searching');
+      c.querySelector('.src-status').innerHTML = '<span class="spinner"></span>検索中...';
+    }, i*350);
+    setTimeout(()=>{
+      c.classList.remove('searching'); c.classList.add('done');
+      const cnt = properties.filter(p=>p.src===c.dataset.src).length;
+      c.querySelector('.src-status').innerHTML = `${cnt}件ヒット`;
+    }, i*350 + 900);
+  });
+
+  setTimeout(()=>{
+    const tbody = document.getElementById('resultsBody');
+    properties.forEach((p,idx)=>{
+      const total = p.rent + p.kanri;
+      const within = total <= 120000;
+      const tr = document.createElement('tr');
+      tr.id = 'row'+idx;
+      tr.innerHTML = `
+        <td><input type="checkbox" onchange="toggleSel(${idx}, this)"></td>
+        <td style="font-weight:600;">${p.name}</td>
+        <td><span class="badge-src ${srcBadge[p.src]}">${srcLabel[p.src]}</span></td>
+        <td>${p.station}</td>
+        <td>${p.madori}／${p.area}</td>
+        <td>${p.rent.toLocaleString()}円／${p.kanri.toLocaleString()}円</td>
+        <td>${p.age}</td>
+        <td>${p.movein}</td>
+        <td>${within ? '<span class="badge-match">条件一致</span>' : '<span class="badge-over">予算超過</span>'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('resultWrap').classList.add('shown');
+    document.getElementById('countNote').textContent = `統合検索結果：全${properties.length}件（3サイト合算）／条件一致 ${properties.filter(p=>p.rent+p.kanri<=120000).length}件`;
+  }, cards.length*350 + 1100);
+}
+
+function toggleSel(idx, el){
+  const row = document.getElementById('row'+idx);
+  if(el.checked){ selected.add(idx); row.classList.add('selected'); }
+  else{ selected.delete(idx); row.classList.remove('selected'); }
+  document.getElementById('btnToStep3').disabled = selected.size===0;
+}
+
+/* ---------- STEP3: folder + zip download ---------- */
+function drawFloorplan(p){
+  const canvas = document.createElement('canvas');
+  canvas.width = 640; canvas.height = 460;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,640,460);
+  ctx.strokeStyle = '#1E2D4E'; ctx.lineWidth = 3;
+  ctx.strokeRect(40,80,560,340);
+
+  ctx.font = '600 20px sans-serif'; ctx.fillStyle = '#1E2D4E';
+  ctx.fillText(p.name, 40, 40);
+  ctx.font = '13px sans-serif'; ctx.fillStyle = '#6c757d';
+  ctx.fillText(`${p.madori} ／ ${p.area} ／ ${p.station}`, 40, 62);
+
+  ctx.strokeStyle = '#4BBFB8'; ctx.lineWidth = 2;
+  if(p.madori === '1K'){
+    ctx.strokeRect(340,80,260,180);
+    ctx.strokeRect(40,80,300,340);
+    ctx.font='15px sans-serif'; ctx.fillStyle='#1E2D4E';
+    ctx.fillText('洋室', 160, 260);
+    ctx.fillText('K', 450, 175);
+    ctx.strokeRect(340,260,260,160);
+    ctx.fillText('WIC', 450, 345);
+  } else {
+    ctx.strokeRect(40,80,300,340);
+    ctx.strokeRect(340,80,260,150);
+    ctx.strokeRect(340,230,260,190);
+    ctx.font='15px sans-serif'; ctx.fillStyle='#1E2D4E';
+    ctx.fillText('洋室', 160, 260);
+    ctx.fillText('LDK', 445, 160);
+    ctx.fillText('バルコニー', 420, 330);
+  }
+  ctx.font='11px sans-serif'; ctx.fillStyle='#adb5bd';
+  ctx.fillText('※本図面はデモ用サンプルです（実在の間取りではありません）', 40, 440);
+  return canvas.toDataURL('image/png').split(',')[1];
+}
+
+function runDownload(){
+  const tree = document.getElementById('folderTree');
+  tree.innerHTML = '';
+  document.getElementById('progInner').style.width='0%';
+  document.getElementById('progLabel').textContent='';
+  document.getElementById('doneBanner').classList.remove('show');
+
+  const chosen = Array.from(selected).map(i=>properties[i]);
+  const bySrc = {riapro:[],itandi:[],athome:[]};
+  chosen.forEach(p=>bySrc[p.src].push(p));
+
+  let lines = [`<div class="folder-line"><span class="folder-icon">📁</span><b>サンライズテクノロジー_名古屋_202609</b></div>`];
+  Object.keys(bySrc).forEach(src=>{
+    if(bySrc[src].length===0) return;
+    lines.push(`<div class="folder-line indent1"><span class="folder-icon">📁</span>${srcLabel[src]}</div>`);
+    bySrc[src].forEach(p=>{
+      lines.push(`<div class="folder-line indent2"><span class="file-icon">🖼</span>${p.name}_図面.png</div>`);
+    });
+  });
+
+  lines.forEach((html,i)=>{
+    setTimeout(()=>{
+      const d = document.createElement('div');
+      d.innerHTML = html;
+      tree.appendChild(d.firstElementChild);
+    }, i*260);
+  });
+
+  const totalTime = lines.length*260 + 400;
+  setTimeout(()=>{
+    document.getElementById('progLabel').textContent = `図面を取得中... (${chosen.length}件)`;
+    document.getElementById('progInner').style.width='100%';
+  }, totalTime);
+
+  setTimeout(async ()=>{
+    document.getElementById('progLabel').textContent = `完了（${chosen.length}件）`;
+    const zip = new JSZip();
+    const root = zip.folder("サンライズテクノロジー_名古屋_202609");
+    Object.keys(bySrc).forEach(src=>{
+      if(bySrc[src].length===0) return;
+      const folder = root.folder(srcLabel[src]);
+      bySrc[src].forEach(p=>{
+        const b64 = drawFloorplan(p);
+        folder.file(`${p.name}_図面.png`, b64, {base64:true});
+        const info = `物件名：${p.name}\n掲載元：${srcLabel[src]}\n最寄駅：${p.station}\n間取り：${p.madori}／${p.area}\n家賃：${p.rent.toLocaleString()}円　管理費：${p.kanri.toLocaleString()}円\n築年数：${p.age}\n入居：${p.movein}\n`;
+        folder.file(`${p.name}_物件概要.txt`, info);
+      });
+    });
+    const blob = await zip.generateAsync({type:"blob"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = "サンライズテクノロジー_名古屋_202609.zip";
+    document.body.appendChild(a); a.click(); a.remove();
+    document.getElementById('doneBanner').classList.add('show');
+  }, totalTime + 1500);
+}
+</script>
+</body>
+</html>
