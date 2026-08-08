@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リロエステート様｜COSOJI 法人仲介AIプラットフォーム デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0F1F38; --ink2:#22355A;
+  --paper:#F2F5F9; --white:#FFF;
+  --line:#DFE5EE; --line2:#EDF1F6;
+  --teal:#0E9C97; --teal-d:#0A7A76; --teal-l:#E6F5F4;
+  --coral:#E8615F; --coral-l:#FDEDEC;
+  --amber:#D9922B; --amber-l:#FDF3E2;
+  --green:#2A8F5C; --green-l:#E8F5ED;
+  --muted:#6C7C93; --muted2:#93A1B5;
+  --radius:6px;
+  --shadow:0 1px 2px rgba(15,31,56,.06), 0 6px 20px rgba(15,31,56,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI",-apple-system,sans-serif;
+  background:var(--paper);color:var(--ink);font-size:13.5px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"JetBrains Mono","SFMono-Regular",Consolas,monospace;font-feature-settings:"tnum"}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ===== shell ===== */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+  background:var(--ink);color:#fff;display:flex;align-items:center;gap:20px;
+  padding:0 22px;height:56px;flex-shrink:0;position:sticky;top:0;z-index:60;
+}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand-mark{font-weight:900;font-size:15px;letter-spacing:.14em}
+.brand-mark span{color:var(--teal)}
+.brand-sub{font-size:11.5px;color:#93A9C9;letter-spacing:.04em}
+.topbar-client{margin-left:4px;padding:3px 10px;border:1px solid #35507A;border-radius:3px;font-size:11.5px;color:#C6D6EB}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.demo-tag{font-size:10.5px;letter-spacing:.16em;font-weight:700;color:var(--ink);background:#F0C544;padding:3px 8px;border-radius:2px}
+.scope{display:flex;align-items:center;gap:10px;background:#1B2E4E;border:1px solid #35507A;border-radius:4px;padding:5px 12px 5px 10px}
+.scope-label{font-size:11px;color:#B6C9E0;white-space:nowrap}
+.switch{position:relative;width:38px;height:20px;flex-shrink:0}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.switch-track{position:absolute;inset:0;background:#3C577E;border-radius:20px;transition:background .22s;pointer-events:none}
+.switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .22s;pointer-events:none}
+.switch input:checked ~ .switch-track{background:var(--teal)}
+.switch input:checked ~ .switch-thumb{transform:translateX(18px)}
+.switch input:focus-visible ~ .switch-track{box-shadow:0 0 0 2px #fff}
+
+.body{display:flex;flex:1;align-items:stretch}
+.side{width:238px;flex-shrink:0;background:var(--white);border-right:1px solid var(--line);padding:20px 0;display:flex;flex-direction:column}
+.side-head{font-size:10.5px;letter-spacing:.18em;color:var(--muted2);font-weight:700;padding:0 20px 10px}
+.side-head.sub{padding-top:16px;margin-top:12px;border-top:1px solid var(--line2)}
+.nav{display:flex;flex-direction:column}
+.nav-item{display:flex;gap:11px;align-items:flex-start;padding:10px 16px 10px 20px;text-align:left;width:100%;border-left:3px solid transparent;transition:background .15s}
+.nav-item:hover{background:var(--line2)}
+.nav-item.active{background:var(--teal-l);border-left-color:var(--teal)}
+.nav-num{font-size:11px;font-weight:600;color:var(--muted2);width:18px;flex-shrink:0;padding-top:2px}
+.nav-item.active .nav-num{color:var(--teal-d)}
+.nav-txt{flex:1;min-width:0}
+.nav-title{font-size:12.8px;font-weight:500;line-height:1.4;display:block}
+.nav-item.active .nav-title{font-weight:700}
+.nav-desc{font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:1px;display:block}
+.nav-item.future .nav-title{color:var(--muted)}
+.nav-item.future.active .nav-title{color:var(--ink)}
+.side-foot{margin-top:auto;padding:16px 20px 0;border-top:1px solid var(--line2);font-size:10.5px;color:var(--muted2);line-height:1.6}
+.main{flex:1;min-width:0;padding:20px 30px 60px;max-width:1260px}
+
+/* ===== 全体設計ストリップ ===== */
+.flow{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:12px 14px;margin-bottom:20px;
+}
+.flow-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.flow-ttl{font-size:10.5px;letter-spacing:.16em;font-weight:700;color:var(--muted2)}
+.flow-total{margin-left:auto;font-size:11px;color:var(--muted)}
+.flow-total b{color:var(--ink);font-size:12.5px}
+.flow-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.fstep{
+  border:1px solid var(--line);border-radius:5px;padding:8px 9px;text-align:left;
+  background:#FBFCFD;transition:all .15s;position:relative;
+}
+.fstep:hover{border-color:var(--muted2)}
+.fstep.on{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 1px var(--teal)}
+.fstep-h{display:flex;align-items:center;gap:6px}
+.fstep-n{font-size:9.5px;font-weight:700;color:var(--muted2);letter-spacing:.06em}
+.fstep.on .fstep-n{color:var(--teal-d)}
+.fstep-t{font-size:12px;font-weight:700;line-height:1.35;margin-top:3px;display:block}
+.fstep-m{display:flex;align-items:center;gap:6px;margin-top:4px}
+.fstep-time{font-size:10.5px;color:var(--muted)}
+.fstep-note{font-size:9.5px;color:var(--muted2);display:block;margin-top:2px;line-height:1.4}
+.flow-cross{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.fcross{
+  border:1px solid var(--line);border-radius:5px;padding:7px 10px;background:#F7F9FC;
+  display:flex;align-items:center;gap:8px;text-align:left;transition:all .15s;
+}
+.fcross:hover{border-color:var(--muted2)}
+.fcross.on{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 1px var(--teal)}
+.fcross-k{font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--muted2);flex-shrink:0}
+.fcross-t{font-size:11.5px;font-weight:700}
+.fcross-d{font-size:10px;color:var(--muted);margin-left:auto;text-align:right}
+
+/* ===== common ===== */
+.page-head{margin-bottom:16px}
+.eyebrow{font-size:10.5px;letter-spacing:.2em;font-weight:700;color:var(--teal-d);display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:700;line-height:1.35}
+.page-lead{font-size:12.5px;color:var(--muted);margin-top:6px;max-width:860px}
+.tip{display:flex;gap:9px;align-items:flex-start;background:#FFFCF0;border:1px solid #F0DFA8;border-radius:var(--radius);padding:9px 13px;margin:14px 0 18px;font-size:12px;color:#6B5A22}
+.tip b{color:#4E3F0C}
+.tip-ico{line-height:1.5}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:18px}
+.card-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.card-title{font-size:13.5px;font-weight:700}
+.card-note{font-size:11px;color:var(--muted);margin-left:auto}
+.card-body{padding:16px}
+.badge{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:2px;white-space:nowrap;line-height:1.6}
+.badge.now{background:var(--teal);color:#fff}
+.badge.partial{background:#1B3B72;color:#fff}
+.badge.future{background:#E7ECF3;color:#5A6D89}
+.badge.outline{background:transparent;border:1px solid var(--line);color:var(--muted)}
+
+.future-block{position:relative;transition:opacity .25s}
+body.scope-first .future-block{opacity:.42;filter:saturate(.25)}
+body.scope-first .future-block::after{
+  content:"";position:absolute;inset:0;z-index:5;border-radius:var(--radius);
+  background:repeating-linear-gradient(135deg,rgba(15,31,56,.045) 0 6px,transparent 6px 12px);pointer-events:none;
+}
+body.scope-first .future-block .lock-note{display:flex}
+.lock-note{display:none;position:absolute;top:10px;right:12px;z-index:6;background:var(--ink);color:#fff;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:2px}
+body.scope-first .col-jd{display:none !important}
+.only-first{display:none}
+body.scope-first .only-first{display:block}
+body.scope-first .fstep.f-future,body.scope-first .fcross.f-future{opacity:.45}
+
+.btn{display:inline-flex;align-items:center;gap:7px;justify-content:center;padding:8px 16px;border-radius:4px;font-size:12.5px;font-weight:700;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal-d)}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ink:hover{background:var(--ink2)}
+.btn-ghost{background:var(--white);border-color:var(--line);color:var(--ink2)}
+.btn-ghost:hover{border-color:var(--muted2);background:#FAFBFD}
+.btn-sm{padding:5px 11px;font-size:11.5px;font-weight:500}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.grid{display:grid;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.f-label{font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:5px;display:block}
+.f-in,.f-sel{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:var(--white);font-size:12.5px}
+.f-sel{appearance:none;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236C7C93'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px}
+.f-in:focus,.f-sel:focus{border-color:var(--teal);outline:none;box-shadow:0 0 0 2px var(--teal-l)}
+.f-hint{font-size:10.5px;color:var(--muted2);margin-top:4px}
+.chk-row{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:4px;padding:7px 12px;font-size:12px;background:var(--white);cursor:pointer;transition:all .15s}
+.chk:hover{border-color:var(--muted2)}
+.chk input{accent-color:var(--teal);width:14px;height:14px;cursor:pointer}
+.chk.on{border-color:var(--teal);background:var(--teal-l)}
+.chk-src{font-size:10px;color:var(--muted)}
+.rules{display:flex;flex-wrap:wrap;gap:6px}
+.rule{font-size:11px;padding:3px 9px;border-radius:11px;background:#F3F6FA;border:1px solid var(--line);color:var(--ink2)}
+.rule b{font-weight:700}
+.hr{height:1px;background:var(--line2);margin:16px 0}
+.sec-t{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-bottom:9px}
+.footnote{font-size:10.5px;color:var(--muted2);line-height:1.7;margin-top:10px}
+.empty{padding:34px 20px;text-align:center;color:var(--muted);font-size:12.5px}
+.empty b{display:block;font-size:13.5px;color:var(--ink2);margin-bottom:4px}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);padding:9px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody td{padding:11px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+tbody tr:hover{background:#FAFCFE}
+tbody tr.sel{background:var(--teal-l)}
+tbody tr.dim{opacity:.5}
+.p-name{font-weight:700;font-size:12.8px;line-height:1.4}
+.p-addr{font-size:10.5px;color:var(--muted);margin-top:1px}
+.rent{font-weight:700;font-size:13px}
+.rent small{font-weight:400;color:var(--muted);font-size:10.5px;display:block;line-height:1.4}
+.src{font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;white-space:nowrap}
+.src.itandi{background:#E9F0FB;color:#26518F}
+.src.reapro{background:#F1EDFA;color:#5B44A0}
+.src.atbb{background:#FBEFE9;color:#96502A}
+.dup{font-size:9.5px;color:var(--teal-d);background:var(--teal-l);border:1px solid #BEE5E3;border-radius:2px;padding:1px 5px;white-space:nowrap;display:inline-block;margin-top:3px}
+.tel-no{
+  font-size:14px;font-weight:700;color:#8C5B12;letter-spacing:.02em;
+  margin:2px 0 5px;white-space:nowrap;
+}
+.tel-no::before{content:"☎ ";font-size:11px;font-weight:400}
+
+/* 各サイトの検索結果URL */
+.url-row{
+  display:flex;align-items:center;gap:11px;
+  border:1px solid var(--line);border-radius:4px;padding:10px 12px;background:#fff;margin-bottom:8px;
+}
+.url-row:last-child{margin-bottom:0}
+.url-main{flex:1;min-width:0}
+.url-head{display:flex;align-items:center;gap:8px}
+.url-cnt{font-size:10.5px;color:var(--muted)}
+.url-str{
+  font-size:11px;color:var(--ink2);background:#F7F9FC;border:1px solid var(--line2);
+  border-radius:3px;padding:5px 8px;margin-top:5px;
+  overflow-x:auto;white-space:nowrap;
+}
+.url-act{display:flex;gap:6px;flex-shrink:0}
+
+/* 物件ごとの掲載元サイトリンク */
+.sl{display:flex;flex-direction:column;gap:4px}
+.sl-btn{
+  display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
+  border:1px solid var(--line);border-radius:3px;padding:3px 8px;background:#fff;
+  white-space:nowrap;transition:all .15s;color:var(--ink2);
+}
+.sl-btn::after{content:"↗";font-weight:400;font-size:10px;color:var(--muted2)}
+.sl-btn:hover{border-color:var(--teal);background:var(--teal-l);color:var(--teal-d)}
+.sl-btn:hover::after{color:var(--teal-d)}
+.sl-btn.lg{font-size:11.5px;padding:5px 11px}
+.open-bar{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:11px 16px;background:#FBFCFD;border-bottom:1px solid var(--line2);
+}
+.open-bar-l{font-size:11.5px;font-weight:700;color:var(--ink2)}
+.open-bar .spacer{margin-left:auto}
+
+/* PoC検証の注記（統合表示の見せ方） */
+.poc-note{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:10px 16px;background:#FFFCF0;border-bottom:1px solid #F0DFA8;
+  font-size:11.5px;color:#6B5A22;line-height:1.6;
+}
+.poc-note b{color:#4E3F0C}
+.mailbox{border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.mailbox-head{background:#F7F9FC;border-bottom:1px solid var(--line2);padding:11px 14px}
+.mailbox-subj{font-size:13.5px;font-weight:700;margin-bottom:5px}
+.mailbox-body{
+  padding:14px;font-size:11.5px;line-height:1.85;white-space:pre-wrap;
+  max-height:320px;overflow-y:auto;background:#fff;
+}
+.mailbox-body mark{background:#FFF3C4;border-radius:2px;padding:1px 2px;box-shadow:0 0 0 1px #E8D48A}
+.mailbox-body .sec{color:var(--teal-d);font-weight:700}
+.poc-tag{
+  flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:.06em;
+  background:#D9922B;color:#fff;padding:2px 7px;border-radius:2px;line-height:1.6;
+}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:3px;white-space:nowrap}
+.st.ok{background:var(--green-l);color:#1D6D42}
+.st.ng{background:var(--coral-l);color:#B03A38}
+.st.tel{background:var(--amber-l);color:#8C5B12}
+.st.dot::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.jd{font-size:11.5px;font-weight:700}
+.jd.pass{color:#1D6D42}
+.jd.nego{color:#8C5B12}
+.jd.fail{color:#B03A38}
+.jd-detail{font-size:10.5px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.45}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line)}
+.stat{background:var(--white);padding:14px 16px}
+.stat-k{font-size:10.5px;color:var(--muted)}
+.stat-v{font-size:24px;font-weight:700;line-height:1.2;margin-top:3px}
+.stat-v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:2px}
+.stat-d{font-size:10.5px;color:var(--teal-d);font-weight:700;margin-top:2px}
+
+/* progress */
+.progress{padding:20px 16px}
+.pline{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);padding:5px 0}
+.pline.done{color:var(--ink)}
+.pdot{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:grid;place-items:center;font-size:9px;color:#fff}
+.pline.run .pdot{border-color:var(--teal);border-top-color:transparent;animation:spin .7s linear infinite}
+.pline.done .pdot{background:var(--teal);border-color:var(--teal)}
+.pline.done .pdot::after{content:"✓"}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pline b{font-weight:700;color:var(--ink)}
+
+.selbar{position:sticky;bottom:0;z-index:40;display:flex;align-items:center;gap:14px;background:var(--ink);color:#fff;border-radius:var(--radius);padding:11px 16px;margin-top:16px;box-shadow:0 -2px 18px rgba(15,31,56,.16)}
+.selbar-txt{font-size:12.5px}
+.selbar-txt b{font-size:16px;color:#8FE3DF;margin:0 3px}
+.selbar .btn{margin-left:auto}
+
+/* 条件サマリー */
+.cond-bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.cond{font-size:11.5px;background:#F3F6FA;border:1px solid var(--line);border-radius:4px;padding:4px 10px}
+.cond b{font-weight:700;color:var(--teal-d);margin-left:4px}
+
+/* saved + chat */
+.saved{display:flex;flex-direction:column;gap:8px}
+.saved-row{border:1px solid var(--line);border-radius:4px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;background:#fff;transition:all .15s}
+.saved-row:hover{border-color:var(--muted2)}
+.saved-row.on{border-color:var(--teal);background:var(--teal-l)}
+.saved-main{flex:1;min-width:0}
+.saved-nm{font-size:12.5px;font-weight:700;line-height:1.4}
+.saved-nm .badge,.saved-nm .pill{margin-left:6px;vertical-align:1px}
+.saved-sum{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+.saved-meta{font-size:10px;color:var(--muted2);margin-top:3px}
+.saved-act{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.saved-del{font-size:11px;color:var(--muted2);padding:2px 4px}
+.saved-del:hover{color:var(--coral)}
+.chat{border:1px solid var(--line);border-radius:4px;background:#FAFCFE;padding:12px;height:236px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+.msg{max-width:88%;font-size:12px;line-height:1.65;padding:8px 11px;border-radius:9px}
+.msg.ai{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:2px}
+.msg.me{background:var(--ink);color:#fff;align-self:flex-end;border-bottom-right-radius:2px}
+.msg.sys{align-self:center;background:none;color:var(--muted2);font-size:10.5px;padding:0}
+.msg-chg{margin-top:7px;padding-top:7px;border-top:1px solid var(--line2)}
+.chg{display:flex;gap:7px;font-size:11px;padding:1px 0;align-items:baseline}
+.chg-k{color:var(--muted);flex-shrink:0}
+.chg-v{font-weight:700;color:var(--teal-d)}
+.chg-o{color:var(--muted2);text-decoration:line-through}
+.chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:13px;padding:4px 11px;background:#fff;color:var(--ink2);transition:all .15s;text-align:left}
+.chip:hover{border-color:var(--teal);background:var(--teal-l);color:var(--teal-d)}
+.chat-input{display:flex;gap:8px;margin-top:9px}
+.dots i{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--muted2);margin-right:3px;animation:bounce .9s infinite}
+.dots i:nth-child(2){animation-delay:.15s}
+.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+/* 図面 */
+.dwg-col-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.dwg-tag{font-size:10.5px;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:2px}
+.dwg-tag.before{background:#EEF1F5;color:#5A6D89}
+.dwg-tag.after{background:var(--ink);color:#fff}
+.dwg-frame{border:1px solid var(--line);border-radius:4px;background:#fff;overflow:hidden;box-shadow:0 2px 10px rgba(15,31,56,.07)}
+.dwg-frame svg{display:block;width:100%;height:auto}
+.opt-list{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:4px;padding:10px 12px;cursor:pointer;transition:all .15s;background:#fff}
+.opt:hover{border-color:var(--muted2)}
+.opt.on{border-color:var(--teal);background:var(--teal-l)}
+.opt input{accent-color:var(--teal);margin-top:3px;width:14px;height:14px;cursor:pointer}
+.opt-t{font-size:12.5px;font-weight:700;display:block}
+.opt-d{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:1px;display:block}
+.mask-rect{opacity:0;transition:opacity .4s}
+.dwg-frame.processed .mask-rect{opacity:1}
+.add-note{opacity:0;transform:translateY(4px);transition:all .4s .2s}
+.dwg-frame.processed .add-note{opacity:1;transform:none}
+
+/* mail */
+.mail{border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.mail-head{background:#F7F9FC;border-bottom:1px solid var(--line2);padding:10px 14px}
+.mail-row{display:flex;gap:10px;font-size:11.5px;padding:2px 0}
+.mail-row span:first-child{color:var(--muted);width:56px;flex-shrink:0}
+.mail-body{padding:14px;font-size:12.5px;line-height:1.85;white-space:pre-wrap;background:#fff;min-height:120px}
+.mail-attach{display:flex;gap:8px;align-items:center;padding:9px 14px;border-top:1px solid var(--line2);background:#FAFBFD;font-size:11.5px;flex-wrap:wrap}
+.att{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:3px;padding:4px 9px;background:#fff;font-size:11px}
+.att-ico{color:var(--coral);font-weight:700;font-size:10px}
+.typing::after{content:"▍";color:var(--teal);animation:blink .8s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* dashboard */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start}
+.kcol{background:#EEF2F7;border-radius:5px;padding:10px;min-height:190px}
+.kcol-head{display:flex;align-items:center;gap:7px;margin-bottom:10px;padding:0 2px}
+.kcol-t{font-size:11.5px;font-weight:700}
+.kcol-n{font-size:10.5px;font-weight:700;background:#fff;color:var(--muted);border-radius:9px;padding:0 6px;margin-left:auto}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:8px;box-shadow:0 1px 2px rgba(15,31,56,.05);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.kcard:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(15,31,56,.1)}
+.kcard-co{font-size:11.5px;font-weight:700;line-height:1.4}
+.kcard-nm{font-size:10.5px;color:var(--muted);margin-top:2px}
+.kcard-meta{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10px;color:var(--muted)}
+.kcard-bar{height:3px;border-radius:2px;background:var(--line);margin-top:8px;overflow:hidden}
+.kcard-bar i{display:block;height:100%;background:var(--teal)}
+.pill{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:2px}
+.pill.warn{background:var(--coral-l);color:#B03A38}
+.pill.ok{background:var(--green-l);color:#1D6D42}
+.pill.hold{background:var(--amber-l);color:#8C5B12}
+.k-avatar{width:18px;height:18px;border-radius:50%;background:var(--ink2);color:#fff;font-size:9px;display:grid;place-items:center;font-weight:700;margin-left:auto}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(15,31,56,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:8px;width:100%;max-width:600px;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.modal-title{font-size:14px;font-weight:700}
+.modal-x{margin-left:auto;font-size:18px;color:var(--muted);line-height:1;padding:0 4px}
+.modal-body{padding:18px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;font-size:12.5px}
+.kv dt{color:var(--muted);font-size:11.5px;padding-top:1px}
+.kv dd{font-weight:500}
+
+@media (max-width:1180px){
+  .flow-row{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:1080px){
+  .grid{grid-template-columns:repeat(2,1fr) !important}
+  .grid2{grid-template-columns:1fr}
+  .kanban{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:820px){
+  .body{flex-direction:column}
+  .side{width:100%;border-right:none;border-bottom:1px solid var(--line);padding:14px 0}
+  .nav{flex-direction:row;overflow-x:auto}
+  .nav-item{flex-direction:column;gap:4px;min-width:152px;border-left:none;border-bottom:3px solid transparent}
+  .nav-item.active{border-bottom-color:var(--teal)}
+  .side-head,.side-foot{display:none}
+  .main{padding:16px 16px 50px}
+  .grid{grid-template-columns:1fr !important}
+  .flow-row{grid-template-columns:repeat(2,1fr)}
+  .flow-cross{grid-template-columns:1fr}
+  .kanban{grid-template-columns:1fr}
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 16px;gap:10px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">CO<span>SO</span>JI</div>
+      <div class="brand-sub">法人仲介AIプラットフォーム</div>
+    </div>
+    <div class="topbar-client">株式会社リロエステート 様</div>
+    <div class="topbar-right">
+      <label class="scope">
+        <span class="scope-label">初回リリース範囲のみ表示</span>
+        <span class="switch">
+          <input type="checkbox" id="scopeToggle" aria-label="初回リリース範囲のみ表示">
+          <span class="switch-track"></span><span class="switch-thumb"></span>
+        </span>
+      </label>
+      <span class="demo-tag">DEMO</span>
+    </div>
+  </header>
+
+  <div class="body">
+    <nav class="side">
+      <div class="side-head">仲介業務の5工程</div>
+      <div class="nav" id="navSteps"></div>
+      <div class="side-head sub">横断・共通</div>
+      <div class="nav" id="navCross"></div>
+      <div class="side-foot">
+        年間依頼 約10,000件／うち約半数が2〜3月<br>
+        対応企業 約400社／1案件あたり 約75分
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- 全体設計ストリップ -->
+      <div class="flow">
+        <div class="flow-top">
+          <span class="flow-ttl">GRAND DESIGN｜仲介業務の5工程 ＋ 横断管理</span>
+          <span class="flow-total">1案件あたり計 <b>約75分</b></span>
+        </div>
+        <div class="flow-row" id="flowRow"></div>
+        <div class="flow-cross" id="flowCross"></div>
+      </div>
+
+      <!-- ================= STEP1 条件確認 ================= -->
+      <!-- ================= STEP1 条件確認 ================= -->
+      <section class="view" id="view1">
+        <div class="page-head">
+          <div class="eyebrow">STEP 01｜条件確認（約5分）<span class="badge now">初回リリース</span></div>
+          <h1>メール条件の自動転記</h1>
+          <p class="page-lead">リロネットから届く定型フォーマットの依頼メールをAIが解析し、検索条件へ自動で転記します。月300〜400件の手入力を削減する工程です。読み取った内容は手入力で修正できます。PDF・手書き・Excel等の他フォーマットからの抽出は将来拡張です。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>実際の依頼メールを表示しています。「AIで条件を読み取る」を押すと、メール内の該当箇所がハイライトされ、検索条件に転記されます。自由記述の要望は検索条件に落とし込めないため、参考情報として別に表示します。</span>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">リロネットからの依頼メール</span>
+            <span class="badge now">初回リリース</span>
+            <span class="card-note">定型フォーマット（月300〜400件）</span>
+          </div>
+          <div class="card-body">
+            <div class="mailbox">
+              <div class="mailbox-head">
+                <div class="mailbox-subj">希望物件リクエスト</div>
+                <div class="mail-row"><span>差出人</span><span class="mono">relonet@relo.jp</span></div>
+                <div class="mail-row"><span>宛先</span><span class="mono">re-relonet@relo.jp</span></div>
+                <div class="mail-row"><span>日付</span><span class="mono">2026/08/03 (月) 8:40</span></div>
+              </div>
+              <div class="mailbox-body" id="mailBodyView"></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:13px">
+              <button class="btn btn-primary" id="btnParseMail">AIで条件を読み取る</button>
+              <button class="btn btn-ghost btn-sm" id="btnResetMail0">読み取り前に戻す</button>
+              <span class="f-hint" id="parseMsg" style="margin:0"></span>
+            </div>
+          </div>
+          <div class="poc-note">
+            <span class="poc-tag">PoCで検証</span>
+            <span>定型メールから検索条件（エリア・賃料・間取り等）を正しく抽出し、検索画面へ自動転記できるかをPoCで検証します。<b>精度が業務要件を満たすかを確認したうえで本開発に入ります</b>。</span>
+          </div>
+        </div>
+
+        <div class="card" id="extractCard" style="display:none">
+          <div class="card-head">
+            <span class="card-title">AIの読み取り結果</span>
+            <span class="badge now">初回リリース</span>
+            <span class="card-note" id="extractNote"></span>
+          </div>
+          <div class="card-body">
+            <div class="grid2">
+              <div>
+                <div class="sec-t">検索条件へ転記した項目</div>
+                <div class="tbl-wrap">
+                  <table>
+                    <thead><tr><th>メールの項目</th><th>読み取った値</th><th>転記先</th></tr></thead>
+                    <tbody id="mapBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <div class="sec-t">参考情報として読み取った項目<span class="badge outline" style="margin-left:7px">検索条件には未反映</span></div>
+                <dl class="kv" id="refBody" style="grid-template-columns:130px 1fr"></dl>
+                <p class="footnote">※ 自由記述の要望や契約条件は、そのままでは検索条件に落とし込めません。担当者が確認して手入力で条件に加えるか、物件選定時の判断材料として使う想定です。どこまでを自動転記の対象とするかはPoCで整理します。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">検索条件（自動転記＋手入力で調整）</span>
+            <span class="badge now">初回リリース</span>
+            <span class="card-note">1回入力 → STEP2で3サイトへ同時送信</span>
+          </div>
+          <div class="card-body">
+            <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+              <div>
+                <label class="f-label" for="fCompany">依頼企業</label>
+                <select class="f-sel" id="fCompany">
+                  <option value="relo">リロケーション・ジャパン 様</option>
+                  <option value="mfg">中央精機工業 様</option>
+                  <option value="fin">明和信託銀行 様</option>
+                </select>
+              </div>
+              <div>
+                <label class="f-label" for="fArea">エリア・沿線</label>
+                <input class="f-in" id="fArea" value="東京23区・横浜・大宮">
+              </div>
+              <div>
+                <label class="f-label" for="fLayout">間取り</label>
+                <select class="f-sel" id="fLayout">
+                  <option>1K・1DK・1LDK</option><option>1K のみ</option><option>1LDK のみ</option>
+                  <option>2LDK以上</option><option>指定なし</option>
+                </select>
+              </div>
+              <div>
+                <label class="f-label" for="fRent">賃料上限</label>
+                <input class="f-in mono" id="fRent" value="200,000">
+                <p class="f-hint">管理費・共益費は含まない</p>
+              </div>
+              <div>
+                <label class="f-label" for="fSize">面積（下限）</label>
+                <select class="f-sel" id="fSize">
+                  <option>指定なし</option><option>40㎡以上</option><option>55㎡以上</option><option>70㎡以上</option>
+                </select>
+              </div>
+              <div>
+                <label class="f-label" for="fMove">入居希望日</label>
+                <input class="f-in mono" id="fMove" value="2026/09/01">
+              </div>
+              <div>
+                <label class="f-label" for="fWalk">駅徒歩</label>
+                <select class="f-sel" id="fWalk">
+                  <option>10分以内</option><option>5分以内</option><option>15分以内</option><option>指定なし</option>
+                </select>
+              </div>
+              <div>
+                <label class="f-label" for="fBuilt">築年数</label>
+                <select class="f-sel" id="fBuilt"><option>指定なし</option><option>15年以内</option><option>10年以内</option></select>
+              </div>
+              <div>
+                <label class="f-label" for="fPet">ペット</label>
+                <select class="f-sel" id="fPet"><option>指定なし</option><option>相談可のみ</option></select>
+              </div>
+              <div>
+                <label class="f-label" for="fCnt">取得件数上限</label>
+                <select class="f-sel" id="fCnt"><option>各サイト50件</option><option>各サイト100件</option></select>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="future-block" style="border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px">
+              <span class="lock-note">初回リリース対象外</span>
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap">
+                <span class="f-label" style="margin:0">適用中の社宅規定（共通マスタを参照し、検索結果と自動照合）</span>
+                <span class="badge future">将来拡張</span>
+              </div>
+              <div class="rules" id="ruleChips"></div>
+              <p class="f-hint">初回リリースでは自動照合を行わず、従来どおり担当営業が図面の備考欄を目視確認します。規定の登録・改定管理には共通マスタ（左メニュー）が必要です。</p>
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="btnToSearch">この条件で検索する（STEP2へ）</button>
+              <span class="f-hint" style="margin:0">条件の保存・チャットでの条件変更はSTEP2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">他フォーマットの依頼書からのAI抽出</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">約400社ぶんのフォーマット差を吸収</span>
+          </div>
+          <div class="card-body">
+            <div class="mail-attach" style="border:1px solid var(--line);border-radius:4px;padding:10px 12px;background:#FAFBFD">
+              <span style="color:var(--muted)">対象</span>
+              <span class="att"><span class="att-ico">PDF</span>社宅斡旋依頼書（PDF）</span>
+              <span class="att"><span class="att-ico">XLS</span>希望条件シート（Excel）</span>
+              <span class="att"><span class="att-ico">IMG</span>手書きFAXのスキャン</span>
+            </div>
+            <p style="font-size:12.5px;color:var(--muted);margin-top:12px">初回リリースはリロネットの定型メールのみを対象とします。フォーマットが企業ごとに異なる依頼書は、レイアウトの揺れや手書き文字の読み取りが必要になるため、定型メールでの精度を確認したうえで対象を広げます。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= STEP2 物件検索 ================= -->
+      <section class="view" id="view2" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">STEP 02｜物件検索（約20分 → 約5分）<span class="badge now">初回リリース</span></div>
+          <h1>ワンストップ横断検索</h1>
+          <p class="page-lead">ITANDI・リアプロ・ATBBを個別に開いて同じ条件を打ち直す作業を、1回の検索に置き換えます。重複して掲載されている物件は名寄せして1件に統合し、個別ログインも不要になります。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>「3サイトを一括検索」で3サイトの結果が1リストに統合されます。重複掲載物件には「2サイト掲載」の印が付きます。保存条件は1クリックで呼び出せ、チャットに「賃料上限を18万円に下げて」と書くだけで条件が書き換わり再検索します。右端の「掲載元サイト」から、その物件を掲載元サイトの画面で直接開けます。</span>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">検索条件と検索先サイト</span>
+            <span class="badge now">初回リリース</span>
+            <span class="card-note"><button class="btn btn-ghost btn-sm" id="btnEditCond">条件を編集（STEP1へ）</button></span>
+          </div>
+          <div class="card-body">
+            <div class="cond-bar" id="condBar"></div>
+            <div class="hr"></div>
+            <div class="f-label">検索先サイト</div>
+            <div class="chk-row">
+              <label class="chk on"><input type="checkbox" checked data-site="itandi">ITANDI<span class="chk-src">API連携</span></label>
+              <label class="chk on"><input type="checkbox" checked data-site="reapro">リアプロ<span class="chk-src">CSV 1日1〜2回</span></label>
+              <label class="chk on"><input type="checkbox" checked data-site="atbb">ATBB<span class="chk-src">CSV連携</span></label>
+            </div>
+            <div style="margin-top:16px">
+              <button class="btn btn-primary" id="btnSearch">3サイトを一括検索</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="searchProg" style="display:none">
+          <div class="progress">
+            <div class="pline" data-p="1"><span class="pdot"></span><span>ITANDI へ検索リクエスト送信（API）</span></div>
+            <div class="pline" data-p="2"><span class="pdot"></span><span>リアプロ 最新CSVから条件抽出</span></div>
+            <div class="pline" data-p="3"><span class="pdot"></span><span>ATBB へ検索リクエスト送信</span></div>
+            <div class="pline" data-p="4"><span class="pdot"></span><span><b>重複物件を名寄せ・統合</b>（照合精度はPoCで検証）</span></div>
+            <div class="pline col-jd" data-p="5"><span class="pdot"></span><span><b id="progCo">リロケーション・ジャパン 様</b> の社宅規定と照合<span class="badge future" style="margin-left:8px">将来拡張</span></span></div>
+          </div>
+        </div>
+
+        <div class="card" id="resultCard" style="display:none">
+          <div class="card-head">
+            <span class="card-title">検索結果</span>
+            <span class="card-note" id="resultNote"></span>
+          </div>
+          <div class="stats" id="resultStats"></div>
+          <div class="poc-note">
+            <span class="poc-tag">PoCで検証</span>
+            <span>3サイトの統合（名寄せ）表示は、照合精度をPoCで検証したうえで確定します。精度が目標に届かない場合はサイト別の併記表示に調整する可能性があり、<b>表示のまとめ方はPoCの検証結果を踏まえて最適化します</b>。</span>
+          </div>
+          <div class="future-block" id="urlBlock">
+            <span class="lock-note">初回リリース対象外</span>
+            <div class="open-bar" id="openBar"></div>
+            <div id="urlList" style="display:none;padding:0 16px 14px"></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th style="width:34px"></th><th>物件</th><th>取得元</th><th>賃料</th><th>間取り／面積</th><th>最寄駅</th>
+                <th class="col-jd">社宅規定 判定</th><th></th><th>掲載元サイト</th>
+              </tr></thead>
+              <tbody id="resultBody"></tbody>
+            </table>
+          </div>
+          <div class="card-body" style="border-top:1px solid var(--line2)">
+            <p class="footnote col-jd">※ 判定は依頼企業の社宅規定と、各サイトの物件情報（特約・契約形態・退去予告等）の照合結果です。「要交渉」は管理会社への条件交渉で成立可能性がある項目を指します。判定精度はPoCフェーズで検証します。</p>
+            <p class="footnote only-first">※ 初回リリースでは社宅規定の自動照合を行わないため、判定列は表示されません。違約金特約・退去予告・契約形態などの確認は、従来どおり営業が図面の備考欄で目視確認します。</p>
+            <p class="footnote">※ 右端の「掲載元サイト」は初回リリースの対象です。物件単位で掲載元の画面を開き、図面のダウンロードや申込は各サイト側で行う流れを想定しています。</p>
+            <p class="footnote">※ 上部の「この条件で各サイトを開く」（条件だけを引き継いだ検索結果へのリンク）は<b>初回リリース対象外とし、実装自体も要検討</b>としています。サイトごとに検索の仕組みとURLパラメータの持たせ方が異なるため3社分それぞれ仕様を起こす必要があり、サイト側の構造が変わるたびに追随する保守が継続的に発生します。</p>
+          </div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">図面・物件資料の一括ダウンロード</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">各サイトを開いて1件ずつ保存する運用をなくす</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:12.5px;color:var(--muted)">API・CSV連携で図面や物件資料が取得できるようになった段階で、選択した物件の資料をこの画面から一括ダウンロードできる形にします。各サイトの画面を開いて1件ずつ保存する運用自体をなくす方向で、掲載元サイトへのリンクは中間的な手段という位置づけです。中途半端にリンクを作り込むより、資料取得そのものをこちらに寄せる方が現場の手数は減ります。</p>
+            <div style="display:flex;gap:8px;margin-top:13px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="alert('選択した物件の図面・物件資料をまとめてダウンロードします（デモでは省略）。\\n取得可否は各サイトのAPI・CSV仕様に依存するため、連携拡張のフェーズで検証します。')">選択物件の資料を一括ダウンロード</button>
+              <span class="f-hint" style="margin:0;align-self:center">取得できる資料の範囲は各サイトの連携仕様に依存</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">条件保存・チャット再検索</span>
+            <span class="badge now">初回リリース</span>
+            <span class="card-note">よく使う条件を保存し、会話で条件を変えて再検索</span>
+          </div>
+          <div class="card-body">
+            <div class="grid2">
+              <div>
+                <div class="sec-t">保存済み検索条件</div>
+                <div class="saved" id="savedList"></div>
+                <div id="saveForm" style="display:none;margin-top:10px;border:1px solid var(--teal);border-radius:4px;padding:11px 12px;background:var(--teal-l)">
+                  <label class="f-label" for="saveName">保存名</label>
+                  <input class="f-in" id="saveName">
+                  <p class="f-hint" id="savePreview"></p>
+                  <div style="display:flex;gap:8px;margin-top:10px">
+                    <button class="btn btn-primary btn-sm" id="btnDoSave">保存する</button>
+                    <button class="btn btn-ghost btn-sm" id="btnCancelSave">キャンセル</button>
+                  </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="btnOpenSave" style="margin-top:10px">現在の条件を保存</button>
+                <p class="footnote">※ 個人用／チーム共有のどちらでも設定できる想定です。繁忙期は企業ごとの定型条件を共有すると、担当が代わっても同じ条件で検索できます。</p>
+              </div>
+              <div>
+                <div class="sec-t">チャットで条件を変更して再検索</div>
+                <div class="chat" id="chat" aria-live="polite"></div>
+                <div class="chat-chips" id="chatChips"></div>
+                <div class="chat-input">
+                  <input class="f-in" id="chatIn" placeholder="例：賃料上限を18万円に下げて、駅徒歩5分以内で">
+                  <button class="btn btn-ink" id="chatSend">送信</button>
+                </div>
+                <p class="footnote">※ 変更内容はSTEP1の検索条件にも反映されます。賃料・エリア・間取り・駅徒歩・築年数・検索先サイト・依頼企業の変更に対応します。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="selbar" id="selbar2" style="display:none">
+          <span class="selbar-txt">ピックアップ <b id="selCount2">0</b> 件</span>
+          <button class="btn btn-primary btn-sm" id="btnToStep3">STEP 03 空室確認・交渉へ</button>
+        </div>
+      </section>
+
+      <!-- ================= STEP3 空室確認・交渉 ================= -->
+      <section class="view" id="view3" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">STEP 03｜空室確認・交渉（約30分）<span class="badge future">将来拡張</span></div>
+          <h1>空室確認・交渉</h1>
+          <p class="page-lead">現状は10件中約7件を電話確認しています。将来拡張では、ITANDIから空室・申込ステータスを取得して一覧に表示し、取得できない物件は「要電話確認」として管理会社の電話番号を並べます。<b>今回の初回スコープからは外れており</b>、初回稼働後にリアプロ・ATBBの連携やAI問合せメールとあわせて実装します。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>「ステータスを更新」でITANDI物件だけが自動で空室／申込ありに切り替わります。残った物件には管理会社の電話番号が並ぶので、そのまま架電リストとして使えます。名寄せの効果で、ATBB掲載物件でもITANDI側にあれば自動取得できます。今回のスコープ外のため、上部スイッチを入れると無効化されます。</span>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">空室・申込ステータス（ITANDI連携）</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note" style="display:flex;align-items:center;gap:12px">
+              <label class="chk" style="padding:5px 10px"><input type="checkbox" id="telOnly">要電話確認のみ表示</label>
+              <button class="btn btn-primary btn-sm" id="btnRefresh">ステータスを更新</button>
+            </span>
+          </div>
+          <div class="stats" id="statusStats"></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th style="width:34px"></th><th>物件</th><th>取得元</th><th>賃料</th>
+                <th>空室・申込ステータス</th><th>取得方法</th><th>管理会社・連絡先</th>
+              </tr></thead>
+              <tbody id="statusBody"></tbody>
+            </table>
+          </div>
+          <div class="card-body" style="border-top:1px solid var(--line2)">
+            <p class="footnote">※ 自動取得できるのはITANDIのステータスのみです。リアプロは空室情報の精度が低いため、ATBBとあわせて従来どおり電話確認とし、次期以降の連携拡張で置き換えます。</p>
+            <p class="footnote">※ この工程は今回の初回スコープ外です。実装フェーズのゴールは、一覧に管理会社の電話番号が表示され、そこへ架電できる状態までとし、架電後の確認結果の記録は含めません（データ構造の選定とオペレーション調整で工数が嵩むため）。</p>
+            <p class="footnote">※ 管理会社名・電話番号は各サイトのCSV・APIで取得できる項目に依存します。取得できない場合は物件詳細ページへのリンク表示に切り替える想定で、PoCフェーズで取得可否を確認します。電話番号はデモ用のサンプルです。</p>
+          </div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">AI問合せメール自動生成</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">要電話確認をメール確認に置き換え</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">確認したい項目（空室状況・短期解約違約金・退去予告・契約形態・保証会社）を物件情報と社宅規定の差分から判断し、管理会社ごとに宛先を分けた文面を生成します。</p>
+            <button class="btn btn-ghost btn-sm" id="btnInqMail">問合せメールを生成する</button>
+            <div id="inqMailWrap" style="margin-top:14px;display:none"></div>
+          </div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">条件交渉の記録</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">規定に抵触する条項の交渉と結果を案件に残す</span>
+          </div>
+          <div class="card-body">
+            <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">「礼金を積み増す代わりに違約金条項を外せないか」といった交渉は、現在は担当者の記憶に残るだけで蓄積されません。交渉項目と結果を物件単位で記録し、次回以降の判断材料にします。</p>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>物件</th><th>交渉が必要な項目</th><th>交渉状況</th><th>管理会社</th><th></th></tr></thead>
+                <tbody id="negoBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="selbar" id="selbar3" style="display:none">
+          <span class="selbar-txt">提案候補 <b id="selCount3">0</b> 件</span>
+          <button class="btn btn-primary btn-sm" id="btnToStep4">STEP 04 図面加工へ</button>
+        </div>
+      </section>
+
+      <!-- ================= STEP4 図面加工 ================= -->
+      <section class="view" id="view4" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">STEP 04｜図面加工（約10分 → 約1分）<span class="badge future">将来拡張</span></div>
+          <h1>図面加工</h1>
+          <p class="page-lead">DocuWorks上で1枚ずつ行っている帯の差し替え・規定NG箇所のマスキング・家具家電の追記・PDF整形を、選択物件へ一括適用します。属人化とストレスが最も大きい工程です。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>「AI図面加工を実行」で図面が変化します。帯がリロエステート様のものに差し替わり、社宅規定に抵触する文言が自動マスキングされ、家具家電の条件が追記されます。</span>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">加工対象と適用オプション</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note" id="dwgTargetNote"></span>
+          </div>
+          <div class="card-body">
+            <div class="grid" style="grid-template-columns:1fr 1.15fr">
+              <div>
+                <div class="sec-t">適用オプション</div>
+                <div class="opt-list">
+                  <label class="opt on"><input type="checkbox" checked data-opt="obi">
+                    <span><span class="opt-t">帯の差し替え</span><span class="opt-d">元付仲介会社の情報を削除し、自社帯を貼り付け</span></span></label>
+                  <label class="opt on"><input type="checkbox" checked data-opt="mask">
+                    <span><span class="opt-t">法人規定NGの自動マスキング</span><span class="opt-d">短期解約違約金・特約など抵触箇所を黒塗り／マーカー表示</span></span></label>
+                  <label class="opt on"><input type="checkbox" checked data-opt="furn">
+                    <span><span class="opt-t">家具家電などの条件追記</span><span class="opt-d">案件ごとの付与条件を図面に反映</span></span></label>
+                  <label class="opt on"><input type="checkbox" checked data-opt="pdf">
+                    <span><span class="opt-t">アレンジ＆PDF化</span><span class="opt-d">沿線ごとに整理し1シートのPDFへ結合</span></span></label>
+                </div>
+                <div class="hr"></div>
+                <div class="sec-t">マスキング対象ワード（規定マスタ連動）</div>
+                <div class="rules" id="maskChips"></div>
+                <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+                  <button class="btn btn-ink" id="btnProcess">AI図面加工を実行</button>
+                  <button class="btn btn-ghost btn-sm" id="btnResetDwg">加工前に戻す</button>
+                </div>
+                <p class="f-hint" id="procMsg" style="margin-top:10px"></p>
+              </div>
+              <div>
+                <div class="sec-t">図面プレビュー（1件目）</div>
+                <div class="dwg-col-head">
+                  <span class="dwg-tag before">加工前</span>
+                  <span class="dwg-tag after" id="afterTag" style="display:none">加工後</span>
+                  <span class="f-hint" style="margin:0" id="dwgName"></span>
+                </div>
+                <div class="dwg-frame" id="dwgFrame">
+                  <svg viewBox="0 0 420 300" role="img" aria-label="物件図面のプレビュー">
+                    <rect width="420" height="300" fill="#fff"/>
+                    <rect x="8" y="8" width="404" height="22" fill="#1B3B72"/>
+                    <text x="16" y="23" fill="#fff" font-size="10" font-family="sans-serif" font-weight="bold">賃貸物件図面（マイソク）</text>
+                    <text id="dwgHeadName" x="404" y="23" fill="#fff" font-size="9" font-family="sans-serif" text-anchor="end">パークビュー新宿 302</text>
+                    <rect x="8" y="36" width="118" height="72" fill="#E4EAF2"/>
+                    <path d="M8 108 L48 74 L78 96 L98 82 L126 108 Z" fill="#C9D6E5"/>
+                    <circle cx="104" cy="56" r="9" fill="#D8E2EE"/>
+                    <rect x="8" y="112" width="56" height="38" fill="#EDF1F6"/>
+                    <rect x="70" y="112" width="56" height="38" fill="#EDF1F6"/>
+                    <text x="36" y="134" fill="#93A1B5" font-size="7" font-family="sans-serif" text-anchor="middle">室内</text>
+                    <text x="98" y="134" fill="#93A1B5" font-size="7" font-family="sans-serif" text-anchor="middle">水回り</text>
+                    <rect x="134" y="36" width="120" height="114" fill="#FBFCFD" stroke="#B9C6D6"/>
+                    <rect x="146" y="48" width="62" height="58" fill="none" stroke="#8FA2B8"/>
+                    <rect x="210" y="48" width="32" height="26" fill="none" stroke="#8FA2B8"/>
+                    <rect x="210" y="76" width="32" height="30" fill="none" stroke="#8FA2B8"/>
+                    <rect x="146" y="110" width="96" height="28" fill="none" stroke="#8FA2B8"/>
+                    <text x="177" y="80" fill="#7B8CA3" font-size="8" font-family="sans-serif" text-anchor="middle">洋室 8.2帖</text>
+                    <text x="226" y="64" fill="#7B8CA3" font-size="6" font-family="sans-serif" text-anchor="middle">UB</text>
+                    <text x="226" y="94" fill="#7B8CA3" font-size="6" font-family="sans-serif" text-anchor="middle">K</text>
+                    <text x="194" y="127" fill="#7B8CA3" font-size="6" font-family="sans-serif" text-anchor="middle">バルコニー</text>
+                    <rect x="262" y="36" width="150" height="114" fill="#fff" stroke="#DFE5EE"/>
+                    <g font-family="sans-serif" font-size="7.5" fill="#22355A">
+                      <text x="268" y="49">賃料</text><text x="406" y="49" text-anchor="end" font-weight="bold">138,000円</text>
+                      <text x="268" y="63">管理費</text><text x="406" y="63" text-anchor="end">8,000円</text>
+                      <text x="268" y="77">敷金／礼金</text><text x="406" y="77" text-anchor="end">1ヶ月／0ヶ月</text>
+                      <text x="268" y="91">間取／面積</text><text x="406" y="91" text-anchor="end">1K／26.4㎡</text>
+                      <text x="268" y="105">築年</text><text x="406" y="105" text-anchor="end">2016年</text>
+                      <text x="268" y="119">最寄駅</text><text x="406" y="119" text-anchor="end">新宿駅 徒歩9分</text>
+                      <text x="268" y="133">契約形態</text><text x="406" y="133" text-anchor="end">普通借家</text>
+                      <text x="268" y="145">保証会社</text><text x="406" y="145" text-anchor="end">当社指定あり</text>
+                    </g>
+                    <line x1="262" y1="54" x2="412" y2="54" stroke="#EDF1F6"/>
+                    <line x1="262" y1="68" x2="412" y2="68" stroke="#EDF1F6"/>
+                    <line x1="262" y1="82" x2="412" y2="82" stroke="#EDF1F6"/>
+                    <line x1="262" y1="96" x2="412" y2="96" stroke="#EDF1F6"/>
+                    <line x1="262" y1="110" x2="412" y2="110" stroke="#EDF1F6"/>
+                    <line x1="262" y1="124" x2="412" y2="124" stroke="#EDF1F6"/>
+                    <line x1="262" y1="138" x2="412" y2="138" stroke="#EDF1F6"/>
+                    <rect x="8" y="158" width="404" height="86" fill="#FAFBFD" stroke="#DFE5EE"/>
+                    <text x="14" y="171" font-size="7.5" font-family="sans-serif" fill="#6C7C93" font-weight="bold">備考・特約</text>
+                    <g font-family="sans-serif" font-size="7.5" fill="#22355A">
+                      <text x="14" y="185">・1年未満の解約時は違約金として賃料1ヶ月分を請求します（短期解約違約金特約）</text>
+                      <text x="14" y="199">・退去予告は解約希望日の2ヶ月前までに書面で提出すること</text>
+                      <text x="14" y="213">・保証会社は当社指定「〇〇保証株式会社」の利用を必須とします</text>
+                      <text x="14" y="227">・鍵交換費22,000円、室内清掃費33,000円を借主負担にて別途頂戴します</text>
+                      <text x="14" y="240">・ペット飼育、楽器演奏は不可。石油ストーブの使用も禁止です</text>
+                    </g>
+                    <g class="mask-rect">
+                      <rect x="14" y="178" width="330" height="10" fill="#12233C"/>
+                      <text x="348" y="186" font-size="7" font-family="sans-serif" fill="#E8615F" font-weight="bold">規定NG</text>
+                      <rect x="14" y="192" width="252" height="10" fill="#12233C"/>
+                      <text x="270" y="200" font-size="7" font-family="sans-serif" fill="#E8615F" font-weight="bold">規定NG</text>
+                      <rect x="14" y="206" width="236" height="10" fill="#12233C"/>
+                      <text x="254" y="214" font-size="7" font-family="sans-serif" fill="#E8615F" font-weight="bold">要交渉</text>
+                    </g>
+                    <g class="add-note">
+                      <rect x="298" y="192" width="112" height="50" fill="#FDEDEC" stroke="#E8615F"/>
+                      <text x="304" y="205" font-size="7" font-family="sans-serif" fill="#B03A38" font-weight="bold">※家具家電リース対応可</text>
+                      <text x="304" y="216" font-size="6.5" font-family="sans-serif" fill="#B03A38">冷蔵庫・洗濯機・電子レンジ</text>
+                      <text x="304" y="226" font-size="6.5" font-family="sans-serif" fill="#B03A38">月額5,000円（税別）</text>
+                      <text x="304" y="236" font-size="6.5" font-family="sans-serif" fill="#B03A38">リロエステートにて手配</text>
+                    </g>
+                    <rect id="obiBox" x="8" y="250" width="404" height="42" fill="#EFF2F6" stroke="#DFE5EE"/>
+                    <text id="obiCo" x="16" y="266" font-size="9" font-family="sans-serif" font-weight="bold" fill="#5A6D89">元付：〇〇不動産販売株式会社</text>
+                    <text id="obiTel" x="16" y="280" font-size="7.5" font-family="sans-serif" fill="#93A1B5">TEL 03-0000-0000／宅建免許（3）第00000号／担当 〇〇</text>
+                    <text id="obiStamp" x="404" y="274" font-size="8" font-family="sans-serif" fill="#B9C6D6" text-anchor="end" font-weight="bold">図面転載可</text>
+                  </svg>
+                </div>
+                <p class="footnote">※ 図面はデモ用のサンプルです。実装時は取得元のPDF／画像に対して同処理を適用します。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="selbar" id="selbar4" style="display:none">
+          <span class="selbar-txt">加工済み <b id="selCount4">0</b> 件</span>
+          <button class="btn btn-primary btn-sm" id="btnToStep5">STEP 05 メール物件紹介へ</button>
+        </div>
+      </section>
+
+      <!-- ================= STEP5 メール物件紹介 ================= -->
+      <section class="view" id="view5" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">STEP 05｜メール物件紹介（約10分）<span class="badge future">将来拡張</span></div>
+          <h1>メール物件紹介</h1>
+          <p class="page-lead">加工済みの図面をまとめ、顧客企業向けの提案メール文面を自動生成します。1案件あたり平均約3回発生するラリーの記録は、そのまま横断の進捗ダッシュボードへ連携されます。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>「提案メールを生成する」で、STEP4で加工した物件を反映した文面ができます。送信すると案件ステータスが「提案送信済み」に変わり、進捗ダッシュボードに反映されます。</span>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">顧客企業向け 提案メール生成</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note" id="mailTargetNote"></span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-ink" id="btnMail">提案メールを生成する</button>
+              <button class="btn btn-ghost btn-sm" id="btnResetMail">やり直す</button>
+            </div>
+            <div id="mailWrap" style="margin-top:14px;display:none"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 横断 進捗ダッシュボード ================= -->
+      <section class="view" id="view6" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">横断｜全工程を横断する進捗管理<span class="badge future">将来拡張</span></div>
+          <h1>進捗ダッシュボード</h1>
+          <p class="page-lead">STEP1〜5のどの工程に案件があるかを1画面に集約します。担当者の記憶とローカルフォルダに散っている「どの物件を提案中で、どれがNGになったか」を、ラリー履歴ごとチームで共有します。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>デモの見どころ：</b>案件カードをクリックすると、提案履歴・NG理由・次アクションが開きます。NG理由が残ることで、次回検索の条件緩和にそのまま使えます。</span>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="stats" id="dashStats"></div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">案件一元管理ボード</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">抜粋表示（担当・依頼企業・期限でフィルタ可）</span>
+          </div>
+          <div class="card-body">
+            <div class="kanban" id="kanban"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 共通 社宅規定マスタ ================= -->
+      <section class="view" id="view7" style="display:none">
+        <div class="page-head">
+          <div class="eyebrow">共通マスタ｜各工程が参照<span class="badge future">将来拡張</span></div>
+          <h1>社宅規定マスタ</h1>
+          <p class="page-lead">STEP1の条件確認、STEP2の検索判定、STEP4の図面マスキングがいずれも参照する共通データです。約400社ぶんを1件ずつ手入力するのは現実的でないため、規定書PDF・依頼書からAIが項目を抽出し、営業が承認して確定させる運用を想定しています。</p>
+        </div>
+
+        <div class="tip">
+          <span class="tip-ico">▶</span>
+          <span><b>ここで決めたいこと：</b>規定の原本を誰が持ち、誰が承認し、改定をどう反映するか。この3点が決まらないと各工程の自動判定は精度が出ません。企業をクリックすると規定項目と改定履歴が確認できます。</span>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="stats" id="masterStats"></div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">企業別 規定台帳</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">全412社のうち直近更新分を表示</span>
+          </div>
+          <div class="card-body">
+            <div class="grid2">
+              <div>
+                <input class="f-in" id="masterSearch" placeholder="企業名で絞り込み" style="margin-bottom:10px">
+                <div class="saved" id="masterList"></div>
+              </div>
+              <div id="masterDetail"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card future-block">
+          <span class="lock-note">初回リリース対象外</span>
+          <div class="card-head">
+            <span class="card-title">規定の登録・改定フロー</span>
+            <span class="badge future">将来拡張</span>
+            <span class="card-note">400社を人手で入力しないための運用</span>
+          </div>
+          <div class="card-body">
+            <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+              <div style="border:1px solid var(--line);border-radius:4px;padding:13px">
+                <div class="eyebrow" style="margin-bottom:5px">STEP A</div>
+                <span class="opt-t">原本を取り込む</span>
+                <span class="opt-d">社宅規定書（PDF）、依頼書、既存のExcel台帳を投入。過去の依頼書からの一括取込にも対応させ、初期整備の工数を抑えます。</span>
+              </div>
+              <div style="border:1px solid var(--line);border-radius:4px;padding:13px">
+                <div class="eyebrow" style="margin-bottom:5px">STEP B</div>
+                <span class="opt-t">AIが項目を抽出して下書き</span>
+                <span class="opt-d">違約金・退去予告・契約形態・保証会社・賃料上限・個別禁止事項を抽出。読み取れなかった項目は空欄のまま残します。</span>
+              </div>
+              <div style="border:1px solid var(--line);border-radius:4px;padding:13px">
+                <div class="eyebrow" style="margin-bottom:5px">STEP C</div>
+                <span class="opt-t">営業が承認して確定</span>
+                <span class="opt-d">承認された版だけが各工程の判定に使われます。承認者と適用開始日を記録し、改定時は旧版を履歴として保持します。</span>
+              </div>
+            </div>
+            <div class="tip" style="margin:16px 0 0">
+              <span class="tip-ico">▶</span>
+              <span><b>要件定義で詰める論点：</b>規定が改定されたとき、すでに提案済みの案件をどう扱うか（再判定して差し替えるか、提案時点の版のまま進めるか）。また、規定書に明記されていない運用ルール（担当者間の口頭合意など）をマスタに載せるかどうか。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-x" id="modalX" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   マスタデータ
+   ============================================================ */
+const COMPANIES = {
+  relo:{
+    name:"リロケーション・ジャパン 様",
+    chk:{rentCap:200000, contracts:["普通借家"], noticeMax:1, penaltyTol:0, guarantorFixedOk:false, noFirstFloor:false},
+    rules:[
+      {k:"penalty",  label:"短期解約違約金", val:"違約金条項がある物件は不可"},
+      {k:"notice",   label:"退去予告",       val:"1ヶ月前まで"},
+      {k:"contract", label:"契約形態",       val:"普通借家のみ"},
+      {k:"guarantor",label:"保証会社",       val:"管理会社指定は不可"},
+      {k:"rent",     label:"賃料上限",       val:"200,000円（管理費込）"},
+      {k:"other",    label:"その他",         val:"ペット飼育不可・楽器不可"}
+    ]},
+  mfg:{
+    name:"中央精機工業 様",
+    chk:{rentCap:150000, contracts:["普通借家"], noticeMax:1, penaltyTol:1, guarantorFixedOk:true, noFirstFloor:false},
+    rules:[
+      {k:"penalty",  label:"短期解約違約金", val:"1年未満までは可（2年未満条項は不可）"},
+      {k:"notice",   label:"退去予告",       val:"1ヶ月前まで"},
+      {k:"contract", label:"契約形態",       val:"普通借家のみ"},
+      {k:"guarantor",label:"保証会社",       val:"指定可（費用は会社負担）"},
+      {k:"rent",     label:"賃料上限",       val:"150,000円（管理費込）"},
+      {k:"other",    label:"その他",         val:"鍵交換費は会社負担上限20,000円"}
+    ]},
+  fin:{
+    name:"明和信託銀行 様",
+    chk:{rentCap:250000, contracts:["普通借家","定期借家"], noticeMax:2, penaltyTol:0, guarantorFixedOk:false, noFirstFloor:true},
+    rules:[
+      {k:"penalty",  label:"短期解約違約金", val:"違約金条項がある物件は不可"},
+      {k:"notice",   label:"退去予告",       val:"2ヶ月前まで可"},
+      {k:"contract", label:"契約形態",       val:"普通借家・定期借家いずれも可"},
+      {k:"guarantor",label:"保証会社",       val:"管理会社指定は不可"},
+      {k:"rent",     label:"賃料上限",       val:"250,000円（管理費込）"},
+      {k:"other",    label:"その他",         val:"1階住戸は不可（防犯規定）"}
+    ]}
+};
+
+/* site: 主たる取得元／also: 同一物件が重複掲載されているサイト（名寄せ対象） */
+const PROPS = [
+  {id:1, name:"パークビュー新宿 302", addr:"東京都新宿区西新宿6-14-3", st:"新宿駅 徒歩9分",
+   rent:138000, kanri:8000, layout:"1K", area:26.4, built:2016, site:"itandi", also:["atbb"], realStatus:"vacant", mgr:"新宿ハウジング管理", tel:"03-5321-4408",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:3}},
+  {id:2, name:"グランデュオ港南 1105", addr:"東京都港区港南3-5-12", st:"品川駅 徒歩7分",
+   rent:205000, kanri:12000, layout:"1LDK", area:42.1, built:2019, site:"itandi", also:[], realStatus:"applied", mgr:"港南エステート", tel:"03-6712-2085",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:11}},
+  {id:3, name:"レジデンス千代田 802", addr:"東京都千代田区神田錦町2-1-8", st:"大手町駅 徒歩6分",
+   rent:168000, kanri:10000, layout:"1DK", area:31.0, built:2014, site:"atbb", also:["reapro"], realStatus:"vacant", mgr:"神田総合管理", tel:"03-3291-7740",
+   f:{penalty:"1年未満 賃料1ヶ月", notice:"2ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:8}},
+  {id:4, name:"シティタワー渋谷 1408", addr:"東京都渋谷区桜丘町18-6", st:"渋谷駅 徒歩5分",
+   rent:248000, kanri:15000, layout:"1LDK", area:45.2, built:2021, site:"itandi", also:[], realStatus:"vacant", mgr:"渋谷ビル管理", tel:"03-3462-1180",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"定期借家（2年）", guarantor:"指定なし", pet:"不可", floor:14}},
+  {id:5, name:"メゾン中央八丁堀 405", addr:"東京都中央区八丁堀3-12-4", st:"八丁堀駅 徒歩3分",
+   rent:142000, kanri:8000, layout:"1K", area:25.8, built:2013, site:"reapro", also:[], realStatus:"vacant", mgr:"八丁堀不動産管理", tel:"03-3552-6621",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"当社指定必須", pet:"不可", floor:4}},
+  {id:6, name:"プレミアム品川シーサイド 703", addr:"東京都品川区東品川4-8-2", st:"品川シーサイド駅 徒歩4分",
+   rent:186000, kanri:11000, layout:"1LDK", area:40.5, built:2018, site:"itandi", also:["reapro","atbb"], realStatus:"vacant", mgr:"東品川リビング", tel:"03-6423-3390",
+   f:{penalty:"2年未満 賃料2ヶ月", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:7}},
+  {id:7, name:"アーバンコート豊洲 1502", addr:"東京都江東区豊洲2-4-9", st:"豊洲駅 徒歩6分",
+   rent:268000, kanri:15000, layout:"2LDK", area:58.3, built:2020, site:"atbb", also:[], realStatus:"vacant", mgr:"豊洲プロパティ", tel:"03-6910-4471",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:15}},
+  {id:8, name:"ルミエール横浜西口 606", addr:"神奈川県横浜市西区北幸2-9-1", st:"横浜駅 徒歩8分",
+   rent:96000, kanri:7000, layout:"1K", area:24.6, built:2011, site:"reapro", also:[], realStatus:"vacant", mgr:"横浜西口管理", tel:"045-311-8820",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:6}},
+  {id:9, name:"サンライズ大宮 109", addr:"埼玉県さいたま市大宮区桜木町1-11-6", st:"大宮駅 徒歩6分",
+   rent:118000, kanri:8000, layout:"1LDK", area:38.0, built:2017, site:"itandi", also:[], realStatus:"vacant", mgr:"大宮住宅管理", tel:"048-641-2270",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"可（小型犬）", floor:1}},
+  {id:10,name:"ザ・パークハウス目黒 1201", addr:"東京都目黒区下目黒1-3-15", st:"目黒駅 徒歩4分",
+   rent:232000, kanri:14000, layout:"1LDK", area:44.8, built:2022, site:"itandi", also:[], realStatus:"applied", mgr:"目黒レジデンス管理", tel:"03-3491-5560",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:12}},
+  {id:11,name:"コンフォリア三田 908", addr:"東京都港区芝5-20-7", st:"三田駅 徒歩5分",
+   rent:152000, kanri:9000, layout:"1K", area:28.2, built:2015, site:"atbb", also:["itandi"], realStatus:"vacant", mgr:"芝プロパティ管理", tel:"03-3452-9903",
+   f:{penalty:"1年未満 賃料1ヶ月", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:9}},
+  {id:12,name:"グランメゾン吉祥寺 304", addr:"東京都武蔵野市吉祥寺本町2-6-11", st:"吉祥寺駅 徒歩7分",
+   rent:128000, kanri:8000, layout:"1DK", area:33.5, built:2012, site:"reapro", also:[], realStatus:"vacant", mgr:"吉祥寺ハウス管理", tel:"0422-21-3380",
+   f:{penalty:"なし", notice:"2ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:3}},
+  {id:13,name:"ブリリア東日本橋 507", addr:"東京都中央区東日本橋2-7-14", st:"馬喰町駅 徒歩4分",
+   rent:156000, kanri:9000, layout:"1K", area:27.5, built:2020, site:"atbb", also:[], realStatus:"vacant", mgr:"日本橋建物管理", tel:"03-3663-4412",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"定期借家（2年）", guarantor:"指定なし", pet:"不可", floor:5}},
+  {id:14,name:"レジディア錦糸町 1003", addr:"東京都墨田区江東橋4-26-8", st:"錦糸町駅 徒歩5分",
+   rent:172000, kanri:10000, layout:"1LDK", area:39.2, built:2019, site:"itandi", also:[], realStatus:"applied", mgr:"錦糸町住宅サービス", tel:"03-3631-7705",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:10}},
+  {id:15,name:"パークアクシス板橋本町 806", addr:"東京都板橋区大和町1-9-3", st:"板橋本町駅 徒歩3分",
+   rent:148000, kanri:9000, layout:"1LDK", area:36.8, built:2017, site:"reapro", also:["atbb"], realStatus:"vacant", mgr:"板橋建物管理", tel:"03-3961-2240",
+   f:{penalty:"1年未満 賃料1ヶ月", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:8}},
+  {id:16,name:"グランコート浦和 402", addr:"埼玉県さいたま市浦和区高砂3-14-2", st:"浦和駅 徒歩5分",
+   rent:89000, kanri:6000, layout:"1K", area:25.2, built:2015, site:"atbb", also:[], realStatus:"vacant", mgr:"浦和管理センター", tel:"048-822-6614",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:4}},
+  {id:17,name:"ステーションフロント大宮 703", addr:"埼玉県さいたま市大宮区宮町1-5-9", st:"大宮駅 徒歩3分",
+   rent:112000, kanri:7000, layout:"1DK", area:29.8, built:2018, site:"itandi", also:[], realStatus:"vacant", mgr:"大宮宮町管理", tel:"048-643-1180",
+   f:{penalty:"1年未満 賃料1ヶ月", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:7}},
+
+  /* --- ファミリー向け（リロネット定型メールの条件に合致する想定） --- */
+  {id:18,name:"グランドヒルズ東陽町 703", addr:"東京都江東区東陽4-8-12", st:"東陽町駅 徒歩6分",
+   rent:148000, kanri:9000, layout:"2LDK", area:58.4, built:2018, site:"itandi", also:["atbb"], realStatus:"vacant", mgr:"東陽住宅管理", tel:"03-5677-2214",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"可（小型犬）", floor:7}},
+  {id:19,name:"リビオ西葛西 1105", addr:"東京都江戸川区西葛西6-15-3", st:"西葛西駅 徒歩8分",
+   rent:158000, kanri:11000, layout:"3LDK", area:68.2, built:2019, site:"atbb", also:[], realStatus:"vacant", mgr:"葛西エステート管理", tel:"03-3688-4470",
+   f:{penalty:"なし", notice:"2ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"相談可", floor:11}},
+  {id:20,name:"サンライトコート市川 402", addr:"千葉県市川市市川南2-4-9", st:"市川駅 徒歩7分",
+   rent:132000, kanri:8000, layout:"2LDK", area:56.8, built:2017, site:"reapro", also:[], realStatus:"vacant", mgr:"市川ハウジング", tel:"047-322-6180",
+   f:{penalty:"1年未満 賃料1ヶ月", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"不可", floor:4}},
+  {id:21,name:"パークホームズ南砂町 806", addr:"東京都江東区南砂5-2-7", st:"南砂町駅 徒歩5分",
+   rent:172000, kanri:12000, layout:"3LDK", area:71.5, built:2021, site:"itandi", also:[], realStatus:"vacant", mgr:"南砂プロパティ", tel:"03-5606-7730",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"定期借家（2年）", guarantor:"指定なし", pet:"可（小型犬）", floor:8}},
+  {id:22,name:"グランスイート葛西 1203", addr:"東京都江戸川区中葛西3-18-6", st:"葛西駅 徒歩9分",
+   rent:139000, kanri:9000, layout:"2LDK", area:60.1, built:2016, site:"reapro", also:["atbb"], realStatus:"vacant", mgr:"中葛西建物管理", tel:"03-3675-1128",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"当社指定必須", pet:"可（小型犬）", floor:12}},
+  {id:23,name:"ロイヤルパークス本八幡 507", addr:"千葉県市川市八幡3-6-2", st:"本八幡駅 徒歩4分",
+   rent:145000, kanri:10000, layout:"3LDK", area:66.4, built:2020, site:"atbb", also:["itandi"], realStatus:"applied", mgr:"八幡レジデンス管理", tel:"047-334-9052",
+   f:{penalty:"なし", notice:"1ヶ月前", contract:"普通借家", guarantor:"指定なし", pet:"相談可", floor:5}}
+];
+
+const SITE_LABEL = {itandi:"ITANDI", reapro:"リアプロ", atbb:"ATBB"};
+const SITE_ORDER = ["itandi","reapro","atbb"];
+
+/* ============================================================
+   状態
+   ============================================================ */
+const state = {
+  step:1, company:"relo", searched:false,
+  results:[], filter:"all", picked:new Set(),
+  statusRevealed:false, processed:false
+};
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const yen = n => n.toLocaleString("ja-JP");
+const sitesOf = p => [p.site, ...(p.also || [])];
+const hasItandi = p => sitesOf(p).includes("itandi");
+
+/* ============================================================
+   全体設計ストリップ／ナビゲーション
+   ============================================================ */
+const FLOW = [
+  {step:1, n:"STEP 01", t:"条件確認",       time:"約5分",  scope:"now",     tag:"初回",     note:"定型メールをAI転記"},
+  {step:2, n:"STEP 02", t:"物件検索",       time:"約20分", scope:"now",     tag:"初回",     note:"3サイト横断検索"},
+  {step:3, n:"STEP 03", t:"空室確認・交渉", time:"約30分", scope:"future",  tag:"将来",     note:"空室/申込表示（ITANDI）"},
+  {step:4, n:"STEP 04", t:"図面加工",       time:"約10分", scope:"future",  tag:"将来",     note:"自動加工・NGマスキング"},
+  {step:5, n:"STEP 05", t:"メール物件紹介", time:"約10分", scope:"future",  tag:"将来",     note:"提案メール自動生成"}
+];
+const CROSS = [
+  {step:6, k:"横断",     t:"進捗ダッシュボード", d:"案件ステータス・ラリー履歴をチーム共有", scope:"future"},
+  {step:7, k:"共通マスタ", t:"社宅規定マスタ",     d:"約400社の規定を各工程が参照", scope:"future"}
+];
+
+function renderNav(){
+  $("#navSteps").innerHTML = FLOW.map(f=>`
+    <button class="nav-item ${f.scope==="future"?"future":""}" data-step="${f.step}">
+      <span class="nav-num mono">${f.n.replace("STEP ","")}</span>
+      <span class="nav-txt">
+        <span class="nav-title">${f.t}</span>
+        <span class="nav-desc">${f.time}／${f.note}</span>
+      </span>
+    </button>`).join("");
+  $("#navCross").innerHTML = CROSS.map(c=>`
+    <button class="nav-item future" data-step="${c.step}">
+      <span class="nav-num mono">${c.step===6?"横断":"共通"}</span>
+      <span class="nav-txt">
+        <span class="nav-title">${c.t}</span>
+        <span class="nav-desc">${c.d}</span>
+      </span>
+    </button>`).join("");
+
+  $("#flowRow").innerHTML = FLOW.map(f=>`
+    <button class="fstep ${f.scope==="future"?"f-future":""}" data-step="${f.step}">
+      <span class="fstep-h"><span class="fstep-n mono">${f.n}</span><span class="badge ${f.scope}">${f.tag}</span></span>
+      <span class="fstep-t">${f.t}</span>
+      <span class="fstep-m"><span class="fstep-time mono">${f.time}</span></span>
+      <span class="fstep-note">${f.note}</span>
+    </button>`).join("");
+  $("#flowCross").innerHTML = CROSS.map(c=>`
+    <button class="fcross f-future" data-step="${c.step}">
+      <span class="fcross-k">${c.k}</span>
+      <span class="fcross-t">${c.t}</span>
+      <span class="fcross-d">${c.d}</span>
+    </button>`).join("");
+
+  $$("[data-step]").forEach(b=>b.addEventListener("click", ()=>goStep(+b.dataset.step)));
+}
+
+function goStep(n){
+  state.step = n;
+  $$(".view").forEach((v,i)=>{ v.style.display = (i+1===n) ? "" : "none"; });
+  $$(".nav-item").forEach(b=>b.classList.toggle("active", +b.dataset.step === n));
+  $$(".fstep, .fcross").forEach(b=>b.classList.toggle("on", +b.dataset.step === n));
+  window.scrollTo({top:0, behavior:"smooth"});
+  if(n===2) renderCondBar();
+  if(n===3){ renderStatus(); renderNego(); }
+  if(n===4) renderStep4();
+  if(n===5) renderStep5();
+  if(n===6) renderDash();
+  if(n===7) renderMaster();
+}
+renderNav();
+
+$("#scopeToggle").addEventListener("change", e=>{
+  document.body.classList.toggle("scope-first", e.target.checked);
+  if(state.searched) paintResults();
+});
+$$(".chk input, .opt input").forEach(inp=>{
+  inp.addEventListener("change", ()=>inp.closest(".chk,.opt").classList.toggle("on", inp.checked));
+});
+
+/* ============================================================
+   社宅規定 照合ロジック（将来拡張の機能）
+   ============================================================ */
+function judge(p, coId){
+  const c = COMPANIES[coId].chk;
+  const issues = [];
+  if(p.rent + p.kanri > c.rentCap)
+    issues.push({sev:"fail", key:"rent", txt:`賃料超過（${yen(p.rent+p.kanri)}円 > 規定上限 ${yen(c.rentCap)}円）`});
+  const ctype = p.f.contract.split("（")[0];
+  if(!c.contracts.includes(ctype))
+    issues.push({sev:"fail", key:"contract", txt:`${p.f.contract}（${c.contracts.join("・")}のみ可）`});
+  const pyr = p.f.penalty === "なし" ? 0 : (p.f.penalty.indexOf("2年") >= 0 ? 2 : 1);
+  if(pyr > c.penaltyTol)
+    issues.push({sev:"nego", key:"penalty", txt:`短期解約違約金あり（${p.f.penalty}）→ 条項削除の交渉が必要`, nego:"短期解約違約金の条項削除"});
+  const nm = p.f.notice.indexOf("2ヶ月") >= 0 ? 2 : 1;
+  if(nm > c.noticeMax)
+    issues.push({sev:"nego", key:"notice", txt:`退去予告${p.f.notice}（規定は${c.noticeMax}ヶ月前）→ 特約変更の交渉が必要`, nego:"退去予告を1ヶ月前へ変更"});
+  if(!c.guarantorFixedOk && p.f.guarantor !== "指定なし")
+    issues.push({sev:"nego", key:"guarantor", txt:"保証会社が管理会社指定 → 変更可否の確認が必要", nego:"保証会社の指定解除"});
+  if(c.noFirstFloor && p.f.floor <= 1)
+    issues.push({sev:"fail", key:"floor", txt:"1階住戸（防犯規定により不可）"});
+
+  let sev = "pass";
+  if(issues.some(i=>i.sev==="fail")) sev = "fail";
+  else if(issues.length) sev = "nego";
+  return {sev, issues};
+}
+const JD_LABEL = {pass:"適合", nego:"要交渉", fail:"抵触（対象外）"};
+
+/* ============================================================
+   STEP1 条件確認
+   ============================================================ */
+function renderRuleChips(){
+  const co = COMPANIES[state.company];
+  $("#ruleChips").innerHTML = co.rules.map(r=>`<span class="rule"><b>${r.label}</b>：${r.val}</span>`).join("");
+  $("#progCo").textContent = co.name;
+  $("#maskChips").innerHTML = ["短期解約違約金","違約金","定期借家","退去予告 2ヶ月前","保証会社 当社指定","ペット飼育可"]
+    .map(w=>`<span class="rule">${w}</span>`).join("");
+}
+$("#fCompany").addEventListener("change", e=>{
+  state.company = e.target.value;
+  $("#fRent").value = COMPANIES[state.company].chk.rentCap.toLocaleString("ja-JP");
+  renderRuleChips();
+  if(state.searched) runSearch(true);
+});
+renderRuleChips();
+
+/* ---- リロネットの定型メール ---- */
+const MAIL_LINES = [
+  {t:"■■　希望物件紹介依頼書　■■■", sec:true},
+  {t:""},
+  {t:"株式会社リロエステート　本社　様"},
+  {t:""},
+  {t:"リクエスト送信日：2026年08月03日"},
+  {t:"リクエスト番号　：1423577"},
+  {t:"*リクエスト番号は契約時に必要となります*"},
+  {t:""},
+  {t:"リロネット法人会員様より物件の紹介を頂きました。"},
+  {t:"ご対応の程、よろしくお願いいたします。"},
+  {t:"■お客様情報　－－－－－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　会社名　　　　　　　　："},
+  {t:"　社員番号　　　　　　　："},
+  {t:"　依頼者氏名（漢字）　　："},
+  {t:"　入居者氏名（漢字）　　："},
+  {t:""},
+  {t:"■ご連絡方法　－－－－－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　物件情報受取方法　　　：　第１希望　メール"},
+  {t:"　連絡先電話番号１　　　："},
+  {t:"　連絡先メールアドレス１："},
+  {t:""},
+  {t:"■ご希望エリア　－－－－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　希望地域／沿線　　　　：　東京都江東区", hit:true},
+  {t:"　　　　　　　　　　　　　　東京都江戸川区", hit:true},
+  {t:"　　　　　　　　　　　　　　千葉県市川市", hit:true},
+  {t:""},
+  {t:"　勤務先最寄駅／勤務地　："},
+  {t:"　勤務先からの通勤時間　：　勤務先から　60　分以内（電車）", ref:true},
+  {t:"　最寄駅からの所要時間　：　指定なし", hit:true},
+  {t:""},
+  {t:"■ご希望条件　－－－－－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　入居希望日　：　2026年09月下旬頃", hit:true},
+  {t:"　下見希望日　：　2026年08月15日頃", ref:true},
+  {t:""},
+  {t:"　賃料　　　　：　10,000 円 ～ 150,000 円　管理費・共益費含まない　駐車場代含まない", hit:true},
+  {t:"　間取り　　　：　2LDK / 3K / 3DK / 3LDK / 4K / 4DK以上", hit:true},
+  {t:"　部屋の広さ　：　55㎡ 以上", hit:true},
+  {t:"　駐車場　　　：　必要なし", ref:true},
+  {t:"　入居人数　　：　3人", ref:true},
+  {t:""},
+  {t:"　建物種別　　：　マンション／アパート／一戸建て・その他", ref:true},
+  {t:"　築年数　　　：　10年以内", hit:true},
+  {t:""},
+  {t:"■その他要望（こだわり条件／再依頼理由等）　－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　その他の要望：　土地勘がないので、指定以外の駅でも通勤６０分以内（乗り換え１回まで）であれば構いません。"},
+  {t:"　　　　　　　　会社で社宅区分（補助上限15万）が決まっていますが、希望に近いものがあれば賃料にこだわらずぜひ紹介してください。", ref:true},
+  {t:"　　　　　　　　バストイレ別・出来れば洗面所も独立していると良いです。ベランダあり希望。エアコンは必須です。トイレは温水洗浄便座希望です。", ref:true},
+  {t:"　　　　　　　　小型犬1匹がおりますので、ペット相談可能物件をご紹介下さい。", hit:true},
+  {t:"　　　　　　　　戸建て・分譲賃貸も可能です。", ref:true},
+  {t:"　　　　　　　　条件に合う物件があれば即下見・即入居可能です。遅くても9月上旬まででの引越しを予定しています。"},
+  {t:"　　　　　　　　可能であれば南向き希望です。", ref:true},
+  {t:""},
+  {t:"■ご紹介時注意事項■　－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　契約形態　：法人契約", ref:true},
+  {t:""},
+  {t:"■注意事項1■　－－－－－－－－－－－－－－－－－－－－－－－", sec:true},
+  {t:""},
+  {t:"　当社は株式会社リロケーション・ジャパンが借主となる「転貸借方式」を取っております。", ref:true},
+  {t:"　１．リロケーション・ジャパンが借主となり、企業に転貸します。"},
+  {t:"　２．火災保険は、企業指定保険に加入いたします。"}
+];
+
+const MAIL_MAP = [
+  {src:"希望地域／沿線",       val:"東京都江東区／東京都江戸川区／千葉県市川市", to:"エリア・沿線", set:"江東区・江戸川区・市川市"},
+  {src:"賃料",                 val:"10,000円 〜 150,000円（管理費・共益費含まない）", to:"賃料上限", set:"150,000"},
+  {src:"間取り",               val:"2LDK / 3K / 3DK / 3LDK / 4K / 4DK以上", to:"間取り", set:"2LDK以上"},
+  {src:"部屋の広さ",           val:"55㎡ 以上", to:"面積（下限）", set:"55㎡以上"},
+  {src:"築年数",               val:"10年以内", to:"築年数", set:"10年以内"},
+  {src:"入居希望日",           val:"2026年09月下旬頃", to:"入居希望日", set:"2026/09/25"},
+  {src:"最寄駅からの所要時間", val:"指定なし", to:"駅徒歩", set:"指定なし"},
+  {src:"その他要望（ペット）", val:"小型犬1匹／ペット相談可能物件を紹介", to:"ペット", set:"相談可のみ"}
+];
+const MAIL_REF = [
+  {k:"リクエスト番号", v:"1423577（契約時に必要）"},
+  {k:"契約形態",       v:"法人契約（リロケーション・ジャパンが借主となる転貸借方式）"},
+  {k:"入居人数",       v:"3人"},
+  {k:"下見希望日",     v:"2026年08月15日頃"},
+  {k:"通勤時間",       v:"勤務先から60分以内（電車・乗り換え1回まで）"},
+  {k:"社宅区分",       v:"補助上限15万円。希望に近ければ賃料にこだわらず紹介可"},
+  {k:"駐車場",         v:"必要なし"},
+  {k:"建物種別",       v:"マンション／アパート／一戸建て・その他"},
+  {k:"設備の要望",     v:"バストイレ別・独立洗面所・ベランダ・エアコン・温水洗浄便座"},
+  {k:"その他",         v:"戸建て・分譲賃貸も可／南向き希望／即下見・即入居可"}
+];
+
+function renderMail(parsed){
+  $("#mailBodyView").innerHTML = MAIL_LINES.map(l=>{
+    const t = l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    if(l.sec) return `<span class="sec">${t}</span>`;
+    if(parsed && (l.hit || l.ref)) return `<mark>${t}</mark>`;
+    return t;
+  }).join("\n");
+}
+renderMail(false);
+
+$("#btnParseMail").addEventListener("click", ()=>{
+  const b = $("#btnParseMail");
+  b.disabled = true; b.textContent = "解析中…";
+  $("#parseMsg").textContent = "";
+  setTimeout(()=>{
+    renderMail(true);
+    MAIL_MAP.forEach(m=>{
+      if(m.to === "エリア・沿線")      $("#fArea").value  = m.set;
+      if(m.to === "賃料上限")          $("#fRent").value  = m.set;
+      if(m.to === "間取り")            $("#fLayout").value = m.set;
+      if(m.to === "面積（下限）")      $("#fSize").value  = m.set;
+      if(m.to === "築年数")            $("#fBuilt").value = m.set;
+      if(m.to === "入居希望日")        $("#fMove").value  = m.set;
+      if(m.to === "駅徒歩")            $("#fWalk").value  = m.set;
+      if(m.to === "ペット")            $("#fPet").value   = m.set;
+    });
+    $("#extractNote").textContent = `転記 ${MAIL_MAP.length}項目／参考情報 ${MAIL_REF.length}項目`;
+    $("#mapBody").innerHTML = MAIL_MAP.map(m=>`<tr>
+      <td style="white-space:nowrap">${m.src}</td>
+      <td>${m.val}</td>
+      <td><span class="chg-v">${m.to}</span><div class="p-addr mono">${m.set}</div></td>
+    </tr>`).join("");
+    $("#refBody").innerHTML = MAIL_REF.map(r=>`<dt>${r.k}</dt><dd>${r.v}</dd>`).join("");
+    $("#extractCard").style.display = "";
+    $("#parseMsg").innerHTML = `解析完了（0.8秒）：<b>${MAIL_MAP.length}項目</b>を検索条件へ転記しました。手入力での修正も可能です。`;
+    b.disabled = false; b.textContent = "AIで条件を読み取る";
+    renderCondBar();
+  }, 900);
+});
+$("#btnResetMail0").addEventListener("click", ()=>{
+  renderMail(false);
+  $("#extractCard").style.display = "none";
+  $("#parseMsg").textContent = "";
+  writeForm(DEFAULT_COND);
+});
+
+$("#btnToSearch").addEventListener("click", ()=>{
+  state.filter = "all";
+  goStep(2);
+  setTimeout(()=>runSearch(false), 120);
+});
+$("#btnEditCond").addEventListener("click", ()=>goStep(1));
+
+/* ============================================================
+   条件の読み書き
+   ============================================================ */
+function activeSites(){
+  return $$(".chk input").filter(i=>i.checked).map(i=>i.dataset.site);
+}
+function readForm(){
+  return {
+    co:$("#fCompany").value, area:$("#fArea").value, layout:$("#fLayout").value,
+    rent:$("#fRent").value, move:$("#fMove").value, walk:$("#fWalk").value,
+    built:$("#fBuilt").value, size:$("#fSize").value, pet:$("#fPet").value,
+    sites:activeSites()
+  };
+}
+function writeForm(c){
+  $("#fCompany").value = c.co; $("#fArea").value = c.area; $("#fLayout").value = c.layout;
+  $("#fRent").value = c.rent; $("#fMove").value = c.move; $("#fWalk").value = c.walk;
+  $("#fBuilt").value = c.built;
+  $("#fSize").value = c.size || "指定なし";
+  $("#fPet").value  = c.pet  || "指定なし";
+  $$(".chk input").forEach(i=>{
+    i.checked = c.sites.includes(i.dataset.site);
+    i.closest(".chk").classList.toggle("on", i.checked);
+  });
+  state.company = c.co;
+  renderRuleChips();
+  renderCondBar();
+}
+function condSummary(c){
+  return `${COMPANIES[c.co].name.replace(" 様","")}／${c.area}／${c.layout}／上限 ${c.rent}円／駅徒歩${c.walk}／${c.sites.map(s=>SITE_LABEL[s]).join("・")}`;
+}
+function renderCondBar(){
+  const c = readForm();
+  $("#condBar").innerHTML = [
+    ["依頼企業", COMPANIES[c.co].name.replace(" 様","")],
+    ["エリア", c.area], ["間取り", c.layout],
+    ["賃料上限", c.rent + "円"], ["面積", c.size],
+    ["入居希望", c.move], ["駅徒歩", c.walk],
+    ["築年数", c.built], ["ペット", c.pet]
+  ].map(([k,v])=>`<span class="cond">${k}<b>${v}</b></span>`).join("");
+}
+
+/* 検索条件でのフィルタ（ポータル側で絞り込める項目） */
+function walkOf(p){ const m = p.st.match(/徒歩\s*(\d+)/); return m ? +m[1] : 99; }
+function matchArea(p, token){
+  if(token === "東京23区") return /^東京都.+区/.test(p.addr);
+  if(token === "首都圏" || token === "指定なし") return true;
+  return p.addr.includes(token) || p.st.includes(token);
+}
+function matchCond(p){
+  // 賃料上限（管理費・共益費は含まない）
+  const cap = parseInt($("#fRent").value.replace(/[^0-9]/g,""),10) || 9999999;
+  if(p.rent > cap) return false;
+  // エリア・沿線
+  const tokens = $("#fArea").value.split(/[・,、\s]+/).filter(Boolean);
+  if(tokens.length && !tokens.some(t=>matchArea(p,t))) return false;
+  // 間取り
+  const lay = $("#fLayout").value;
+  if(lay === "1K のみ"   && p.layout !== "1K")   return false;
+  if(lay === "1LDK のみ" && p.layout !== "1LDK") return false;
+  if(lay === "2LDK以上"  && !/^[2-9]/.test(p.layout)) return false;
+  if(lay === "1K・1DK・1LDK" && !["1K","1DK","1LDK"].includes(p.layout)) return false;
+  // 面積（下限）
+  const sz = $("#fSize").value;
+  if(sz !== "指定なし" && p.area < parseInt(sz,10)) return false;
+  // 駅徒歩
+  const wSel = $("#fWalk").value;
+  if(wSel !== "指定なし" && walkOf(p) > parseInt(wSel,10)) return false;
+  // 築年数
+  const bSel = $("#fBuilt").value;
+  if(bSel !== "指定なし" && (2026 - p.built) > parseInt(bSel,10)) return false;
+  // ペット
+  if($("#fPet").value === "相談可のみ" && p.f.pet === "不可") return false;
+  return true;
+}
+
+/* ============================================================
+   STEP2 物件検索
+   ============================================================ */
+$("#btnSearch").addEventListener("click", ()=>{ state.filter = "all"; runSearch(false); });
+
+function runSearch(instant){
+  const sites = activeSites();
+  if(!sites.length){ alert("検索先サイトを1つ以上選択してください。"); return; }
+
+  const list = PROPS
+    .filter(p => sitesOf(p).some(s=>sites.includes(s)) && matchCond(p))
+    .map(p => ({p, j:judge(p, state.company)}));
+
+  state.results = list;
+  state.searched = true;
+  renderCondBar();
+
+  if(instant){ paintResults(); return; }
+
+  $("#resultCard").style.display = "none";
+  $("#urlList").style.display = "none";
+  $("#selbar2").style.display = "none";
+  const prog = $("#searchProg");
+  prog.style.display = "";
+  const lines = $$("#searchProg .pline").filter(l=>getComputedStyle(l).display !== "none");
+  lines.forEach(l=>l.className = l.classList.contains("col-jd") ? "pline col-jd" : "pline");
+  let i = 0;
+  const tick = ()=>{
+    if(i > 0) lines[i-1].className = (lines[i-1].classList.contains("col-jd")?"pline col-jd ":"pline ") + "done";
+    if(i < lines.length){
+      lines[i].className = (lines[i].classList.contains("col-jd")?"pline col-jd ":"pline ") + "run";
+      i++;
+      setTimeout(tick, 400);
+    }else{
+      setTimeout(()=>{ prog.style.display = "none"; paintResults(); }, 260);
+    }
+  };
+  tick();
+}
+
+function displayList(){
+  return state.results.filter(({j}) =>
+    state.filter === "pass"   ? j.sev === "pass" :
+    state.filter === "noFail" ? j.sev !== "fail" : true);
+}
+function srcOf(p, sites){
+  const own = sitesOf(p).filter(s=>sites.includes(s));
+  return own.length ? own : [p.site];
+}
+
+function paintResults(){
+  const sf = document.body.classList.contains("scope-first");
+  const sites = activeSites();
+  const all = state.results;
+  const list = sf ? all : displayList();
+
+  const cnt = {itandi:0, reapro:0, atbb:0};
+  let pass=0, nego=0, fail=0, rawTotal=0, merged=0;
+  all.forEach(({p,j})=>{
+    const own = srcOf(p, sites);
+    own.forEach(s=>cnt[s]++);
+    rawTotal += own.length;
+    if(own.length > 1) merged++;
+    if(j.sev==="pass") pass++; else if(j.sev==="nego") nego++; else fail++;
+  });
+
+  const base = `${SITE_LABEL.itandi} ${cnt.itandi}件／${SITE_LABEL.reapro} ${cnt.reapro}件／${SITE_LABEL.atbb} ${cnt.atbb}件（延べ ${rawTotal}件）→ 名寄せ後 ${all.length}件`;
+  $("#resultNote").innerHTML = (sf || state.filter === "all")
+    ? base
+    : `${base}　<span class="badge outline">絞り込み：${FILTER_LABEL[state.filter]} ${list.length}件</span> <button class="btn btn-ghost btn-sm" id="btnClearFilter">解除</button>`;
+
+  $("#resultStats").innerHTML = sf ? `
+    <div class="stat"><div class="stat-k">検索所要時間</div><div class="stat-v mono">18<small>秒</small></div><div class="stat-d">従来 約20分／件</div></div>
+    <div class="stat"><div class="stat-k">名寄せ後の件数</div><div class="stat-v mono">${all.length}<small>件</small></div><div class="stat-d">延べ ${rawTotal}件から統合</div></div>
+    <div class="stat"><div class="stat-k">重複を統合</div><div class="stat-v mono" style="color:#0A7A76">${merged}<small>件</small></div><div class="stat-d">複数サイト掲載／PoCで検証</div></div>
+    <div class="stat"><div class="stat-k">個別ログイン</div><div class="stat-v mono">0<small>回</small></div><div class="stat-d">従来は3サイト分</div></div>` : `
+    <div class="stat"><div class="stat-k">名寄せ後の件数</div><div class="stat-v mono">${all.length}<small>件</small></div><div class="stat-d">延べ ${rawTotal}件から統合／PoCで検証</div></div>
+    <div class="stat"><div class="stat-k">規定 適合</div><div class="stat-v mono" style="color:#1D6D42">${pass}<small>件</small></div><div class="stat-d">そのまま提案可</div></div>
+    <div class="stat"><div class="stat-k">要交渉</div><div class="stat-v mono" style="color:#8C5B12">${nego}<small>件</small></div><div class="stat-d">条項変更の交渉で成立余地あり</div></div>
+    <div class="stat"><div class="stat-k">抵触（対象外）</div><div class="stat-v mono" style="color:#B03A38">${fail}<small>件</small></div><div class="stat-d">提案前に自動除外</div></div>`;
+
+  $("#resultBody").innerHTML = list.length ? list.map(({p,j})=>{
+    const dis = !sf && j.sev === "fail";
+    const own = srcOf(p, sites);
+    const detail = j.issues.length ? j.issues.map(i=>"・"+i.txt).join("<br>")
+                                   : "全項目クリア（違約金なし／予告1ヶ月／普通借家）";
+    return `<tr class="${dis?"dim":""}">
+      <td><input type="checkbox" class="pick" data-id="${p.id}" ${dis?"disabled":""} aria-label="ピックアップ"></td>
+      <td><div class="p-name">${p.name}</div><div class="p-addr">${p.addr}</div></td>
+      <td>${own.map(s=>`<span class="src ${s}">${SITE_LABEL[s]}</span>`).join(" ")}
+          ${own.length>1?`<div class="dup" title="同一物件と判定して1件に統合しています。判定精度はPoCで検証し、結果に応じてサイト別の併記表示に調整する可能性があります。">${own.length}サイト掲載 → 統合</div>`:""}</td>
+      <td><div class="rent mono">${yen(p.rent)}<small>＋管理費 ${yen(p.kanri)}</small></div></td>
+      <td>${p.layout}／${p.area}㎡<div class="p-addr">築${p.built}年</div></td>
+      <td>${p.st}</td>
+      <td class="col-jd"><div class="jd ${j.sev}">${JD_LABEL[j.sev]}</div><div class="jd-detail">${detail}</div></td>
+      <td><button class="btn btn-ghost btn-sm detail" data-id="${p.id}">詳細</button></td>
+      <td>${siteLinks(p, sites)}</td>
+    </tr>`;
+  }).join("")
+  : `<tr><td colspan="9"><div class="empty"><b>表示できる物件がありません</b>絞り込みを解除するか、検索条件を緩めてください。</div></td></tr>`;
+
+  $("#resultCard").style.display = "";
+  state.picked = new Set();
+  state.statusRevealed = false;
+  updateSel2();
+
+  const cf = $("#btnClearFilter");
+  if(cf) cf.addEventListener("click", ()=>{ state.filter = "all"; paintResults(); });
+
+  $$(".pick").forEach(cb=>cb.addEventListener("change", ()=>{
+    const id = +cb.dataset.id;
+    cb.checked ? state.picked.add(id) : state.picked.delete(id);
+    cb.closest("tr").classList.toggle("sel", cb.checked);
+    state.statusRevealed = false;
+    updateSel2();
+  }));
+  $$(".detail").forEach(b=>b.addEventListener("click", ()=>openDetail(+b.dataset.id)));
+  bindSiteLinks();
+  renderOpenBar();
+}
+
+/* 各サイトの検索結果ページURL（条件をクエリに変換） */
+const URL_SPEC = {
+  itandi:{host:"【ITANDI BB】", path:"/rent_rooms/search",
+    q:c=>`rent_to=${c.rent.replace(/,/g,"")}&madori=${layParam(c.layout)}${walkParam(c.walk,"walk_to")}&area=${c.area.split("・").join(",")}&move_in=${c.move.replace(/\//g,"-")}${sizeParam(c.size,"area_from")}${builtParam(c.built,"built_within")}`},
+  reapro:{host:"【リアプロ】", path:"/search/result",
+    q:c=>`price_max=${c.rent.replace(/,/g,"")}&type=${layParam(c.layout)}${walkParam(c.walk,"station_min")}&area=${c.area.split("・").join("+")}${sizeParam(c.size,"menseki_from")}${builtParam(c.built,"age_max")}`},
+  atbb:{host:"【ATBB】", path:"/search/bukken/list",
+    q:c=>`chinryo_max=${c.rent.replace(/,/g,"")}&madori=${layParam(c.layout)}${walkParam(c.walk,"toho")}&ensen=${c.area.split("・").join(",")}${sizeParam(c.size,"menseki")}${builtParam(c.built,"chikunen")}`}
+};
+function layParam(lay){
+  if(lay === "1K のみ")   return "1K";
+  if(lay === "1LDK のみ") return "1LDK";
+  if(lay === "2LDK以上")  return "2LDK,3LDK,4LDK";
+  if(lay === "指定なし")  return "all";
+  return "1K,1DK,1LDK";
+}
+function builtParam(built, key){
+  return built === "指定なし" ? "" : `&${key}=${parseInt(built,10)}`;
+}
+function sizeParam(size, key){
+  return (!size || size === "指定なし") ? "" : `&${key}=${parseInt(size,10)}`;
+}
+function walkParam(walk, key){
+  return (!walk || walk === "指定なし") ? "" : `&${key}=${parseInt(walk,10)}`;
+}
+/* 物件単位の各サイト検索結果URL */
+const PROP_CODE = {
+  itandi: p => `IT-${1000 + p.id}`,
+  reapro: p => `RP-${String(20000 + p.id * 7)}`,
+  atbb:   p => `AT-${100000 + p.id * 3}`
+};
+const CODE_KEY = {itandi:"room", reapro:"bukken", atbb:"bkno"};
+
+function propUrl(site, p){
+  const spec = URL_SPEC[site];
+  const c = readForm();
+  return `${spec.host}${spec.path}?${spec.q(c)}&${CODE_KEY[site]}=${PROP_CODE[site](p)}`;
+}
+function siteLinks(p, sites){
+  const own = srcOf(p, sites);
+  return `<div class="sl">${own.map(s=>
+    `<button class="sl-btn site-open" data-s="${s}" data-id="${p.id}" title="${propUrl(s,p)}">${SITE_LABEL[s]}で開く</button>`
+  ).join("")}</div>`;
+}
+function bindSiteLinks(){
+  $$(".site-open").forEach(b=>b.addEventListener("click", ()=>{
+    const p = PROPS.find(x=>x.id === +b.dataset.id);
+    const s = b.dataset.s;
+    alert(`${SITE_LABEL[s]} で「${p.name}」を開きます。\n\n${propUrl(s,p)}\n\n入力した検索条件がそのまま反映された状態で表示されるため、\n図面のダウンロードや申込はそのまま各サイト側で行えます。\n（デモでは実際の遷移は行いません）`);
+  }));
+}
+function copyUrl(btn, url){
+  const done = ()=>{ const t = btn.textContent; btn.textContent = "コピーしました"; setTimeout(()=>btn.textContent = t, 1600); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done).catch(done);
+  }else{ done(); }
+}
+
+/* サイト単位の検索結果URL（条件のみ・物件指定なし） */
+function searchUrl(site){
+  const spec = URL_SPEC[site];
+  return `${spec.host}${spec.path}?${spec.q(readForm())}`;
+}
+function renderOpenBar(){
+  const sel = activeSites();
+  const sites = SITE_ORDER.filter(s=>sel.includes(s));
+  const cnt = s => state.results.filter(r=>srcOf(r.p, sel).includes(s)).length;
+
+  $("#openBar").innerHTML = `
+    <span class="open-bar-l">この条件で各サイトを開く</span>
+    <span class="badge future">将来拡張（実装要検討）</span>
+    ${sites.map(s=>`<button class="sl-btn lg site-search" data-s="${s}" title="${searchUrl(s)}">${SITE_LABEL[s]}の検索結果（${cnt(s)}件）</button>`).join("")}
+    <span class="spacer"></span>
+    <button class="btn btn-ghost btn-sm" id="toggleUrls">URLを表示</button>`;
+
+  $("#urlList").innerHTML = sites.map(s=>{
+    const url = searchUrl(s);
+    return `<div class="url-row">
+      <div class="url-main">
+        <div class="url-head"><span class="src ${s}">${SITE_LABEL[s]}</span><span class="url-cnt">この条件で ${cnt(s)}件</span></div>
+        <div class="url-str mono">${url}</div>
+      </div>
+      <div class="url-act">
+        <button class="btn btn-ghost btn-sm site-search" data-s="${s}">開く</button>
+        <button class="btn btn-ghost btn-sm url-copy" data-u="${encodeURIComponent(url)}">コピー</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  $$(".site-search").forEach(b=>b.addEventListener("click", ()=>{
+    const s = b.dataset.s;
+    alert(`${SITE_LABEL[s]} の検索結果画面を新しいタブで開きます。\n\n${searchUrl(s)}\n\n入力した条件が反映された検索結果が表示されるため、\n各サイトで条件を入れ直す必要はありません。\n（デモでは実際の遷移は行いません）`);
+  }));
+  $$("#urlList .url-copy").forEach(b=>b.addEventListener("click", ()=>copyUrl(b, decodeURIComponent(b.dataset.u))));
+
+  const t = $("#toggleUrls");
+  t.addEventListener("click", ()=>{
+    const open = $("#urlList").style.display !== "none";
+    $("#urlList").style.display = open ? "none" : "";
+    t.textContent = open ? "URLを表示" : "URLを隠す";
+  });
+}
+
+function updateSel2(){
+  $("#selCount2").textContent = state.picked.size;
+  $("#selbar2").style.display = state.picked.size ? "flex" : "none";
+}
+$("#btnToStep3").addEventListener("click", ()=>goStep(3));
+
+function openDetail(id){
+  const p = PROPS.find(x=>x.id===id);
+  const j = judge(p, state.company);
+  const own = srcOf(p, activeSites());
+  $("#modalTitle").textContent = p.name;
+  $("#modalBody").innerHTML = `
+    <dl class="kv">
+      <dt>所在地</dt><dd>${p.addr}</dd>
+      <dt>最寄駅</dt><dd>${p.st}</dd>
+      <dt>賃料</dt><dd class="mono">${yen(p.rent)}円 ＋ 管理費 ${yen(p.kanri)}円</dd>
+      <dt>間取り</dt><dd>${p.layout}／${p.area}㎡（${p.f.floor}階）</dd>
+      <dt>取得元</dt><dd>${own.map(s=>`<span class="src ${s}">${SITE_LABEL[s]}</span>`).join(" ")}${own.length>1?"　※名寄せで1件に統合":""}</dd>
+      <dt>管理会社</dt><dd>${p.mgr}</dd>
+    </dl>
+    <div class="hr"></div>
+    <div class="sec-t">契約条件（サイト掲載情報から抽出）</div>
+    <dl class="kv">
+      <dt>契約形態</dt><dd>${p.f.contract}</dd>
+      <dt>短期解約違約金</dt><dd>${p.f.penalty}</dd>
+      <dt>退去予告</dt><dd>${p.f.notice}</dd>
+      <dt>保証会社</dt><dd>${p.f.guarantor}</dd>
+      <dt>ペット</dt><dd>${p.f.pet}</dd>
+    </dl>
+    <div class="hr"></div>
+    <div class="sec-t">社宅規定 照合結果（将来拡張）｜${COMPANIES[state.company].name}</div>
+    <div class="jd ${j.sev}" style="font-size:14px;margin-bottom:8px">${JD_LABEL[j.sev]}</div>
+    ${j.issues.length
+      ? `<ul style="padding-left:18px;font-size:12.5px;line-height:1.9">${j.issues.map(i=>`<li>${i.txt}</li>`).join("")}</ul>`
+      : `<p style="font-size:12.5px">抵触項目はありません。</p>`}
+    <div class="hr"></div>
+    <div class="sec-t">掲載元サイトの検索結果URL</div>
+    ${own.map(s=>`
+      <div class="url-row">
+        <div class="url-main">
+          <div class="url-head"><span class="src ${s}">${SITE_LABEL[s]}</span><span class="url-cnt">物件コード ${PROP_CODE[s](p)}</span></div>
+          <div class="url-str mono">${propUrl(s,p)}</div>
+        </div>
+        <div class="url-act">
+          <button class="btn btn-ghost btn-sm site-open" data-s="${s}" data-id="${p.id}">開く</button>
+          <button class="btn btn-ghost btn-sm url-copy" data-u="${encodeURIComponent(propUrl(s,p))}">コピー</button>
+        </div>
+      </div>`).join("")}
+    <p class="footnote">※ 検索条件をクエリに変換し、物件コードを付与したURLです。図面のダウンロードや申込は各サイト側で行う想定です。物件単位のURLが取得できるかはPoCで確認します。</p>`;
+  bindSiteLinks();
+  $$(".url-copy").forEach(b=>b.addEventListener("click", ()=>copyUrl(b, decodeURIComponent(b.dataset.u))));
+  $("#overlay").classList.add("open");
+}
+$("#modalX").addEventListener("click", ()=>$("#overlay").classList.remove("open"));
+$("#overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") $("#overlay").classList.remove("open"); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") $("#overlay").classList.remove("open"); });
+
+/* ============================================================
+   保存済み条件
+   ============================================================ */
+let SAVED = [
+  {id:1, name:"リロJ様_1K首都圏_9月入居", shared:true, updated:"2026/08/03", used:34,
+   c:{co:"relo", area:"東京23区・横浜・大宮", layout:"1K・1DK・1LDK", rent:"200,000", move:"2026/09/01", walk:"10分以内", built:"指定なし", sites:["itandi","reapro","atbb"]}},
+  {id:2, name:"中央精機_新卒3名_大宮", shared:false, updated:"2026/07/24", used:8,
+   c:{co:"mfg", area:"大宮・浦和", layout:"1K・1DK・1LDK", rent:"150,000", move:"2027/03/20", walk:"10分以内", built:"15年以内", sites:["itandi","atbb"]}},
+  {id:3, name:"明和信託_品川エリア_急ぎ", shared:true, updated:"2026/07/26", used:12,
+   c:{co:"fin", area:"品川・港南・大井町・目黒", layout:"1LDK のみ", rent:"250,000", move:"2026/08/15", walk:"10分以内", built:"指定なし", sites:["itandi","reapro","atbb"]}}
+];
+let savedSeq = 100, activeSavedId = null;
+
+function renderSaved(){
+  $("#savedList").innerHTML = SAVED.length ? SAVED.map(s=>`
+    <div class="saved-row ${activeSavedId===s.id?"on":""}">
+      <div class="saved-main">
+        <div class="saved-nm">${s.name}${s.shared?'<span class="badge outline">チーム共有</span>':""}</div>
+        <div class="saved-sum">${condSummary(s.c)}</div>
+        <div class="saved-meta mono">最終更新 ${s.updated}／利用 ${s.used}回</div>
+      </div>
+      <div class="saved-act">
+        <button class="btn btn-ghost btn-sm use-saved" data-id="${s.id}">この条件で検索</button>
+        <button class="saved-del del-saved" data-id="${s.id}">削除</button>
+      </div>
+    </div>`).join("")
+  : `<div class="empty" style="border:1px dashed var(--line);border-radius:4px;padding:22px"><b>保存済みの条件はありません</b>下のボタンで現在の条件を保存できます。</div>`;
+
+  $$(".use-saved").forEach(b=>b.addEventListener("click", ()=>{
+    const s = SAVED.find(x=>x.id === +b.dataset.id);
+    activeSavedId = s.id; s.used++;
+    writeForm(s.c); renderSaved();
+    state.filter = "all";
+    runSearch(false);
+    pushMsg("sys", `保存条件「${s.name}」を呼び出しました`);
+  }));
+  $$(".del-saved").forEach(b=>b.addEventListener("click", ()=>{
+    SAVED = SAVED.filter(x=>x.id !== +b.dataset.id);
+    renderSaved();
+  }));
+}
+function autoName(c){
+  const co  = COMPANIES[c.co].name.replace(" 様","").slice(0,6);
+  const lay = c.layout.replace("・","").replace(" のみ","").replace("以上","");
+  return `${co}_${lay}_${c.area.split("・")[0]}_上限${Math.round(parseInt(c.rent.replace(/[^0-9]/g,""),10)/10000)}万`;
+}
+$("#btnOpenSave").addEventListener("click", ()=>{
+  const c = readForm();
+  $("#saveName").value = autoName(c);
+  $("#savePreview").textContent = condSummary(c);
+  $("#saveForm").style.display = "";
+  $("#btnOpenSave").style.display = "none";
+  $("#saveName").focus();
+});
+function closeSaveForm(){ $("#saveForm").style.display = "none"; $("#btnOpenSave").style.display = ""; }
+$("#btnCancelSave").addEventListener("click", closeSaveForm);
+$("#btnDoSave").addEventListener("click", ()=>{
+  const nm = $("#saveName").value.trim();
+  if(!nm){ $("#saveName").focus(); return; }
+  const id = ++savedSeq;
+  SAVED.unshift({id, name:nm, shared:false, updated:"2026/08/03", used:0, c:readForm()});
+  activeSavedId = id;
+  closeSaveForm(); renderSaved();
+  pushMsg("sys", `「${nm}」を保存しました`);
+});
+
+/* ============================================================
+   チャット再検索
+   ============================================================ */
+const AREAS = ["新宿","渋谷","目黒","品川","港南","大井町","豊洲","三田","八丁堀","大手町","神田",
+               "千代田","中央区","港区","横浜","川崎","大宮","浦和","吉祥寺","武蔵野","錦糸町","板橋",
+               "江東区","江戸川区","市川市","東陽町","西葛西","葛西","南砂町","本八幡","東京23区"];
+let CHAT = [];
+function pushMsg(role, html){ CHAT.push({role, html}); renderChat(); }
+function renderChat(){
+  const el = $("#chat");
+  el.innerHTML = CHAT.map(m=>`<div class="msg ${m.role}">${m.html}</div>`).join("");
+  el.scrollTop = el.scrollHeight;
+}
+const CHIPS = [
+  "賃料上限を18万円に下げて",
+  "1LDKだけにして、駅徒歩5分以内で",
+  "ITANDIだけで再検索して",
+  "適合の物件だけ表示して",
+  "依頼企業を中央精機工業に変えて"
+];
+$("#chatChips").innerHTML = CHIPS.map((c,i)=>`<button class="chip" data-i="${i}">${c}</button>`).join("")
+  + `<button class="chip" id="chipReset" style="border-style:dashed">条件をリセット</button>`;
+$$('#chatChips .chip[data-i]').forEach(b=>b.addEventListener("click", ()=>{
+  $("#chatIn").value = CHIPS[+b.dataset.i];
+  sendChat();
+}));
+
+function toHalf(s){
+  return s.replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0)-0xFEE0)).replace(/，/g, ",");
+}
+function parseChat(raw){
+  const t = toHalf(raw);
+  const only = /だけ|のみ|限定/.test(t);
+  const cur = readForm();
+  const next = {...cur, sites:[...cur.sites]};
+  const chg = [];
+  let filterChg = null, wantSave = false;
+
+  const mRent = t.match(/(?:賃料|家賃|上限|予算)[^0-9]{0,10}(\d+(?:,\d{3})*(?:\.\d+)?)\s*(万)?/);
+  if(mRent){
+    let v = parseFloat(mRent[1].replace(/,/g,""));
+    if(mRent[2] || v <= 100) v *= 10000;
+    v = Math.round(v);
+    if(String(v) !== cur.rent.replace(/,/g,"")){
+      next.rent = v.toLocaleString("ja-JP");
+      chg.push({k:"賃料上限", o:cur.rent+"円", v:next.rent+"円"});
+    }
+  }
+  const hitAreas = AREAS.filter(a=>t.includes(a));
+  if(hitAreas.length){
+    const joined = hitAreas.join("・");
+    if(joined !== cur.area){ next.area = joined; chg.push({k:"エリア", o:cur.area, v:joined}); }
+  }
+  let lay = null;
+  if(/2LDK/.test(t)) lay = "2LDK以上";
+  else if(/1LDK/.test(t)) lay = only ? "1LDK のみ" : "1K・1DK・1LDK";
+  else if(/1K/.test(t))   lay = only ? "1K のみ"   : "1K・1DK・1LDK";
+  else if(/1DK/.test(t))  lay = "1K・1DK・1LDK";
+  if(lay && lay !== cur.layout){ next.layout = lay; chg.push({k:"間取り", o:cur.layout, v:lay}); }
+
+  const mWalk = t.match(/徒歩\s*(\d+)/);
+  if(mWalk){
+    const n = +mWalk[1], w = n<=5 ? "5分以内" : n<=10 ? "10分以内" : "15分以内";
+    if(w !== cur.walk){ next.walk = w; chg.push({k:"駅徒歩", o:cur.walk, v:w}); }
+  }
+  const mSize = t.match(/(\d+)\s*(?:㎡|m2|平米|平方メートル)/);
+  if(mSize){
+    const n0 = +mSize[1];
+    const sz = n0 >= 70 ? "70㎡以上" : n0 >= 55 ? "55㎡以上" : n0 >= 40 ? "40㎡以上" : "指定なし";
+    if(sz !== cur.size){ next.size = sz; chg.push({k:"面積（下限）", o:cur.size, v:sz}); }
+  }
+  if(/ペット/.test(t)){
+    const pv = /不可|なし|外して|指定なし/.test(t) ? "指定なし" : "相談可のみ";
+    if(pv !== cur.pet){ next.pet = pv; chg.push({k:"ペット", o:cur.pet, v:pv}); }
+  }
+  const mB = t.match(/築\s*(\d+)/);
+  if(mB){
+    const n = +mB[1], b = n<=10 ? "10年以内" : n<=15 ? "15年以内" : "指定なし";
+    if(b !== cur.built){ next.built = b; chg.push({k:"築年数", o:cur.built, v:b}); }
+  }
+  const hitSites = [];
+  if(/ITANDI|イタンジ/i.test(t)) hitSites.push("itandi");
+  if(/リアプロ/.test(t)) hitSites.push("reapro");
+  if(/ATBB|アットBB|アットビービー/i.test(t)) hitSites.push("atbb");
+  if(hitSites.length){
+    const ns = only ? hitSites : SITE_ORDER.filter(s => cur.sites.includes(s) || hitSites.includes(s));
+    if(ns.join() !== cur.sites.join()){
+      next.sites = ns;
+      chg.push({k:"検索先", o:cur.sites.map(s=>SITE_LABEL[s]).join("・"), v:ns.map(s=>SITE_LABEL[s]).join("・")});
+    }
+  }
+  let co = null;
+  if(/リロケーション|リロJ/.test(t)) co = "relo";
+  else if(/中央精機/.test(t)) co = "mfg";
+  else if(/明和|信託/.test(t)) co = "fin";
+  if(co && co !== cur.co){
+    next.co = co;
+    chg.push({k:"依頼企業", o:COMPANIES[cur.co].name, v:COMPANIES[co].name});
+    if(!mRent){
+      const capNew = COMPANIES[co].chk.rentCap.toLocaleString("ja-JP");
+      if(capNew !== cur.rent){
+        next.rent = capNew;
+        chg.push({k:"賃料上限", o:cur.rent+"円", v:capNew+"円（規定連動）"});
+      }
+    }
+  }
+  const clear = /外して|解除|指定なし|問わない|こだわらない/.test(t);
+  if(clear && /間取り/.test(t) && cur.layout !== "1K・1DK・1LDK"){
+    next.layout = "1K・1DK・1LDK"; chg.push({k:"間取り", o:cur.layout, v:"1K・1DK・1LDK"});
+  }
+  if(clear && /築/.test(t) && cur.built !== "指定なし"){
+    next.built = "指定なし"; chg.push({k:"築年数", o:cur.built, v:"指定なし"});
+  }
+  if(clear && /面積|広さ/.test(t) && cur.size !== "指定なし"){
+    next.size = "指定なし"; chg.push({k:"面積（下限）", o:cur.size, v:"指定なし"});
+  }
+  if(/適合/.test(t) && (only || /表示|絞/.test(t))) filterChg = "pass";
+  else if(/(抵触|対象外|NG)/.test(t) && /(除外|除いて|外して|抜いて)/.test(t)) filterChg = "noFail";
+  else if(/(すべて|全部|全件|全て)/.test(t) && /(表示|戻|解除)/.test(t)) filterChg = "all";
+  if(/保存/.test(t)) wantSave = true;
+
+  return {next, chg, filterChg, wantSave};
+}
+const FILTER_LABEL = {all:"すべて表示", pass:"適合のみ", noFail:"抵触（対象外）を除く"};
+
+function sendChat(){
+  const raw = $("#chatIn").value.trim();
+  if(!raw) return;
+  $("#chatIn").value = "";
+  pushMsg("me", raw.replace(/</g,"&lt;"));
+
+  const {next, chg, filterChg, wantSave} = parseChat(raw);
+  const nothing = !chg.length && !filterChg && !wantSave;
+
+  pushMsg("ai", `<span class="dots"><i></i><i></i><i></i></span>`);
+  setTimeout(()=>{
+    CHAT.pop();
+    if(nothing){
+      pushMsg("ai", `条件として読み取れる指定が見つかりませんでした。<br>次のような書き方でお伝えください。<br><b>「賃料上限を18万円に」／「目黒と品川に絞って」／「1LDKだけ」／「徒歩5分以内」／「築10年以内」／「ITANDIだけ」</b>`);
+      return;
+    }
+    if(chg.length){ writeForm(next); activeSavedId = null; renderSaved(); }
+    const sf = document.body.classList.contains("scope-first");
+    if(filterChg && !sf) state.filter = filterChg;
+
+    runSearch(true);
+
+    const all = state.results;
+    const shown = sf ? all.length : displayList().length;
+    const pass = all.filter(r=>r.j.sev==="pass").length;
+    const nego = all.filter(r=>r.j.sev==="nego").length;
+    const fail = all.filter(r=>r.j.sev==="fail").length;
+    const sites = activeSites();
+    const bySite = SITE_ORDER.filter(s=>sites.includes(s))
+      .map(s=>`${SITE_LABEL[s]} ${all.filter(r=>srcOf(r.p,sites).includes(s)).length}`).join("／");
+
+    let html = "条件を変更して再検索しました。";
+    if(chg.length){
+      html += `<div class="msg-chg">${chg.map(c=>
+        `<div class="chg"><span class="chg-k">${c.k}</span><span class="chg-o">${c.o}</span><span>→</span><span class="chg-v">${c.v}</span></div>`).join("")}</div>`;
+    }
+    if(filterChg){
+      html += sf
+        ? `<div class="msg-chg">社宅規定の判定による絞り込みは<b>将来拡張</b>の機能です。初回リリースでは判定を行わないため、この指定は適用していません。</div>`
+        : `<div class="msg-chg"><div class="chg"><span class="chg-k">表示</span><span class="chg-v">${FILTER_LABEL[filterChg]}</span></div></div>`;
+    }
+    html += sf
+      ? `<div class="msg-chg"><b>${shown}件</b>を表示（${bySite}）</div>`
+      : `<div class="msg-chg"><b>${shown}件</b>を表示（適合 ${pass}／要交渉 ${nego}／抵触 ${fail}）</div>`;
+
+    if(shown === 0){
+      html += `<div class="msg-chg">該当する物件がありませんでした。条件を緩めて再度お試しください。</div>`;
+    }
+    pushMsg("ai", html);
+
+    if(wantSave){
+      $("#btnOpenSave").click();
+      pushMsg("ai", "この条件を保存できます。左の保存名を確認して「保存する」を押してください。");
+    }
+  }, 600);
+}
+$("#chatSend").addEventListener("click", sendChat);
+$("#chatIn").addEventListener("keydown", e=>{ if(e.key==="Enter") sendChat(); });
+renderSaved();
+const DEFAULT_COND = readForm();
+$("#chipReset").addEventListener("click", ()=>{
+  writeForm(DEFAULT_COND);
+  state.filter = "all"; activeSavedId = null;
+  renderSaved(); runSearch(true);
+  pushMsg("sys", "検索条件を初期状態に戻しました");
+});
+pushMsg("ai", "検索条件を会話で変更できます。<br>例：<b>「賃料上限を18万円に下げて、駅徒歩5分以内で」</b><br>下のボタンからもすぐ試せます。");
+
+/* ============================================================
+   STEP3 空室確認・交渉
+   ============================================================ */
+function pickedProps(){ return state.results.filter(r=>state.picked.has(r.p.id)); }
+
+function renderStatus(){
+  const all = pickedProps();
+  const sites = activeSites();
+  if(!all.length){
+    $("#statusBody").innerHTML = `<tr><td colspan="7"><div class="empty"><b>ピックアップ物件がありません</b>STEP 02 で検索し、候補にチェックを入れてください。</div></td></tr>`;
+    $("#statusStats").innerHTML = "";
+    $("#selbar3").style.display = "none";
+    return;
+  }
+  const rev = state.statusRevealed;
+  const autoN = all.filter(r=>hasItandi(r.p)).length;
+  const telList = all.filter(r=>!hasItandi(r.p));
+  const telN = telList.length;
+  const telCos = new Set(telList.map(r=>r.p.mgr)).size;
+  const appliedN = rev ? all.filter(r=>hasItandi(r.p) && r.p.realStatus==="applied").length : 0;
+  const okN = rev ? autoN - appliedN : 0;
+
+  $("#statusStats").innerHTML = `
+    <div class="stat"><div class="stat-k">ピックアップ</div><div class="stat-v mono">${all.length}<small>件</small></div></div>
+    <div class="stat"><div class="stat-k">自動取得できた（ITANDI）</div><div class="stat-v mono" style="color:${rev?"#0A7A76":"#93A1B5"}">${rev?autoN:"—"}<small>件</small></div><div class="stat-d">${rev?"電話不要":"未取得"}</div></div>
+    <div class="stat"><div class="stat-k">申込あり（除外）</div><div class="stat-v mono" style="color:${rev?"#B03A38":"#93A1B5"}">${rev?appliedN:"—"}<small>件</small></div><div class="stat-d">${rev?"提案前に除外":""}</div></div>
+    <div class="stat"><div class="stat-k">要電話確認</div><div class="stat-v mono" style="color:#8C5B12">${telN}<small>件</small></div><div class="stat-d">リアプロ・ATBBのみ掲載</div></div>
+    <div class="stat"><div class="stat-k">架電先</div><div class="stat-v mono">${telCos}<small>社</small></div><div class="stat-d">管理会社ごとにまとめて確認</div></div>`;
+
+  const list = $("#telOnly").checked ? telList : all;
+
+  $("#statusBody").innerHTML = list.length ? list.map(({p})=>{
+    const own = srcOf(p, sites);
+    const srcHtml = own.map(s=>`<span class="src ${s}">${SITE_LABEL[s]}</span>`).join(" ");
+    let stHtml, howHtml, contactHtml, dim = "";
+    if(hasItandi(p)){
+      if(rev){
+        if(p.realStatus === "applied"){
+          stHtml = `<span class="st ng dot">申込あり（対象外）</span>`; dim = "dim";
+        }else{
+          stHtml = `<span class="st ok dot">空室（案内可）</span>`;
+        }
+      }else{
+        stHtml = `<span class="st tel dot">未取得</span>`;
+      }
+      howHtml = `<span class="badge outline">ITANDI API 自動取得</span>
+                 <div class="p-addr">${rev ? "2026/08/03 09:12 更新" + (own.length>1?"／名寄せにより取得":"") : "「ステータスを更新」を実行"}</div>`;
+      contactHtml = `<div>${p.mgr}</div>`;
+    }else{
+      stHtml  = `<span class="st tel dot">要電話確認</span>`;
+      howHtml = `<span class="badge outline">連携なし（将来拡張）</span>
+                 <div class="p-addr">${own.map(s=>SITE_LABEL[s]).join("・")}はステータス未提供</div>`;
+      contactHtml = `<div>${p.mgr}</div>
+        <div class="tel-no mono">${p.tel}</div>`;
+    }
+    return `<tr class="${dim}">
+      <td><span class="mono" style="font-size:11px;color:var(--muted2)">${String(p.id).padStart(2,"0")}</span></td>
+      <td><div class="p-name">${p.name}</div><div class="p-addr">${p.st}</div></td>
+      <td>${srcHtml}</td>
+      <td><div class="rent mono">${yen(p.rent)}</div></td>
+      <td>${stHtml}</td>
+      <td>${howHtml}</td>
+      <td>${contactHtml}</td>
+    </tr>`;
+  }).join("")
+  : `<tr><td colspan="7"><div class="empty"><b>要電話確認の物件はありません</b>ピックアップした物件はすべてITANDIからステータスを取得できます。</div></td></tr>`;
+
+  $("#selCount3").textContent = okN + telN;
+  $("#selbar3").style.display = rev ? "flex" : "none";
+}
+$("#telOnly").addEventListener("change", renderStatus);
+
+$("#btnRefresh").addEventListener("click", ()=>{
+  const b = $("#btnRefresh");
+  b.disabled = true; b.textContent = "ITANDIに問い合わせ中…";
+  setTimeout(()=>{
+    state.statusRevealed = true;
+    b.disabled = false; b.textContent = "ステータスを更新";
+    renderStatus();
+  }, 900);
+});
+$("#btnToStep4").addEventListener("click", ()=>goStep(4));
+
+$("#btnInqMail").addEventListener("click", ()=>{
+  const tel = pickedProps().filter(r=>!hasItandi(r.p));
+  const wrap = $("#inqMailWrap");
+  if(!tel.length){
+    wrap.style.display = "";
+    wrap.innerHTML = `<div class="empty" style="border:1px solid var(--line);border-radius:4px"><b>要電話確認の物件がありません</b>リアプロ・ATBBのみ掲載の物件をピックアップすると生成できます。</div>`;
+    return;
+  }
+  const body =
+`${tel[0].p.mgr} 御中
+ご担当者様
+
+いつもお世話になっております。
+株式会社リロエステートの渡辺です。
+
+法人契約（社宅）でのご案内を検討しており、下記物件について
+空室状況と条件のご確認をお願いいたします。
+
+${tel.map(({p})=>
+`■ ${p.name}（${p.addr}）
+　賃料 ${yen(p.rent)}円／管理費 ${yen(p.kanri)}円　${p.layout}・${p.area}㎡
+　① 現在の空室・申込状況
+　② 短期解約違約金の特約有無${p.f.penalty!=="なし"?`（掲載情報：${p.f.penalty}）`:""}
+　③ 退去予告の期限（${p.f.notice}との掲載を確認）
+　④ 契約形態（${p.f.contract}）
+　⑤ 保証会社の指定有無（${p.f.guarantor}）`).join("\n\n")}
+
+契約者は法人、入居者は当社クライアント企業の従業員となります。
+社宅規定上、1年未満の解約違約金条項および2ヶ月前予告は
+そのままではご案内が難しいため、条件変更の可否も併せて
+ご教示いただけますと幸いです。
+
+お忙しいところ恐れ入りますが、ご確認のほどよろしくお願いいたします。`;
+
+  wrap.style.display = "";
+  wrap.innerHTML = `
+    <div class="mail">
+      <div class="mail-head">
+        <div class="mail-row"><span>宛先</span><span>${tel[0].p.mgr} 賃貸管理部</span></div>
+        <div class="mail-row"><span>件名</span><span>【法人契約】空室状況および契約条件のご確認（${tel.length}件）</span></div>
+      </div>
+      <div class="mail-body" id="inqBody"></div>
+    </div>
+    <p class="footnote">※ 物件の管理会社ごとに宛先を分割して生成します。確認項目は社宅規定と掲載情報の差分から自動決定します。</p>`;
+  typeInto($("#inqBody"), body);
+});
+
+function renderNego(){
+  const rows = [];
+  pickedProps().forEach(({p,j})=>{
+    j.issues.filter(i=>i.sev==="nego").forEach(i=>rows.push({p, item:i.nego || i.txt}));
+  });
+  const STATUS = [
+    {t:"依頼中", c:"hold", d:"07/31 電話で依頼済み・回答待ち"},
+    {t:"合意",   c:"ok",   d:"礼金0→1ヶ月の条件で条項削除に合意"},
+    {t:"未着手", c:"warn", d:"次回の架電時に交渉予定"}
+  ];
+  $("#negoBody").innerHTML = rows.length ? rows.map((r,i)=>{
+    const s = STATUS[i % STATUS.length];
+    return `<tr>
+      <td><div class="p-name">${r.p.name}</div><div class="p-addr">${r.p.st}</div></td>
+      <td>${r.item}</td>
+      <td><span class="pill ${s.c}">${s.t}</span><div class="p-addr">${s.d}</div></td>
+      <td>${r.p.mgr}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="alert('交渉結果の記録画面を開きます（デモでは省略）。\\n結果は案件履歴と社宅規定マスタの参考情報に残ります。')">結果を記録</button></td>
+    </tr>`;
+  }).join("")
+  : `<tr><td colspan="5"><div class="empty"><b>交渉が必要な物件はありません</b>規定に抵触する条項を持つ物件をピックアップすると表示されます。</div></td></tr>`;
+}
+
+/* ============================================================
+   STEP4 図面加工
+   ============================================================ */
+function targetProps(){
+  const list = pickedProps().filter(({p}) => !(hasItandi(p) && state.statusRevealed && p.realStatus === "applied"));
+  return list.length ? list : state.results.filter(r=>r.j.sev !== "fail").slice(0,3);
+}
+function renderStep4(){
+  const t = targetProps();
+  $("#dwgTargetNote").textContent = `加工対象 ${t.length}件（沿線ごとに整理して1PDFへ結合）`;
+  if(t.length){
+    const p = t[0].p;
+    $("#dwgName").textContent = `${p.name}／取得元 ${srcOf(p, activeSites()).map(s=>SITE_LABEL[s]).join("・")}`;
+    $("#dwgHeadName").textContent = p.name;
+  }
+  $("#selCount4").textContent = t.length;
+  $("#selbar4").style.display = state.processed ? "flex" : "none";
+}
+$("#btnProcess").addEventListener("click", ()=>{
+  const opts = Object.fromEntries($$(".opt input").map(i=>[i.dataset.opt, i.checked]));
+  const b = $("#btnProcess");
+  b.disabled = true; b.textContent = "加工中…";
+  const frame = $("#dwgFrame");
+  setTimeout(()=>{
+    if(opts.obi){
+      $("#obiBox").setAttribute("fill","#E6F5F4"); $("#obiBox").setAttribute("stroke","#0E9C97");
+      $("#obiCo").textContent = "取扱：株式会社リロエステート"; $("#obiCo").setAttribute("fill","#0A7A76");
+      $("#obiTel").textContent = "TEL 03-5155-XXXX／国土交通大臣（3）第XXXXX号／担当 渡辺";
+      $("#obiTel").setAttribute("fill","#0A7A76");
+      $("#obiStamp").textContent = "自社帯 差替済"; $("#obiStamp").setAttribute("fill","#0E9C97");
+    }
+    frame.classList.add("processed");
+    if(!opts.mask) frame.querySelector(".mask-rect").style.opacity = 0;
+    if(!opts.furn) frame.querySelector(".add-note").style.opacity = 0;
+    $("#afterTag").style.display = "";
+
+    const done = [];
+    if(opts.obi)  done.push("帯を自社情報へ差し替え");
+    if(opts.mask) done.push("規定NG 2箇所／要交渉 1箇所をマスキング");
+    if(opts.furn) done.push("家具家電リース条件を追記");
+    if(opts.pdf)  done.push(`${targetProps().length}件を沿線ごとに整理し1PDFへ結合`);
+    $("#procMsg").innerHTML = `加工完了（1.2秒）：${done.join(" ／ ")}。<br>従来の手作業 約10分／件 → <b>約1分／件</b>。`;
+    b.disabled = false; b.textContent = "AI図面加工を実行";
+    state.processed = true;
+    $("#selbar4").style.display = "flex";
+  }, 1100);
+});
+$("#btnResetDwg").addEventListener("click", ()=>{
+  const frame = $("#dwgFrame");
+  frame.classList.remove("processed");
+  frame.querySelector(".mask-rect").style.opacity = "";
+  frame.querySelector(".add-note").style.opacity = "";
+  $("#obiBox").setAttribute("fill","#EFF2F6"); $("#obiBox").setAttribute("stroke","#DFE5EE");
+  $("#obiCo").textContent = "元付：〇〇不動産販売株式会社"; $("#obiCo").setAttribute("fill","#5A6D89");
+  $("#obiTel").textContent = "TEL 03-0000-0000／宅建免許（3）第00000号／担当 〇〇"; $("#obiTel").setAttribute("fill","#93A1B5");
+  $("#obiStamp").textContent = "図面転載可"; $("#obiStamp").setAttribute("fill","#B9C6D6");
+  $("#afterTag").style.display = "none";
+  $("#procMsg").textContent = "";
+  state.processed = false;
+  $("#selbar4").style.display = "none";
+});
+$("#btnToStep5").addEventListener("click", ()=>goStep(5));
+
+/* ============================================================
+   STEP5 メール物件紹介
+   ============================================================ */
+function renderStep5(){
+  const t = targetProps();
+  $("#mailTargetNote").textContent = state.processed
+    ? `加工済み ${t.length}件を添付`
+    : `対象 ${t.length}件（STEP4で図面加工を実行すると加工済みPDFを添付）`;
+}
+$("#btnResetMail").addEventListener("click", ()=>{ $("#mailWrap").style.display = "none"; });
+$("#btnMail").addEventListener("click", ()=>{
+  const t  = targetProps();
+  const co = COMPANIES[state.company];
+  const body =
+`${co.name.replace(" 様","")}
+ご担当者様
+
+平素より大変お世話になっております。
+株式会社リロエステートの渡辺です。
+
+このたびご依頼いただきました社宅物件につきまして、
+貴社の社宅規定に適合する物件を${t.length}件ご提案いたします。
+図面は1つのPDFにまとめて添付しております。
+
+${t.map(({p,j},i)=>
+`${i+1}. ${p.name}（${p.st}）
+　　賃料 ${yen(p.rent)}円／管理費 ${yen(p.kanri)}円　${p.layout}・${p.area}㎡・築${p.built}年
+　　${j.sev==="pass" ? "規定適合（違約金なし／退去予告1ヶ月／普通借家）" : "管理会社と条件交渉のうえ規定適合の見込み"}`).join("\n\n")}
+
+いずれも短期解約違約金・退去予告・契約形態について
+貴社規定への適合を確認済みです。
+家具家電のリース対応が可能な物件も含まれておりますので、
+ご希望があれば併せて手配いたします。
+
+内見のご希望日程をご連絡いただけますと幸いです。
+ご不明点がございましたらお気軽にお申し付けください。`;
+
+  $("#mailWrap").style.display = "";
+  $("#mailWrap").innerHTML = `
+    <div class="mail">
+      <div class="mail-head">
+        <div class="mail-row"><span>宛先</span><span>${co.name}</span></div>
+        <div class="mail-row"><span>件名</span><span>【物件ご提案】社宅斡旋のご依頼につきまして（${t.length}件）</span></div>
+      </div>
+      <div class="mail-body" id="mailBody"></div>
+      <div class="mail-attach">
+        <span style="color:var(--muted)">添付</span>
+        <span class="att"><span class="att-ico">PDF</span>物件ご提案_${t.length}件${state.processed?"_加工済":""}.pdf</span>
+        <span class="att"><span class="att-ico">XLS</span>物件条件一覧.xlsx</span>
+        ${state.processed?"":'<span class="f-hint" style="margin:0">※STEP4の図面加工が未実行です</span>'}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="btnSend">この内容で送信</button>
+      <button class="btn btn-ghost btn-sm" onclick="alert('文面を編集モードで開きます（デモでは省略）。')">文面を編集</button>
+    </div>`;
+  typeInto($("#mailBody"), body);
+  $("#btnSend").addEventListener("click", ()=>{
+    alert("提案を送信し、案件ステータスを「提案送信済み」に更新しました。\n横断の進捗ダッシュボードに反映されます。");
+    goStep(6);
+  });
+});
+
+function typeInto(el, text){
+  el.textContent = "";
+  el.classList.add("typing");
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    el.textContent = text; el.classList.remove("typing"); return;
+  }
+  let i = 0;
+  const step = Math.max(3, Math.round(text.length/220));
+  const t = setInterval(()=>{
+    i += step;
+    el.textContent = text.slice(0, i);
+    if(i >= text.length){ clearInterval(t); el.classList.remove("typing"); }
+  }, 16);
+}
+
+/* ============================================================
+   横断 進捗ダッシュボード
+   ============================================================ */
+const KCOLS = ["STEP1-2 条件・検索中","STEP3 空室確認・交渉","STEP4-5 提案準備・送信","顧客確認・内見","成約"];
+const CASES = [
+  {col:0, co:"リロケーション・ジャパン 様", nm:"転勤者A様（新宿・9月入居）", own:"渡", rally:1, pill:null, prog:20,
+   hist:["08/01 依頼書受領（PDF）","08/03 横断検索 11件抽出／適合4件"], next:"物件ピックアップ完了 → 空室確認へ"},
+  {col:0, co:"中央精機工業 様", nm:"新卒3名（大宮・3月入居）", own:"佐", rally:1, pill:{c:"hold",t:"繁忙期"}, prog:15,
+   hist:["07/26 依頼書受領（Excel）"], next:"検索条件の確定（賃料上限15万・1K）"},
+  {col:1, co:"明和信託銀行 様", nm:"中途採用B様（品川・8月入居）", own:"渡", rally:2, pill:null, prog:42,
+   hist:["07/22 3件提案","07/25 うち1件が申込あり判明・除外","07/28 代替2件を追加提案"], next:"要電話確認 2件の架電"},
+  {col:1, co:"リロケーション・ジャパン 様", nm:"転勤者C様（横浜・9月入居）", own:"高", rally:3, pill:{c:"hold",t:"要交渉"}, prog:50,
+   hist:["07/20 4件提案","07/24 2件NG（賃料オーバー）","07/27 条件緩和し再提案3件"], next:"違約金条項の削除交渉（回答待ち）"},
+  {col:2, co:"中央精機工業 様", nm:"転勤者D様（三田・8月入居）", own:"佐", rally:2, pill:null, prog:64,
+   hist:["07/23 コンフォリア三田 908 を候補に","07/26 短期解約違約金条項が判明","08/01 図面加工完了"], next:"提案メール送信"},
+  {col:2, co:"明和信託銀行 様", nm:"転勤者E様（豊洲・9月入居）", own:"渡", rally:2, pill:{c:"warn",t:"回答期限"}, prog:60,
+   hist:["07/21 2件提案","07/25 退去予告2ヶ月前が規定抵触","07/28 1ヶ月前へ変更を交渉中"], next:"本日中に提案送信"},
+  {col:3, co:"リロケーション・ジャパン 様", nm:"転勤者F様（目黒・8月入居）", own:"高", rally:3, pill:{c:"ok",t:"内見予定"}, prog:82,
+   hist:["07/18 3件提案","07/24 1件へ絞り込み","08/01 内見日程確定 08/06"], next:"内見同行（08/06 14:00）"},
+  {col:3, co:"中央精機工業 様", nm:"転勤者G様（吉祥寺・9月入居）", own:"稲", rally:2, pill:{c:"ok",t:"内見予定"}, prog:78,
+   hist:["07/19 2件提案","07/27 内見希望の回答"], next:"内見日程調整中"},
+  {col:4, co:"明和信託銀行 様", nm:"転勤者H様（八丁堀・8月入居）", own:"渡", rally:3, pill:{c:"ok",t:"成約"}, prog:100,
+   hist:["07/10 提案","07/17 内見","07/24 申込","07/28 契約締結"], next:"完了（鍵引渡し 08/05）"},
+  {col:4, co:"リロケーション・ジャパン 様", nm:"転勤者I様（新宿・8月入居）", own:"佐", rally:2, pill:{c:"ok",t:"成約"}, prog:100,
+   hist:["07/08 提案","07/15 内見","07/22 契約締結"], next:"完了"}
+];
+function renderDash(){
+  $("#dashStats").innerHTML = `
+    <div class="stat"><div class="stat-k">今月の依頼件数</div><div class="stat-v mono">742<small>件</small></div><div class="stat-d">前年同月 +58件</div></div>
+    <div class="stat"><div class="stat-k">進行中</div><div class="stat-v mono">186<small>件</small></div><div class="stat-d">担当5名／1人あたり37件</div></div>
+    <div class="stat"><div class="stat-k">要対応（期限超過）</div><div class="stat-v mono" style="color:#B03A38">3<small>件</small></div><div class="stat-d">回答期限を過ぎた案件</div></div>
+    <div class="stat"><div class="stat-k">平均リードタイム</div><div class="stat-v mono">6.2<small>日</small></div><div class="stat-d">依頼受領 → 成約</div></div>
+    <div class="stat"><div class="stat-k">平均ラリー回数</div><div class="stat-v mono">2.4<small>回</small></div><div class="stat-d">導入前 約3回</div></div>`;
+
+  $("#kanban").innerHTML = KCOLS.map((t,ci)=>{
+    const cs = CASES.filter(c=>c.col===ci);
+    return `<div class="kcol">
+      <div class="kcol-head"><span class="kcol-t">${t}</span><span class="kcol-n mono">${cs.length}</span></div>
+      ${cs.map((c,i)=>`
+        <div class="kcard" data-ci="${ci}" data-i="${i}">
+          <div class="kcard-co">${c.co.replace(" 様","")}</div>
+          <div class="kcard-nm">${c.nm}</div>
+          <div class="kcard-meta">
+            <span class="mono">ラリー ${c.rally}回</span>
+            ${c.pill?`<span class="pill ${c.pill.c}">${c.pill.t}</span>`:""}
+            <span class="k-avatar">${c.own}</span>
+          </div>
+          <div class="kcard-bar"><i style="width:${c.prog}%"></i></div>
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+
+  $$(".kcard").forEach(card=>card.addEventListener("click", ()=>{
+    const cs = CASES.filter(c=>c.col == card.dataset.ci);
+    openCase(cs[+card.dataset.i]);
+  }));
+}
+function openCase(c){
+  const NAME = {渡:"渡辺", 佐:"佐々木", 高:"高橋", 稲:"稲熊"};
+  $("#modalTitle").textContent = c.co.replace(" 様","") + "／" + c.nm;
+  $("#modalBody").innerHTML = `
+    <dl class="kv">
+      <dt>現在の工程</dt><dd>${KCOLS[c.col]}</dd>
+      <dt>担当</dt><dd>${NAME[c.own]}</dd>
+      <dt>ラリー回数</dt><dd class="mono">${c.rally}回</dd>
+      <dt>次アクション</dt><dd style="font-weight:700;color:var(--teal-d)">${c.next}</dd>
+    </dl>
+    <div class="hr"></div>
+    <div class="sec-t">提案・やり取り履歴</div>
+    <ul style="padding-left:18px;font-size:12.5px;line-height:2">${c.hist.map(h=>`<li>${h}</li>`).join("")}</ul>
+    <div class="tip" style="margin:16px 0 0"><span class="tip-ico">▶</span><span>NG理由が履歴に残るため、次回検索で条件をどう緩めるか（賃料上限の引き上げ、エリア拡大など）の判断材料になります。担当者が不在でも他メンバーがこの画面だけで引き継げます。</span></div>`;
+  $("#overlay").classList.add("open");
+}
+
+/* ============================================================
+   共通 社宅規定マスタ
+   ============================================================ */
+const ST_LABEL = {
+  ready:{t:"整備済", c:"ok"},
+  draft:{t:"AI下書き 承認待ち", c:"hold"},
+  none: {t:"未整備", c:"warn"}
+};
+const rulesOf = coId => COMPANIES[coId].rules.map(r=>({label:r.label, val:r.val}));
+
+const MASTER = [
+  {id:"relo", name:"リロケーション・ジャパン", status:"ready", updated:"2026/07/12", ver:"v3",
+   cases:186, src:"社宅規定書（PDF・12頁）", owner:"渡辺", rules:rulesOf("relo"),
+   hist:[{d:"2026/07/12", v:"v3", txt:"賃料上限を190,000円から200,000円へ改定", by:"渡辺"},
+         {d:"2025/10/01", v:"v2", txt:"退去予告を2ヶ月前から1ヶ月前必須へ変更", by:"高橋"},
+         {d:"2024/04/01", v:"v1", txt:"初版登録（規定書PDFからAI抽出→承認）", by:"渡辺"}]},
+  {id:"mfg", name:"中央精機工業", status:"ready", updated:"2026/06/28", ver:"v2",
+   cases:64, src:"社宅規定書（PDF・6頁）", owner:"佐々木", rules:rulesOf("mfg"),
+   hist:[{d:"2026/06/28", v:"v2", txt:"保証会社の指定を許容（費用は会社負担）に変更", by:"佐々木"},
+         {d:"2025/03/15", v:"v1", txt:"初版登録", by:"佐々木"}]},
+  {id:"fin", name:"明和信託銀行", status:"ready", updated:"2026/07/03", ver:"v4",
+   cases:38, src:"社宅規定書（PDF・18頁）＋別紙特約", owner:"渡辺", rules:rulesOf("fin"),
+   hist:[{d:"2026/07/03", v:"v4", txt:"1階住戸を不可とする防犯規定を追加", by:"渡辺"},
+         {d:"2025/09/01", v:"v3", txt:"定期借家契約を条件付きで許容", by:"稲熊"},
+         {d:"2025/01/10", v:"v2", txt:"賃料上限を230,000円から250,000円へ改定", by:"渡辺"}]},
+  {id:"m4", name:"東海電機工業", status:"ready", updated:"2026/06/12", ver:"v2",
+   cases:52, src:"社宅規定書（PDF・8頁）", owner:"高橋",
+   rules:[{label:"短期解約違約金",val:"違約金条項がある物件は不可"},{label:"退去予告",val:"1ヶ月前まで"},
+          {label:"契約形態",val:"普通借家のみ"},{label:"保証会社",val:"指定可（費用は本人負担）"},
+          {label:"賃料上限",val:"165,000円（管理費込）"},{label:"その他",val:"駐車場は別途申請が必要"}],
+   hist:[{d:"2026/06/12", v:"v2", txt:"賃料上限を155,000円から165,000円へ改定", by:"高橋"},
+         {d:"2024/08/20", v:"v1", txt:"初版登録", by:"高橋"}]},
+  {id:"m5", name:"日本橋商事", status:"draft", updated:"2026/08/01", ver:"下書き",
+   cases:0, src:"依頼書メール本文", owner:"—",
+   note:"規定書PDFが未提供のため、依頼書メールの記載からAIが抽出した下書きです。空欄の項目は読み取れなかった箇所で、営業の確認が必要です。承認されるまで各工程の判定には使われません。",
+   rules:[{label:"短期解約違約金",val:"1年未満は不可（要確認）"},{label:"退去予告",val:"（未取得）"},
+          {label:"契約形態",val:"普通借家のみ"},{label:"保証会社",val:"（未取得）"},
+          {label:"賃料上限",val:"140,000円（管理費込）"},{label:"その他",val:"（未取得）"}],
+   hist:[{d:"2026/08/01", v:"下書き", txt:"依頼書メールからAIが抽出（未承認）", by:"AI"}]},
+  {id:"m6", name:"関西メディカルサービス", status:"ready", updated:"2026/05/19", ver:"v1",
+   cases:23, src:"社宅規定書（PDF・4頁）", owner:"稲熊",
+   rules:[{label:"短期解約違約金",val:"2年未満は不可"},{label:"退去予告",val:"2ヶ月前まで可"},
+          {label:"契約形態",val:"普通借家・定期借家いずれも可"},{label:"保証会社",val:"管理会社指定は不可"},
+          {label:"賃料上限",val:"175,000円（管理費込）"},{label:"その他",val:"単身用のみ・家具家電付を優先"}],
+   hist:[{d:"2026/05/19", v:"v1", txt:"初版登録", by:"稲熊"}]},
+  {id:"m7", name:"グローバル物流サービス", status:"none", updated:"—", ver:"—",
+   cases:11, src:"—", owner:"—",
+   note:"規定書が未取込のため、依頼ごとに営業が個別確認しています。この状態の企業は自動照合の対象外となり、従来どおり図面の目視確認が必要です。未整備は現在32社。",
+   rules:[], hist:[]},
+  {id:"m8", name:"みらい建設", status:"ready", updated:"2026/04/05", ver:"v3",
+   cases:29, src:"社宅規定書（PDF・10頁）", owner:"佐々木",
+   rules:[{label:"短期解約違約金",val:"違約金条項がある物件は不可"},{label:"退去予告",val:"1ヶ月前まで"},
+          {label:"契約形態",val:"普通借家のみ"},{label:"保証会社",val:"管理会社指定は不可"},
+          {label:"賃料上限",val:"200,000円（管理費込）"},{label:"その他",val:"2階以上・オートロック必須"}],
+   hist:[{d:"2026/04/05", v:"v3", txt:"オートロック必須の条件を追加", by:"佐々木"},
+         {d:"2025/06/11", v:"v2", txt:"賃料上限を185,000円から200,000円へ改定", by:"佐々木"}]}
+];
+let activeMasterId = "relo";
+
+function renderMaster(){
+  $("#masterStats").innerHTML = `
+    <div class="stat"><div class="stat-k">登録企業</div><div class="stat-v mono">412<small>社</small></div><div class="stat-d">対応企業 約400社</div></div>
+    <div class="stat"><div class="stat-k">整備済（承認済）</div><div class="stat-v mono" style="color:#1D6D42">375<small>社</small></div><div class="stat-d">自動照合の対象</div></div>
+    <div class="stat"><div class="stat-k">AI下書き 承認待ち</div><div class="stat-v mono" style="color:#8C5B12">5<small>社</small></div><div class="stat-d">営業の確認が必要</div></div>
+    <div class="stat"><div class="stat-k">未整備</div><div class="stat-v mono" style="color:#B03A38">32<small>社</small></div><div class="stat-d">個別確認で運用中</div></div>
+    <div class="stat"><div class="stat-k">今月の改定</div><div class="stat-v mono">8<small>社</small></div><div class="stat-d">提案中案件の再判定が必要</div></div>`;
+
+  const q = ($("#masterSearch").value || "").trim();
+  const list = q ? MASTER.filter(m=>m.name.includes(q)) : MASTER;
+
+  $("#masterList").innerHTML = list.length ? list.map(m=>{
+    const st = ST_LABEL[m.status];
+    return `<div class="saved-row master-row ${activeMasterId===m.id?"on":""}" data-id="${m.id}" role="button" tabindex="0">
+      <div class="saved-main">
+        <div class="saved-nm">${m.name} 様<span class="pill ${st.c}">${st.t}</span></div>
+        <div class="saved-sum">${m.status==="none" ? "規定未登録" : m.rules.slice(0,3).map(r=>`${r.label}：${r.val}`).join("／")}</div>
+        <div class="saved-meta mono">${m.ver}／最終更新 ${m.updated}／進行中案件 ${m.cases}件</div>
+      </div>
+    </div>`;
+  }).join("")
+  : `<div class="empty" style="border:1px dashed var(--line);border-radius:4px"><b>該当する企業がありません</b>企業名を変えて絞り込んでください。</div>`;
+
+  $$(".master-row").forEach(r=>{
+    const pick = ()=>{ activeMasterId = r.dataset.id; renderMaster(); };
+    r.addEventListener("click", pick);
+    r.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(); }});
+  });
+
+  const m = MASTER.find(x=>x.id===activeMasterId) || MASTER[0];
+  const st = ST_LABEL[m.status];
+  const linked = ["relo","mfg","fin"].includes(m.id);
+
+  $("#masterDetail").innerHTML = `
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap">
+      <span class="card-title">${m.name} 様</span>
+      <span class="pill ${st.c}">${st.t}</span>
+      <span class="badge outline mono">${m.ver}</span>
+    </div>
+    ${m.note ? `<div class="tip" style="margin:0 0 13px"><span class="tip-ico">▶</span><span>${m.note}</span></div>` : ""}
+    ${m.rules.length ? `
+      <div class="sec-t">規定項目</div>
+      <dl class="kv" style="grid-template-columns:120px 1fr">
+        ${m.rules.map(r=>`<dt>${r.label}</dt><dd${r.val.indexOf("（未取得）")===0?' style="color:var(--muted2)"':""}>${r.val}</dd>`).join("")}
+      </dl>` : ""}
+    <div class="hr"></div>
+    <div class="sec-t">原本・管理情報</div>
+    <dl class="kv" style="grid-template-columns:120px 1fr">
+      <dt>原本</dt><dd>${m.src === "—" ? "未登録" : `<span class="att"><span class="att-ico">PDF</span>${m.src}</span>`}</dd>
+      <dt>規定の管理者</dt><dd>${m.owner === "—" ? "未設定" : m.owner}</dd>
+      <dt>進行中案件</dt><dd class="mono">${m.cases}件</dd>
+    </dl>
+    ${m.hist.length ? `
+      <div class="hr"></div>
+      <div class="sec-t">改定履歴</div>
+      <div>${m.hist.map(h=>`
+        <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:11.5px">
+          <span class="mono" style="color:var(--muted);flex-shrink:0">${h.d}</span>
+          <span class="badge outline mono" style="flex-shrink:0">${h.v}</span>
+          <span style="flex:1">${h.txt}</span>
+          <span style="color:var(--muted2);flex-shrink:0">${h.by}</span>
+        </div>`).join("")}</div>` : ""}
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      ${m.status==="draft" ? `<button class="btn btn-primary btn-sm" onclick="alert('下書きを承認し、v1として確定します。\\n承認後の版だけが各工程の判定に使われます。')">下書きを承認する</button>` : ""}
+      ${m.status==="none" ? `<button class="btn btn-primary btn-sm" onclick="alert('規定書PDFをアップロードすると、AIが項目を抽出して下書きを作成します。')">規定書を取り込む</button>` : ""}
+      <button class="btn btn-ghost btn-sm" onclick="alert('規定項目の編集画面を開きます（デモでは省略）。\\n変更を保存すると新しい版として履歴に残ります。')">規定を編集</button>
+      ${linked ? `<button class="btn btn-ghost btn-sm master-jump" data-co="${m.id}">この規定でSTEP 02を検索</button>` : ""}
+    </div>`;
+
+  $$(".master-jump").forEach(b=>b.addEventListener("click", ()=>{
+    const co = b.dataset.co;
+    $("#fCompany").value = co;
+    state.company = co;
+    $("#fRent").value = COMPANIES[co].chk.rentCap.toLocaleString("ja-JP");
+    renderRuleChips();
+    state.filter = "all";
+    goStep(2);
+    setTimeout(()=>runSearch(false), 120);
+  }));
+}
+$("#masterSearch").addEventListener("input", renderMaster);
+
+/* ============================================================
+   初期化
+   ============================================================ */
+renderCondBar();
+goStep(1);
+</script>
+</body>
+</html>
