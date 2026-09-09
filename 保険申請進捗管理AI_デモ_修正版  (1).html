@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保険申請進捗管理AI — デモ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Meiryo','MS PGothic','Noto Sans JP',sans-serif; font-size:13px; background:#F5F6F8; color:#1F2937; }
+select,input,textarea,button { font-family:inherit; }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:#f0f0f0; }
+::-webkit-scrollbar-thumb { background:#b0b8c8; border-radius:3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+
+const React = window.React;
+const ReactDOM = window.ReactDOM;
+const { useState, useEffect } = React;
+
+/* ============================================================
+   DESIGN SYSTEM / COLORS
+============================================================ */
+const C = {
+  navy: "#2B4B8C",
+  navyDark: "#1A3266",
+  navyLight: "#E8EDF5",
+  accent: "#2B6CB0",
+  bg: "#F5F6F8",
+  border: "#C8CDD6",
+  borderLight: "#E2E5EA",
+  tableHead: "#EEF0F4",
+  tableStripe: "#F9FAFB",
+  text: "#1F2937",
+  textMid: "#4B5563",
+  textLight: "#8D96A3",
+  red: "#B91C1C",
+  redBg: "#FEF2F2",
+  redBorder: "#FECACA",
+  yellow: "#92400E",
+  yellowBg: "#FFFBEB",
+  yellowBorder: "#FDE68A",
+  green: "#166534",
+  greenBg: "#F0FDF4",
+  greenBorder: "#BBF7D0"
+};
+
+/* ============================================================
+   MOCK DATA
+============================================================ */
+const NAV_ITEMS = ["受付・AI解析", "進捗一覧", "進捗ボード", "ダッシュボード"];
+
+// holderType: "insurer"=保険会社対応中 / "internal"=社内対応中 / "contractor"=施工会社対応中 / "done"=対応完了
+// leadTimeDays: 着金確定した案件のみ「申請〜着金」の実績日数を保持（ダッシュボードの平均リードタイム算出に使用）
+const INITIAL_CASES = [
+  // 渋谷ビル南館
+  { id: "CLM-0801", date: "2026/08/06", prop: "渋谷ビル南館", unit: "屋上共用部", type: "台風・風災", title: "風雨による屋上フェンス・樋の破損", prob: 85, cost: 850000, insStatus: "査定待ち", workStatus: "見積作成中", holder: "保険会社（鑑定人の査定待ち）", holderType: "insurer" },
+  { id: "CLM-0776", date: "2026/07/10", prop: "渋谷ビル南館", unit: "1F 駐輪場屋根", type: "風災・飛来物", title: "駐輪場屋根の一部破損", prob: 65, cost: 280000, insStatus: "申請済・回答待ち", workStatus: "発注済", holder: "保険会社（回答待ち）", holderType: "insurer" },
+  { id: "CLM-0752", date: "2026/06/18", prop: "渋谷ビル南館", unit: "3F 共用部", type: "給排水事故", title: "共用部配管からの少量水漏れ", prob: 55, cost: 150000, insStatus: "対象外回答", workStatus: "完了", holder: "対応完了（保険対象外・工事のみで解決済）", holderType: "done" },
+
+  // 新宿レジデンス
+  { id: "CLM-0802", date: "2026/08/05", prop: "新宿レジデンス", unit: "302号室", type: "給排水事故", title: "上階配管破裂による専有部水漏れ", prob: 90, cost: 1200000, insStatus: "鑑定人調査済", workStatus: "発注待ち", holder: "社内対応中（発注手続き）", holderType: "internal" },
+  { id: "CLM-0781", date: "2026/07/22", prop: "新宿レジデンス", unit: "共用部エレベーター", type: "落雷・電気事故", title: "落雷によるエレベーター制御盤故障", prob: 70, cost: 980000, insStatus: "申請書類作成中", workStatus: "見積取得済", holder: "社内対応中（保険会社への申請書類作成）", holderType: "internal" },
+  { id: "CLM-0760", date: "2026/06/30", prop: "新宿レジデンス", unit: "屋上防水", type: "経年劣化", title: "屋上防水層のひび割れ", prob: 5, cost: 1800000, insStatus: "対象外（経年劣化）", workStatus: "施工中", holder: "施工会社（工事対応中）", holderType: "contractor" },
+
+  // 目黒タワー
+  { id: "CLM-0803", date: "2026/08/02", prop: "目黒タワー", unit: "1F エントランス", type: "破損・飛来物", title: "強風によるガラスドアのひび割れ", prob: 75, cost: 320000, insStatus: "申請書類作成中", workStatus: "現地調査済", holder: "社内対応中（保険会社への申請書類作成）", holderType: "internal" },
+  { id: "CLM-0788", date: "2026/07/15", prop: "目黒タワー", unit: "屋上看板", type: "風災", title: "看板固定部の破損・落下危険", prob: 88, cost: 610000, insStatus: "査定待ち", workStatus: "見積作成中", holder: "保険会社（鑑定人の査定待ち）", holderType: "insurer" },
+  { id: "CLM-0765", date: "2026/06/25", prop: "目黒タワー", unit: "B1F 機械室", type: "浸水", title: "大雨によるポンプ室浸水", prob: 55, cost: 430000, insStatus: "着金確定", workStatus: "完了", holder: "対応完了（保険適用・工事完了）", holderType: "done", leadTimeDays: 9 },
+
+  // 大宮センタービル
+  { id: "CLM-0798", date: "2026/07/28", prop: "大宮センタービル", unit: "外壁西面", type: "風災・飛来物", title: "外壁タイルの部分剥離・落下", prob: 80, cost: 2100000, insStatus: "着金確定", workStatus: "施工中", holder: "施工会社（工事対応中）", holderType: "contractor", leadTimeDays: 7 },
+  { id: "CLM-0770", date: "2026/07/05", prop: "大宮センタービル", unit: "屋上防水", type: "台風・風災", title: "屋上防水シートの浮き・破れ", prob: 72, cost: 560000, insStatus: "鑑定人調査済", workStatus: "発注待ち", holder: "社内対応中（発注手続き）", holderType: "internal" },
+  { id: "CLM-0742", date: "2026/06/08", prop: "大宮センタービル", unit: "機械室", type: "漏水", title: "空調配管からの漏水", prob: 60, cost: 330000, insStatus: "鑑定人調査済", workStatus: "発注待ち", holder: "社内対応中（発注手続き）", holderType: "internal" },
+
+  // 横浜みなとビル
+  { id: "CLM-0795", date: "2026/07/20", prop: "横浜みなとビル", unit: "B1F 駐車場", type: "水漏れ", title: "排水ポンプ逆流による浸水", prob: 52, cost: 450000, insStatus: "対象外回答", workStatus: "完了", holder: "対応完了（保険対象外・工事のみで解決済）", holderType: "done" },
+  { id: "CLM-0731", date: "2026/06/12", prop: "横浜みなとビル", unit: "共用部照明設備", type: "経年劣化", title: "照明設備の経年劣化による故障", prob: 5, cost: 95000, insStatus: "対象外（経年劣化）", workStatus: "完了", holder: "対応完了（保険対象外・工事のみで解決済）", holderType: "done" },
+  { id: "CLM-0715", date: "2026/05/25", prop: "横浜みなとビル", unit: "共用部自動ドア", type: "経年劣化", title: "自動ドア開閉不良", prob: 5, cost: 60000, insStatus: "対象外（経年劣化）", workStatus: "完了", holder: "対応完了（保険対象外・工事のみで解決済）", holderType: "done" },
+
+  // 品川フロントタワー
+  { id: "CLM-0790", date: "2026/07/18", prop: "品川フロントタワー", unit: "3F 共用ラウンジ", type: "盗難", title: "ラウンジ備品の盗難被害", prob: 68, cost: 220000, insStatus: "申請済・回答待ち", workStatus: "対応不要", holder: "保険会社（回答待ち）", holderType: "insurer" },
+  { id: "CLM-0768", date: "2026/06/28", prop: "品川フロントタワー", unit: "エントランス自動ドア", type: "破損", title: "自動ドアセンサーの破損", prob: 82, cost: 340000, insStatus: "着金確定", workStatus: "施工中", holder: "施工会社（工事対応中）", holderType: "contractor", leadTimeDays: 11 },
+  { id: "CLM-0705", date: "2026/05/15", prop: "品川フロントタワー", unit: "地下ポンプ室", type: "水災", title: "地下ポンプ故障による排水不良", prob: 58, cost: 175000, insStatus: "申請済・回答待ち", workStatus: "対応不要", holder: "保険会社（回答待ち）", holderType: "insurer" },
+
+  // 池袋グランドビル
+  { id: "CLM-0785", date: "2026/07/12", prop: "池袋グランドビル", unit: "屋上設備置場", type: "落雷", title: "落雷による受変電設備の損傷", prob: 77, cost: 510000, insStatus: "申請書類作成中", workStatus: "現地調査済", holder: "社内対応中（保険会社への申請書類作成）", holderType: "internal" },
+  { id: "CLM-0755", date: "2026/06/20", prop: "池袋グランドビル", unit: "電気設備", type: "電気的機械的事故", title: "サージによる制御機器の故障", prob: 91, cost: 1050000, insStatus: "着金確定", workStatus: "完了", holder: "対応完了（保険適用・工事完了）", holderType: "done", leadTimeDays: 13 },
+  { id: "CLM-0695", date: "2026/05/10", prop: "池袋グランドビル", unit: "共用部窓ガラス", type: "破損・飛来物", title: "共用部窓ガラスの破損", prob: 70, cost: 260000, insStatus: "鑑定人調査済", workStatus: "発注待ち", holder: "社内対応中（発注手続き）", holderType: "internal" },
+
+  // 長期滞留案件（時効アラートのデモ用）
+  { id: "CLM-0512", date: "2023/10/20", prop: "渋谷ビル南館", unit: "屋上防水", type: "水漏れ", title: "屋上からの浸水（申請書類が長期未提出）", prob: 60, cost: 300000, insStatus: "申請書類作成中", workStatus: "見積取得済", holder: "社内対応中（保険会社への申請書類作成）", holderType: "internal" },
+  { id: "CLM-0480", date: "2023/09/05", prop: "新宿レジデンス", unit: "共用部外壁", type: "破損・飛来物", title: "外壁破損（保険会社から長期未回答）", prob: 50, cost: 200000, insStatus: "申請済・回答待ち", workStatus: "対応不要", holder: "保険会社（回答待ち）", holderType: "insurer" },
+];
+
+const fmtMoney = (n) => `¥${n.toLocaleString()}`;
+
+// 対象物件の直近案件を取得（Tab1のAI解析で「写真から検出した想定被害」の参考データとして使用）
+const latestCaseForProp = (propName) => {
+  const matches = INITIAL_CASES.filter(c => c.prop === propName);
+  if (matches.length === 0) return null;
+  return matches.slice().sort((a, b) => new Date(b.date.replace(/\//g, "-")) - new Date(a.date.replace(/\//g, "-")))[0];
+};
+
+const HOLDER_COLOR = {
+  insurer: { bg: "#FEF2F2", text: C.red, dot: "🔴" },
+  internal: { bg: "#FFFBEB", text: C.yellow, dot: "🟡" },
+  contractor: { bg: "#EFF6FF", text: "#1D4ED8", dot: "🔵" },
+  done: { bg: C.greenBg, text: C.green, dot: "✅" }
+};
+
+// 見積り依頼が必要な工事ステータス（現地調査済み・見積作成中＝まだ施工会社から正式な見積りを取っていない段階）
+const QUOTE_ELIGIBLE_STATUSES = ["現地調査済", "見積作成中"];
+const needsQuote = (c) => QUOTE_ELIGIBLE_STATUSES.includes(c.workStatus);
+
+// 進捗ボード用：保険側・工事側、それぞれ独立したステータス軸に分類
+const INSURANCE_STAGES = ["申請準備中", "保険会社対応中", "着金確定", "対象外"];
+const insuranceStage = (c) => {
+  if (c.insStatus === "着金確定") return "着金確定";
+  if (c.insStatus.includes("対象外")) return "対象外";
+  if (c.insStatus === "申請書類作成中") return "申請準備中";
+  return "保険会社対応中"; // 申請済・回答待ち／鑑定人調査済／査定待ち
+};
+const CONSTRUCTION_STAGES = ["調査・見積中", "発注手続き中", "施工中", "完了"];
+const constructionStage = (c) => {
+  if (c.workStatus === "完了" || c.workStatus === "対応不要") return "完了";
+  if (c.workStatus === "施工中") return "施工中";
+  if (c.workStatus === "発注待ち" || c.workStatus === "発注済") return "発注手続き中";
+  return "調査・見積中"; // 現地調査済／見積作成中／見積取得済
+};
+const STAGE_COLOR = {
+  "申請準備中": C.yellow, "保険会社対応中": C.red, "着金確定": C.green, "対象外": C.textLight,
+  "調査・見積中": C.yellow, "発注手続き中": C.red, "施工中": "#1D4ED8", "完了": C.green
+};
+
+/* ============================================================
+   SHARED COMPONENTS
+============================================================ */
+function Btn({ label, onClick, primary, small, danger, disabled }) {
+  const bg = disabled ? "#ccc" : danger ? C.red : primary ? C.navy : "#fff";
+  const col = disabled ? "#888" : danger || primary ? "#fff" : C.navy;
+  const bdr = disabled ? "#ccc" : danger ? C.red : primary ? C.navy : C.border;
+  return React.createElement("button", {
+    onClick: disabled ? undefined : onClick,
+    disabled: disabled,
+    style: {
+      background: bg, color: col, border: `1px solid ${bdr}`, borderRadius: 4,
+      padding: small ? "4px 12px" : "7px 16px", fontSize: small ? 12 : 13,
+      fontWeight: 600, cursor: disabled ? "default" : "pointer", whiteSpace: "nowrap"
+    }
+  }, label);
+}
+
+function TH({ children, w }) {
+  return React.createElement("th", {
+    style: {
+      padding: "7px 10px", fontSize: 12, fontWeight: 700, color: C.textMid, textAlign: "left",
+      background: C.tableHead, borderBottom: `1px solid ${C.border}`, borderRight: `1px solid ${C.borderLight}`,
+      whiteSpace: "nowrap", width: w
+    }
+  }, children);
+}
+
+function TD({ children, center, bold, small }) {
+  return React.createElement("td", {
+    style: {
+      padding: "7px 10px", fontSize: small ? 11 : 13, fontWeight: bold ? 600 : 400,
+      color: bold ? C.text : C.textMid, textAlign: center ? "center" : "left",
+      borderBottom: `1px solid ${C.borderLight}`, borderRight: `1px solid ${C.borderLight}`, whiteSpace: "nowrap",
+      overflow: "hidden", textOverflow: "ellipsis"
+    }
+  }, children);
+}
+
+/* ============================================================
+   MAIN APP
+============================================================ */
+const PROPERTIES = [
+  { name: "渋谷ビル南館", unit: "屋上共用部", insurer: "東京海上日動", policyNo: "F-2204-88831", period: "2026/04〜2027/03", rider: "風災・飛来物特約：有 / 原因調査費用特約：有" },
+  { name: "新宿レジデンス", unit: "302号室（共用部保険）", insurer: "損保ジャパン", policyNo: "F-2109-55210", period: "2025/10〜2026/09", rider: "水災特約：有 / 給排水事故特約：有" },
+  { name: "目黒タワー", unit: "1F エントランス", insurer: "三井住友海上", policyNo: "F-2306-77210", period: "2026/06〜2027/05", rider: "破損・汚損特約：有 / 飛来物特約：有" },
+  { name: "大宮センタービル", unit: "外壁西面", insurer: "あいおいニッセイ同和", policyNo: "F-2401-99120", period: "2026/01〜2026/12", rider: "風災特約：有 / 落下物特約：有" },
+  { name: "横浜みなとビル", unit: "B1F 駐車場", insurer: "東京海上日動", policyNo: "F-2003-44410", period: "2025/03〜2026/02", rider: "水災特約：無（対象外） / 機械保険：無" },
+  { name: "品川フロントタワー", unit: "3F 共用ラウンジ", insurer: "損保ジャパン", policyNo: "F-2502-11230", period: "2026/02〜2027/01", rider: "盗難特約：有 / 破汚損特約：有" },
+  { name: "池袋グランドビル", unit: "屋上設備置場", insurer: "三井住友海上", policyNo: "F-2508-30021", period: "2026/05〜2027/04", rider: "風災特約：有 / 電気的機械的事故特約：有" }
+];
+
+const BUILDING_NAMES = PROPERTIES.map(p => p.name);
+
+function App() {
+  const [activeNav, setActiveNav] = useState("受付・AI解析");
+  const [toast, setToast] = useState(null);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [propIdx, setPropIdx] = useState(0);
+  const [decision, setDecision] = useState(null); // "insurance" | "construction-only"
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFileName, setPhotoFileName] = useState(null);
+  const [memoText, setMemoText] = useState("");
+  const [selectedBuilding, setSelectedBuilding] = useState("全物件"); // ヘッダーの物件フィルタ（進捗一覧・進捗ボードに反映）
+  const [remindCase, setRemindCase] = useState(null); // 催促文/見積依頼モーダル対象案件
+  const [remindKind, setRemindKind] = useState("reminder"); // "reminder" | "quote"
+  const [remindText, setRemindText] = useState("");
+  const [chartMode, setChartMode] = useState("monthly"); // "monthly" | "yearly"（ダッシュボードのトレンドグラフ切替）
+  const [quickFilter, setQuickFilter] = useState(null); // ダッシュボードの数字クリックで進捗一覧を絞り込むフィルタ
+  const [cases, setCases] = useState(INITIAL_CASES); // 案件データ（詳細モーダルからステータス変更可能にするためstate化）
+  const [detailCaseId, setDetailCaseId] = useState(null); // 案件詳細モーダル対象ID
+
+  // 事故状況報告書の自動生成（写真解析＝直近の類似実績データをもとに、審査に通りやすい文面をAIが作成。編集可）
+  const generateReport = (p, refCase) => {
+    const today = "2026/08/07";
+    return `【事故状況報告書（AI自動生成・編集可）】
+発生確認日: ${today}
+物件: ${p.name}（${p.unit}）
+被害状況: ${refCase.title}
+事故種別: ${refCase.type}
+被害推定額: ${fmtMoney(refCase.cost)}
+突合保険証券: ${p.insurer}（証券番号 ${p.policyNo} ／ ${p.rider}）
+特記事項: 本件は${refCase.type}に該当する可能性が${refCase.prob >= 50 ? "高く" : "低く"}、査定時の参考資料としてご活用ください。`;
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhotoPreview(reader.result);
+    reader.readAsDataURL(file);
+    setPhotoFileName(file.name);
+  };
+
+  // ダッシュボード・ヘッダー共通で使う集計値（案件データから算出。ハードコードしない）
+  const totalCases = cases.length;
+  const inProgressCases = cases.filter(c => c.holderType === "insurer" || c.holderType === "internal");
+  const confirmedCases = cases.filter(c => c.insStatus === "着金確定");
+  const confirmedSum = confirmedCases.reduce((s, c) => s + c.cost, 0);
+  const leadTimes = cases.filter(c => c.leadTimeDays != null).map(c => c.leadTimeDays);
+  const avgLeadTime = leadTimes.length ? (leadTimes.reduce((s, d) => s + d, 0) / leadTimes.length) : 0;
+  const outOfScopeCases = cases.filter(c => c.insStatus.includes("対象外"));
+  const outOfScopeButPossible = outOfScopeCases.filter(c => c.prob >= 50);
+
+  // 月次・年次トレンド（発生日ベースで集計。ハードコードせずCASESから算出）
+  const groupBy = (keyFn) => {
+    const map = {};
+    cases.forEach(c => {
+      const key = keyFn(c.date);
+      if (!map[key]) map[key] = { key, count: 0, cost: 0, confirmed: 0 };
+      map[key].count += 1;
+      map[key].cost += c.cost;
+      if (c.insStatus === "着金確定") map[key].confirmed += c.cost;
+    });
+    return Object.values(map).sort((a, b) => a.key.localeCompare(b.key));
+  };
+  const monthlyTrend = groupBy(d => d.slice(0, 7));   // "2026/08"
+  const yearlyTrend = groupBy(d => d.slice(0, 4));    // "2026"
+  const trendData = chartMode === "monthly" ? monthlyTrend : yearlyTrend;
+
+  // 物件別 件数・着金額（設備台帳デモに近い内訳グラフ）
+  const byProperty = PROPERTIES.map(p => {
+    const list = cases.filter(c => c.prop === p.name);
+    return {
+      name: p.name,
+      count: list.length,
+      cost: list.reduce((s, c) => s + c.cost, 0),
+      confirmed: list.filter(c => c.insStatus === "着金確定").reduce((s, c) => s + c.cost, 0)
+    };
+  }).sort((a, b) => b.count - a.count);
+
+  // 時効アラート（保険金請求権は保険法上3年で時効）／停滞検知（催促文の対象判定に使用）
+  const TODAY = new Date("2026-08-07");
+  const daysSince = (dateStr) => Math.floor((TODAY - new Date(dateStr.replace(/\//g, "-"))) / 86400000);
+  const daysUntilLimitation = (dateStr) => {
+    const event = new Date(dateStr.replace(/\//g, "-"));
+    const limit = new Date(event); limit.setFullYear(limit.getFullYear() + 3);
+    return Math.floor((limit - TODAY) / 86400000);
+  };
+  const casesWithMeta = cases.map(c => ({ ...c, daysStalled: daysSince(c.date), daysToLimit: daysUntilLimitation(c.date) }));
+  const urgentCases = casesWithMeta.filter(c => c.holderType !== "done" && c.daysToLimit <= 180).sort((a, b) => a.daysToLimit - b.daysToLimit);
+
+  const QUICK_FILTER_LABELS = {
+    inProgress: "保険対応・進行中の案件",
+    confirmed: "保険確定・着金済みの案件",
+    urgent: "時効優先対応の案件",
+    outOfScope: "現場で「対象外」と判断された案件"
+  };
+  const applyQuickFilter = (list) => {
+    if (!quickFilter) return list;
+    if (quickFilter === "inProgress") return list.filter(c => c.holderType === "insurer" || c.holderType === "internal");
+    if (quickFilter === "confirmed") return list.filter(c => c.insStatus === "着金確定");
+    if (quickFilter === "urgent") return list.filter(c => c.holderType !== "done" && c.daysToLimit <= 180);
+    if (quickFilter === "outOfScope") return list.filter(c => c.insStatus.includes("対象外"));
+    return list;
+  };
+  const visibleCases = applyQuickFilter(selectedBuilding === "全物件" ? casesWithMeta : casesWithMeta.filter(c => c.prop === selectedBuilding));
+
+  // ②催促文・見積依頼メモの自動生成（編集可能）
+  const generateReminder = (c) => {
+    if (c.holderType === "insurer") {
+      return `【${c.prop} ${c.unit}】${c.title}の件（案件ID: ${c.id}）\n保険会社への申請から${c.daysStalled}日が経過しております。現在の査定状況についてご確認をお願いいたします。`;
+    }
+    if (c.holderType === "internal") {
+      return `【${c.prop} ${c.unit}】${c.title}の件（案件ID: ${c.id}）\n社内対応（${c.holder}）が${c.daysStalled}日滞留しています。至急ご対応をお願いします。`;
+    }
+    return `【${c.prop} ${c.unit}】${c.title}の件（案件ID: ${c.id}）\n工事の進捗についてご確認をお願いいたします。現在のステータス：${c.workStatus}`;
+  };
+
+  const generateQuoteRequest = (c) => {
+    return `【見積り依頼】${c.prop} ${c.unit}（案件ID: ${c.id}）\n\n下記の修繕について、お見積りをお願いいたします。\n\n・被害状況：${c.title}\n・事故種別：${c.type}\n・想定被害額：${fmtMoney(c.cost)}\n・現地写真：添付の通り\n\nお手数ですが、1週間以内に見積書のご提出をお願いいたします。ご不明点があればご連絡ください。`;
+  };
+
+  const openRemind = (c, kind = "reminder") => {
+    setRemindCase(c);
+    setRemindKind(kind);
+    setRemindText(kind === "quote" ? generateQuoteRequest(c) : generateReminder(c));
+  };
+
+  // 案件詳細モーダル：ステータスを変更すると対応窓口（holder）を自動で再計算
+  const INSURANCE_STATUS_OPTIONS = ["申請書類作成中", "申請済・回答待ち", "鑑定人調査済", "査定待ち", "着金確定", "対象外回答", "対象外（経年劣化）"];
+  const CONSTRUCTION_STATUS_OPTIONS = ["現地調査済", "見積作成中", "見積取得済", "発注待ち", "発注済", "施工中", "完了", "対応不要"];
+
+  const computeHolder = (insStatus, workStatus) => {
+    const insDone = insStatus === "着金確定" || insStatus.includes("対象外");
+    const workDone = workStatus === "完了" || workStatus === "対応不要";
+    if (insDone && workDone) return { holderType: "done", holder: insStatus === "着金確定" ? "対応完了（保険適用・工事完了）" : "対応完了（保険対象外・工事のみで解決済）" };
+    if (insDone && !workDone) return { holderType: "contractor", holder: "施工会社（工事対応中）" };
+    if (!insDone && workDone) return { holderType: "insurer", holder: "保険会社（回答待ち）" };
+    if (insStatus === "申請書類作成中") return { holderType: "internal", holder: "社内対応中（保険会社への申請書類作成）" };
+    if (insStatus === "査定待ち") return { holderType: "insurer", holder: "保険会社（鑑定人の査定待ち）" };
+    if (insStatus === "申請済・回答待ち") return { holderType: "insurer", holder: "保険会社（回答待ち）" };
+    if (insStatus === "鑑定人調査済") return { holderType: "internal", holder: "社内対応中（発注手続き）" };
+    return { holderType: "internal", holder: "社内対応中" };
+  };
+
+  const updateCaseStatus = (id, field, value) => {
+    setCases(prev => prev.map(c => {
+      if (c.id !== id) return c;
+      const next = { ...c, [field]: value };
+      const { holderType, holder } = computeHolder(next.insStatus, next.workStatus);
+      return { ...next, holderType, holder };
+    }));
+    showToast("✅ ステータスを更新しました", C.green);
+  };
+
+  const detailCase = detailCaseId ? casesWithMeta.find(c => c.id === detailCaseId) : null;
+
+  const showToast = (msg, color = C.navy) => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 2800);
+  };
+
+  const triggerAI = () => {
+    setAiAnalyzing(true);
+    setAiResult(null);
+    setDecision(null);
+    setMemoText("");
+    setTimeout(() => {
+      const p = PROPERTIES[propIdx];
+      const refCase = latestCaseForProp(p.name) || { title: "現地写真で確認された損傷", type: "破損", prob: 60, cost: 300000 };
+      setAiAnalyzing(false);
+      setAiResult({
+        type: `${refCase.type}（火災保険補償対象可能性：${refCase.prob}%）`,
+        amount: fmtMoney(refCase.cost),
+        reason: `登録済みの火災保険（${p.rider}）と、写真から検出した被害状況（${refCase.title}）を突合した結果、${refCase.type}による補償対象の可能性が${refCase.prob >= 50 ? "高い" : "低い"}と判定されました。`
+      });
+      setMemoText(generateReport(p, refCase));
+      showToast("✅ 保険証券との突合が完了：事故状況報告書を自動作成しました", C.green);
+    }, 1500);
+  };
+
+  return React.createElement("div", {
+    style: { fontFamily: "'Meiryo','MS PGothic','Noto Sans JP',sans-serif", background: C.bg, minHeight: "100vh", display: "flex", flexDirection: "column" }
+  },
+    // Toast
+    toast && React.createElement("div", {
+      style: { position: "fixed", top: 16, right: 16, zIndex: 999, background: toast.color, color: "#fff", borderRadius: 4, padding: "10px 16px", fontSize: 13, fontWeight: 600, boxShadow: "0 2px 10px rgba(0,0,0,0.2)" }
+    }, toast.msg),
+
+    // Header
+    React.createElement("header", {
+      style: { background: C.navyDark, color: "#fff", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 48 }
+    },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
+        React.createElement("span", { style: { fontSize: 14, fontWeight: 700, letterSpacing: "0.05em" } }, "保険申請進捗管理AI"),
+        React.createElement("select", {
+          value: selectedBuilding,
+          onChange: (e) => setSelectedBuilding(e.target.value),
+          style: { fontSize: 12, padding: "3px 8px", borderRadius: 4, border: "1px solid #4A6BA8", background: "#24406F", color: "#fff" }
+        },
+          React.createElement("option", { value: "全物件" }, "🏢 全物件"),
+          BUILDING_NAMES.map(name => React.createElement("option", { key: name, value: name }, name))
+        ),
+        React.createElement("span", { style: { color: "#A0B4D4", fontSize: 11 } }, `管理物件: ${PROPERTIES.length}棟 | 進行中の案件: ${inProgressCases.length}件`)
+      ),
+      React.createElement("div", { style: { fontSize: 12, color: "#A0B4D4" } }, "担当：東京PM営業部 殿")
+    ),
+
+    // Sub Navigation
+    React.createElement("nav", {
+      style: { background: "#fff", borderBottom: `2px solid ${C.border}`, display: "flex", padding: "0 20px" }
+    },
+      NAV_ITEMS.map(item => React.createElement("button", {
+        key: item,
+        onClick: () => setActiveNav(item),
+        style: {
+          padding: "9px 16px", fontSize: 13, fontWeight: activeNav === item ? 700 : 400,
+          color: activeNav === item ? C.navy : C.textMid, background: "none", border: "none",
+          borderBottom: activeNav === item ? `3px solid ${C.navy}` : "3px solid transparent", cursor: "pointer", marginBottom: -2
+        }
+      }, item))
+    ),
+
+    // Main Content Area
+    React.createElement("main", { style: { flex: 1, padding: "16px 20px", maxWidth: 1280, margin: "0 auto", width: "100%" } },
+
+      /* ------------------------------------------------------------
+         TAB 1: 受付・AI解析（富治林さん指示：写真アップロードから始まるフロー）
+      ------------------------------------------------------------ */
+      activeNav === "受付・AI解析" && React.createElement("div", null,
+        React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, padding: 18, marginBottom: 16 } },
+          React.createElement("div", { style: { borderBottom: `1px solid ${C.borderLight}`, paddingBottom: 10, marginBottom: 14, fontWeight: 700, color: C.navy, fontSize: 14 } },
+            "現地写真をアップロードして、保険適用可能性をAIが解析します"
+          ),
+          React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } },
+            React.createElement("div", null,
+              // 現地写真アップロードをトップに配置（富治林さん指示：写真アップロードから始まるフロー）
+              React.createElement("label", { style: { fontSize: 12, color: C.textMid, display: "block", marginBottom: 4 } }, "① 現地写真（LINE/スマホから自動転送可能）"),
+              React.createElement("label", { style: { display: "block", border: `2px dashed ${C.border}`, borderRadius: 4, padding: "16px 12px", textAlign: "center", background: C.bg, marginBottom: 10, cursor: "pointer" } },
+                React.createElement("input", { type: "file", accept: "image/*", style: { display: "none" }, onChange: handlePhotoChange }),
+                photoPreview ? React.createElement("img", { src: photoPreview, style: { maxHeight: 110, maxWidth: "100%", borderRadius: 4, marginBottom: 6, display: "block", marginLeft: "auto", marginRight: "auto" } }) : React.createElement("div", { style: { fontSize: 26, marginBottom: 4 } }, "📷"),
+                React.createElement("div", { style: { fontSize: 12, color: C.textMid, fontWeight: 600 } }, photoPreview ? `${photoFileName}（クリックで変更）` : "写真をクリックして選択、またはドラッグ＆ドロップ"),
+                !photoPreview && React.createElement("div", { style: { fontSize: 11, color: C.textLight, marginTop: 2 } }, "デモ用に手元の画像を選択できます")
+              ),
+              React.createElement("label", { style: { fontSize: 12, color: C.textMid, display: "block", marginBottom: 4 } }, "② 対象物件・区画（写真から自動特定・修正可）"),
+              React.createElement("select", {
+                value: propIdx,
+                onChange: (e) => { setPropIdx(Number(e.target.value)); setAiResult(null); setDecision(null); setMemoText(""); },
+                style: { width: "100%", border: `1px solid ${C.border}`, padding: "6px 8px", fontSize: 13, marginBottom: 14 }
+              },
+                PROPERTIES.map((p, i) => React.createElement("option", { key: p.name, value: i }, `${p.name} — ${p.unit}`))
+              ),
+              React.createElement(Btn, { label: "🤖 AIで解析する（事故状況報告書も自動作成）", primary: true, onClick: triggerAI })
+            ),
+            React.createElement("div", { style: { background: C.bg, border: `1px dashed ${C.border}`, padding: 14, borderRadius: 4, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" } },
+              aiAnalyzing ? React.createElement("div", { style: { textAlign: "center" } },
+                React.createElement("div", { style: { fontSize: 24, marginBottom: 8 } }, "🔍"),
+                React.createElement("div", { style: { fontWeight: 700, color: C.navy } }, "写真を解析し、登録済みの保険証券と突合中..."),
+                React.createElement("div", { style: { fontSize: 11, color: C.textLight, marginTop: 4 } }, "破損形状 / 特約適用条件 / 気象データを照合中")
+              ) : aiResult ? React.createElement("div", { style: { width: "100%" } },
+                React.createElement("div", { style: { background: C.greenBg, border: `1px solid ${C.greenBorder}`, padding: 10, marginBottom: 10 } },
+                  React.createElement("span", { style: { color: C.green, fontWeight: 700, fontSize: 14 } }, `判定結果: ${aiResult.type}`),
+                  React.createElement("div", { style: { fontSize: 18, fontWeight: 700, color: C.navy, marginTop: 4 } }, `想定降りる保険金: ${aiResult.amount}`)
+                ),
+                React.createElement("div", { style: { background: C.navyLight, border: `1px solid ${C.border}`, borderRadius: 4, padding: "8px 10px", marginBottom: 10, fontSize: 11, color: C.navy } },
+                  React.createElement("div", { style: { fontWeight: 700, marginBottom: 2 } }, `🔗 突合した保険証券：${PROPERTIES[propIdx].insurer}`),
+                  React.createElement("div", { style: { color: C.textMid } }, `証券番号 ${PROPERTIES[propIdx].policyNo} ／ 保険期間 ${PROPERTIES[propIdx].period}`),
+                  React.createElement("div", { style: { color: C.textMid } }, PROPERTIES[propIdx].rider)
+                ),
+                React.createElement("div", { style: { fontSize: 12, color: C.textMid, marginBottom: 6 } }, React.createElement("strong", null, "判定根拠: "), aiResult.reason),
+                React.createElement("label", { style: { fontSize: 11, color: C.textMid, display: "block", marginBottom: 4, fontWeight: 700 } }, "📄 事故状況報告書（AI自動生成・審査提出用・編集可）"),
+                React.createElement("textarea", {
+                  value: memoText,
+                  onChange: (e) => setMemoText(e.target.value),
+                  style: { width: "100%", height: 130, border: `1px solid ${C.border}`, padding: 8, fontSize: 11, marginBottom: 10, whiteSpace: "pre-wrap", fontFamily: "inherit" }
+                }),
+                !decision ? React.createElement("div", null,
+                  React.createElement("div", { style: { fontSize: 11, color: C.textLight, marginBottom: 6 } }, "この案件、どちらで進めますか？"),
+                  React.createElement("div", { style: { display: "flex", gap: 8 } },
+                    React.createElement(Btn, {
+                      label: "✅ 保険申請へ進める", primary: true, small: true,
+                      onClick: () => { setDecision("insurance"); showToast("✅ 保険の進捗管理に登録しました", C.green); }
+                    }),
+                    React.createElement(Btn, {
+                      label: "🔧 対象外・工事のみで進める", small: true,
+                      onClick: () => { setDecision("construction-only"); showToast("🔧 工事のみの進捗管理に登録しました", C.navy); }
+                    })
+                  )
+                ) : decision === "insurance" ? React.createElement("div", null,
+                  React.createElement("div", { style: { fontSize: 12, color: C.green, fontWeight: 700, marginBottom: 8 } }, "→ 保険申請と工事、両方の進捗管理を開始しました"),
+                  React.createElement(Btn, { label: "📄 申請書類＆提案書をワンクリック自動作成", primary: true, small: true, onClick: () => showToast("✅ 保険会社用PDF & オーナー提案LINE文面を作成しました！", C.green) })
+                ) : React.createElement("div", { style: { fontSize: 12, color: C.textMid, fontWeight: 700 } }, "→ 保険対象外として、工事のみの進捗管理を開始しました")
+              ) : React.createElement("div", { style: { color: C.textLight, fontSize: 12 } }, "👈 写真をアップロードして「AIで解析する」を押すと、登録済みの保険証券と突合して適用可能性を判定します")
+            )
+          )
+        )
+      ),
+
+      /* ------------------------------------------------------------
+         TAB 2: 進捗一覧（Excel風グリッド：おじさん絶賛UI）
+      ------------------------------------------------------------ */
+      activeNav === "進捗一覧" && React.createElement("div", null,
+        quickFilter && React.createElement("div", { style: { background: C.navyLight, border: `1px solid ${C.border}`, borderRadius: 4, padding: "8px 14px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" } },
+          React.createElement("span", { style: { fontSize: 12, color: C.navy, fontWeight: 700 } }, `🔎 絞り込み中：${QUICK_FILTER_LABELS[quickFilter]}（ダッシュボードから）`),
+          React.createElement(Btn, { label: "✕ 絞り込み解除", small: true, onClick: () => setQuickFilter(null) })
+        ),
+        urgentCases.length > 0 && React.createElement("div", { style: { background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: 4, padding: "10px 14px", marginBottom: 12 } },
+          React.createElement("div", { style: { fontWeight: 700, color: C.red, fontSize: 13, marginBottom: 6 } }, `⚠ 時効優先対応：${urgentCases.length}件が保険金請求権の時効（3年）まで180日を切っています`),
+          urgentCases.map(c => React.createElement("div", { key: c.id, style: { fontSize: 12, color: C.textMid, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderTop: `1px dashed ${C.redBorder}` } },
+            React.createElement("span", null, `${c.id} ｜ ${c.prop} ${c.unit} ｜ ${c.title}`),
+            React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 } },
+              React.createElement("span", { style: { fontWeight: 700, color: C.red } }, `時効まで ${c.daysToLimit}日`),
+              React.createElement(Btn, { label: "📝 催促文を生成", small: true, onClick: () => openRemind(c) })
+            )
+          ))
+        ),
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } },
+          React.createElement("span", { style: { fontWeight: 700, color: C.navy, fontSize: 14 } }, `保険申請 ＆ 修繕案件 台帳（${selectedBuilding === "全物件" ? "全物件" : selectedBuilding} / 全${visibleCases.length}件）`),
+          React.createElement(Btn, { label: "📥 Excel形式でエクスポート", onClick: () => showToast("✅ Excelファイルをダウンロードしました") })
+        ),
+        React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, overflowX: "auto" } },
+          React.createElement("table", { style: { borderCollapse: "collapse", width: "100%", tableLayout: "fixed" } },
+            React.createElement("thead", null,
+              React.createElement("tr", null,
+                React.createElement(TH, { w: 80 }, "案件ID"),
+                React.createElement(TH, { w: 85 }, "発生日"),
+                React.createElement(TH, { w: 110 }, "物件名"),
+                React.createElement(TH, { w: 75 }, "事故種別"),
+                React.createElement(TH, null, "不具合事故内容"),
+                React.createElement(TH, { w: 70 }, "AI適用率"),
+                React.createElement(TH, { w: 95 }, "見積・保険金額"),
+                React.createElement(TH, { w: 95 }, "保険会社進捗"),
+                React.createElement(TH, { w: 95 }, "工事手配進捗"),
+                React.createElement(TH, { w: 130 }, "現在の対応窓口"),
+                React.createElement(TH, { w: 100 }, "操作")
+              )
+            ),
+            React.createElement("tbody", null,
+              visibleCases.length === 0 ? React.createElement("tr", null,
+                React.createElement("td", { colSpan: 11, style: { padding: 20, textAlign: "center", color: C.textLight, fontSize: 12 } }, "この物件の対象案件はありません")
+              ) : visibleCases.map((c, i) => React.createElement("tr", { key: c.id, style: { background: i % 2 === 0 ? "#fff" : C.tableStripe } },
+                React.createElement(TD, { center: true, small: true }, c.id),
+                React.createElement(TD, { center: true, small: true }, c.date),
+                React.createElement(TD, { bold: true }, c.prop),
+                React.createElement(TD, null, c.type),
+                React.createElement(TD, null, c.title),
+                React.createElement(TD, { center: true }, React.createElement("span", { style: { fontWeight: 700, color: c.prob >= 80 ? C.red : C.green } }, `${c.prob}%`)),
+                React.createElement(TD, { bold: true }, fmtMoney(c.cost)),
+                React.createElement(TD, null, React.createElement("span", { style: { background: C.navyLight, padding: "2px 6px", borderRadius: 3, fontSize: 11, color: C.navy, fontWeight: 600 } }, c.insStatus)),
+                React.createElement(TD, null, React.createElement("span", { style: { background: "#FEF3C7", padding: "2px 6px", borderRadius: 3, fontSize: 11, color: "#92400E", fontWeight: 600 } }, c.workStatus)),
+                React.createElement("td", { style: { padding: "6px 8px", borderBottom: `1px solid ${C.borderLight}`, borderRight: `1px solid ${C.borderLight}` } },
+                  React.createElement("div", { style: { background: HOLDER_COLOR[c.holderType].bg, color: HOLDER_COLOR[c.holderType].text, padding: "2px 6px", borderRadius: 3, fontWeight: 700, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: c.holder }, `${HOLDER_COLOR[c.holderType].dot} ${c.holder}`),
+                  c.holderType !== "done" && React.createElement("div", { style: { fontSize: 10, color: C.textLight, marginTop: 2 } }, `${c.daysStalled}日経過${c.daysToLimit <= 180 ? ` ／ 時効まで${c.daysToLimit}日` : ""}`)
+                ),
+                React.createElement("td", { style: { padding: "4px 6px", borderBottom: `1px solid ${C.borderLight}`, textAlign: "center" } },
+                  React.createElement("div", { style: { display: "flex", gap: 3, justifyContent: "center" } },
+                    React.createElement(Btn, { label: "詳細", small: true, onClick: () => setDetailCaseId(c.id) }),
+                    c.holderType !== "done" && React.createElement("button", { title: "催促文を生成", onClick: () => openRemind(c, "reminder"), style: { border: `1px solid ${C.border}`, background: "#fff", borderRadius: 4, padding: "4px 6px", cursor: "pointer", fontSize: 12 } }, "📝"),
+                    needsQuote(c) && React.createElement("button", { title: "見積り依頼を送る", onClick: () => openRemind(c, "quote"), style: { border: `1px solid ${C.border}`, background: "#fff", borderRadius: 4, padding: "4px 6px", cursor: "pointer", fontSize: 12 } }, "🏗")
+                  )
+                )
+              ))
+            )
+          )
+        )
+      ),
+
+      /* ------------------------------------------------------------
+         TAB 3: 進捗ボード (保険と工事を両方並行追跡)
+      ------------------------------------------------------------ */
+      activeNav === "進捗ボード" && React.createElement("div", null,
+        React.createElement("div", { style: { fontSize: 12, color: C.textLight, marginBottom: 14 } }, "※ 保険と工事は必ずしも同じ順番で進みません。それぞれ独立したステータスとして並べています。同じ案件が両方のボードに出るので、「どちらが先行し、どちらが遅れているか」が一目で分かります。"),
+        visibleCases.length === 0 ? React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, padding: 30, textAlign: "center", color: C.textLight, fontSize: 12 } }, "この物件の対象案件はありません") :
+        React.createElement("div", null,
+          // 🏦 保険ステータス カンバン
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 13, marginBottom: 8 } }, "🏦 保険ステータス"),
+          React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 22 } },
+            INSURANCE_STAGES.map(stage => {
+              const stageCases = visibleCases.filter(c => insuranceStage(c) === stage);
+              return React.createElement("div", { key: stage, style: { background: "#fff", border: `1px solid ${C.border}`, padding: 10 } },
+                React.createElement("div", { style: { fontWeight: 700, color: STAGE_COLOR[stage], borderBottom: `2px solid ${STAGE_COLOR[stage]}`, paddingBottom: 6, marginBottom: 8, fontSize: 12, display: "flex", justifyContent: "space-between" } },
+                  React.createElement("span", null, stage), React.createElement("span", null, `${stageCases.length}件`)
+                ),
+                stageCases.length === 0 ? React.createElement("div", { style: { fontSize: 11, color: C.textLight, textAlign: "center", padding: 10 } }, "－") :
+                stageCases.map(c => React.createElement("div", { key: c.id, onClick: () => setDetailCaseId(c.id), style: { background: C.bg, border: `1px solid ${C.borderLight}`, padding: 8, marginBottom: 6, borderRadius: 3, cursor: "pointer" } },
+                  React.createElement("div", { style: { fontSize: 10, color: C.textLight } }, `${c.id} | ${c.prop}`),
+                  React.createElement("div", { style: { fontWeight: 700, fontSize: 11, marginTop: 2, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: c.title }, c.title),
+                  React.createElement("div", { style: { fontSize: 10, color: "#1D4ED8", background: "#EFF6FF", display: "inline-block", padding: "1px 5px", borderRadius: 3, marginBottom: 4 } }, `🔨 工事: ${c.workStatus}`),
+                  c.holderType !== "done" && React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 } },
+                    c.daysToLimit <= 180 ? React.createElement("span", { style: { fontSize: 10, color: C.red, fontWeight: 700 } }, `⚠ 時効まで${c.daysToLimit}日`) : React.createElement("span", { style: { fontSize: 10, color: C.textLight } }, `${c.daysStalled}日経過`),
+                    React.createElement("button", { title: "催促文を生成", onClick: (e) => { e.stopPropagation(); openRemind(c, "reminder"); }, style: { border: `1px solid ${C.border}`, background: "#fff", borderRadius: 4, padding: "2px 5px", cursor: "pointer", fontSize: 11 } }, "📝")
+                  )
+                ))
+              );
+            })
+          ),
+
+          // 🔨 工事ステータス カンバン
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 13, marginBottom: 8 } }, "🔨 工事ステータス"),
+          React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 } },
+            CONSTRUCTION_STAGES.map(stage => {
+              const stageCases = visibleCases.filter(c => constructionStage(c) === stage);
+              return React.createElement("div", { key: stage, style: { background: "#fff", border: `1px solid ${C.border}`, padding: 10 } },
+                React.createElement("div", { style: { fontWeight: 700, color: STAGE_COLOR[stage], borderBottom: `2px solid ${STAGE_COLOR[stage]}`, paddingBottom: 6, marginBottom: 8, fontSize: 12, display: "flex", justifyContent: "space-between" } },
+                  React.createElement("span", null, stage), React.createElement("span", null, `${stageCases.length}件`)
+                ),
+                stageCases.length === 0 ? React.createElement("div", { style: { fontSize: 11, color: C.textLight, textAlign: "center", padding: 10 } }, "－") :
+                stageCases.map(c => React.createElement("div", { key: c.id, onClick: () => setDetailCaseId(c.id), style: { background: C.bg, border: `1px solid ${C.borderLight}`, padding: 8, marginBottom: 6, borderRadius: 3, cursor: "pointer" } },
+                  React.createElement("div", { style: { fontSize: 10, color: C.textLight } }, `${c.id} | ${c.prop}`),
+                  React.createElement("div", { style: { fontWeight: 700, fontSize: 11, marginTop: 2, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: c.title }, c.title),
+                  React.createElement("div", { style: { fontSize: 10, color: C.navy, background: C.navyLight, display: "inline-block", padding: "1px 5px", borderRadius: 3, marginBottom: 4 } }, `🏦 保険: ${c.insStatus}`),
+                  needsQuote(c) && React.createElement("div", { style: { textAlign: "right", marginTop: 4 } },
+                    React.createElement("button", { title: "見積り依頼を送る", onClick: (e) => { e.stopPropagation(); openRemind(c, "quote"); }, style: { border: `1px solid ${C.border}`, background: "#fff", borderRadius: 4, padding: "2px 5px", cursor: "pointer", fontSize: 11 } }, "🏗")
+                  )
+                ))
+              );
+            })
+          )
+        )
+      ),
+
+      /* ------------------------------------------------------------
+         TAB 4: ダッシュボード (ROI・利益インパクト可視化)
+      ------------------------------------------------------------ */
+      activeNav === "ダッシュボード" && React.createElement("div", null,
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 16 } },
+          [
+            { label: "登録案件数（累計）", val: `${totalCases} 件`, sub: `管理物件 ${PROPERTIES.length}棟が対象`, warn: false, filter: null },
+            { label: "保険対応・進行中の案件", val: `${inProgressCases.length} 件（${Math.round(inProgressCases.length / totalCases * 100)}%）`, sub: "保険会社対応中＋社内手続き中", warn: false, filter: "inProgress" },
+            { label: "保険確定・着金累計", val: fmtMoney(confirmedSum), sub: `着金確定 ${confirmedCases.length}件の合計`, warn: false, filter: "confirmed" },
+            { label: "平均リードタイム（申請〜着金）", val: `${avgLeadTime.toFixed(1)} 日`, sub: "着金確定案件の実績平均", warn: false, filter: "confirmed" },
+            { label: "時効優先対応", val: `${urgentCases.length} 件`, sub: "3年の時効まで180日以内", warn: true, filter: "urgent" },
+          ].map(s => React.createElement("div", {
+            key: s.label,
+            onClick: () => { setQuickFilter(s.filter); setActiveNav("進捗一覧"); },
+            style: { background: "#fff", border: `1px solid ${s.warn ? C.redBorder : C.border}`, borderLeft: `4px solid ${s.warn ? C.red : C.navy}`, padding: "12px 14px", cursor: "pointer" },
+            title: "クリックすると案件一覧に絞り込んで表示します"
+          },
+            React.createElement("div", { style: { fontSize: 11, color: C.textMid, marginBottom: 4 } }, s.label),
+            React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: s.warn ? C.red : C.navy } }, s.val),
+            React.createElement("div", { style: { fontSize: 11, color: C.textLight, marginTop: 2 } }, s.sub)
+          ))
+        ),
+
+        // 🤖 AIによる意思決定サポート
+        React.createElement("div", { style: { background: C.navyLight, border: `1px solid ${C.border}`, borderRadius: 4, padding: "14px 18px", marginBottom: 16 } },
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 14, marginBottom: 8 } }, "🤖 AIによる意思決定サポート"),
+          React.createElement("ul", { style: { margin: 0, paddingLeft: 20, fontSize: 12, color: C.text, lineHeight: 1.8 } },
+            urgentCases.length > 0 && React.createElement("li", null,
+              React.createElement("strong", null, `時効まで180日以内の案件が${urgentCases.length}件`), `あります（最短 ${urgentCases[0].daysToLimit}日：${urgentCases[0].prop}）。至急、対応窓口への催促を推奨します。`
+            ),
+            outOfScopeButPossible.length > 0 && React.createElement("li", null,
+              React.createElement("strong", null, `「保険対象外」と現場判断された案件のうち${outOfScopeButPossible.length}件`), `は、AIの再検証で適用可能性が高いと判定されています。再確認を推奨します。`
+            ),
+            byProperty[0] && React.createElement("li", null,
+              React.createElement("strong", null, `${byProperty[0].name}`), `は案件数が最も多い物件です（${byProperty[0].count}件）。設備の傾向として重点確認をおすすめします。`
+            ),
+            inProgressCases.length > 0 && React.createElement("li", null,
+              React.createElement("strong", null, `保険対応・進行中の案件は${inProgressCases.length}件`), `。停滞が長い案件には催促文の自動生成をご活用ください。`
+            )
+          )
+        ),
+
+        // 📊 月次/年次トレンドグラフ
+        React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, padding: 18, marginBottom: 16 } },
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } },
+            React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 14 } }, "📊 案件数・着金額の推移"),
+            React.createElement("div", { style: { display: "flex", gap: 6 } },
+              React.createElement(Btn, { label: "月次", small: true, primary: chartMode === "monthly", onClick: () => setChartMode("monthly") }),
+              React.createElement(Btn, { label: "年次", small: true, primary: chartMode === "yearly", onClick: () => setChartMode("yearly") })
+            )
+          ),
+          React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: chartMode === "monthly" ? 10 : 30, height: 150, paddingLeft: 6, borderBottom: `2px solid ${C.border}` } },
+            trendData.map(d => {
+              const maxCount = Math.max(...trendData.map(x => x.count), 1);
+              return React.createElement("div", { key: d.key, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" } },
+                React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: C.navy, marginBottom: 3 } }, `${d.count}件`),
+                React.createElement("div", { style: { width: "60%", minWidth: 18, background: C.navy, borderRadius: "3px 3px 0 0", height: `${Math.max(6, (d.count / maxCount) * 100)}%` } }),
+                d.confirmed > 0 && React.createElement("div", { style: { fontSize: 9, color: C.green, marginTop: 3, fontWeight: 600 } }, `着金 ${fmtMoney(d.confirmed)}`)
+              );
+            })
+          ),
+          React.createElement("div", { style: { display: "flex", gap: chartMode === "monthly" ? 10 : 30, paddingLeft: 6, marginTop: 6 } },
+            trendData.map(d => React.createElement("div", { key: d.key, style: { flex: 1, textAlign: "center", fontSize: 11, color: C.textMid, fontWeight: 600 } }, d.key))
+          ),
+          React.createElement("div", { style: { fontSize: 10, color: C.textLight, marginTop: 10 } }, "※ 案件登録日ベース。緑の数値は同月・同年内に着金確定した金額。")
+        ),
+
+        // 📍 物件別 内訳グラフ
+        React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, padding: 18, marginBottom: 16 } },
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 14, marginBottom: 14 } }, "📍 物件別の案件数・着金額"),
+          byProperty.map(p => {
+            const maxCount = Math.max(...byProperty.map(x => x.count), 1);
+            return React.createElement("div", { key: p.name, style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 } },
+              React.createElement("div", { style: { width: 130, fontSize: 12, color: C.text, fontWeight: 600, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, p.name),
+              React.createElement("div", { style: { flex: 1, background: C.bg, borderRadius: 3, height: 18, position: "relative" } },
+                React.createElement("div", { style: { background: C.accent, height: "100%", borderRadius: 3, width: `${Math.max(4, (p.count / maxCount) * 100)}%` } })
+              ),
+              React.createElement("div", { style: { width: 40, fontSize: 12, color: C.navy, fontWeight: 700, textAlign: "right", flexShrink: 0 } }, `${p.count}件`),
+              React.createElement("div", { style: { width: 100, fontSize: 11, color: C.textLight, textAlign: "right", flexShrink: 0 } }, p.confirmed > 0 ? `着金 ${fmtMoney(p.confirmed)}` : "－")
+            );
+          })
+        ),
+
+        React.createElement("div", { style: { background: "#fff", border: `1px solid ${C.border}`, padding: 18 } },
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 14, marginBottom: 10 } }, "保険活用率の分析"),
+          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 20 } },
+            React.createElement("div", { style: { textAlign: "center" } },
+              React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: C.navy } }, `${totalCases}件`),
+              React.createElement("div", { style: { fontSize: 11, color: C.textLight } }, "登録案件数（累計）")
+            ),
+            React.createElement("div", { style: { fontSize: 18, color: C.textLight } }, "→"),
+            React.createElement("div", { style: { textAlign: "center", cursor: "pointer" }, onClick: () => { setQuickFilter("outOfScope"); setActiveNav("進捗一覧"); }, title: "クリックすると案件一覧に絞り込んで表示します" },
+              React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: C.red } }, `${outOfScopeCases.length}件（${Math.round(outOfScopeCases.length / totalCases * 100)}%）`),
+              React.createElement("div", { style: { fontSize: 11, color: C.textLight } }, "現場では『保険対象外』と判断")
+            ),
+            React.createElement("div", { style: { fontSize: 18, color: C.textLight } }, "→"),
+            React.createElement("div", { style: { textAlign: "center" } },
+              React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: C.green } }, `うち${outOfScopeButPossible.length}件`),
+              React.createElement("div", { style: { fontSize: 11, color: C.textLight } }, "AI再検知で適用可能性を発見")
+            )
+          ),
+          React.createElement("p", { style: { fontSize: 11, color: C.textMid, marginTop: 10 } }, "※ 「そもそも保険を検討していない」案件をAIが拾い上げることで、申請判断の漏れを経営側から一元的に把握できます。")
+        )
+      )
+    ),
+
+    // 催促文・確認メモ 生成モーダル（自動生成・編集可能）
+    remindCase && React.createElement("div", {
+      style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 998 },
+      onClick: () => setRemindCase(null)
+    },
+      React.createElement("div", {
+        style: { background: "#fff", borderRadius: 6, padding: 20, width: 440, boxShadow: "0 8px 30px rgba(0,0,0,0.25)" },
+        onClick: (e) => e.stopPropagation()
+      },
+        React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 14, marginBottom: 4 } }, remindKind === "quote" ? "🏗 見積り依頼（AI自動生成・編集可）" : "📝 催促文・確認メモ（AI自動生成・編集可）"),
+        React.createElement("div", { style: { fontSize: 11, color: C.textLight, marginBottom: 10 } }, `${remindCase.id} ｜ ${remindCase.prop} ${remindCase.unit}`),
+        React.createElement("textarea", {
+          value: remindText,
+          onChange: (e) => setRemindText(e.target.value),
+          style: { width: "100%", height: 150, border: `1px solid ${C.border}`, padding: 8, fontSize: 12, marginBottom: 12, whiteSpace: "pre-wrap" }
+        }),
+        React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8 } },
+          React.createElement(Btn, { label: "閉じる", small: true, onClick: () => setRemindCase(null) }),
+          React.createElement(Btn, {
+            label: remindKind === "quote" ? "📋 コピーして送信済にする" : "📋 コピーして送信済にする", primary: true, small: true,
+            onClick: () => { showToast(remindKind === "quote" ? "✅ 見積り依頼をコピーしました（送信済として記録）" : "✅ 催促文をコピーしました（送信済として記録）", C.green); setRemindCase(null); }
+          })
+        )
+      )
+    ),
+
+    // 案件詳細モーダル（ステータス変更可能）
+    detailCase && React.createElement("div", {
+      style: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 998 },
+      onClick: () => setDetailCaseId(null)
+    },
+      React.createElement("div", {
+        style: { background: "#fff", borderRadius: 6, padding: 22, width: 480, maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" },
+        onClick: (e) => e.stopPropagation()
+      },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 } },
+          React.createElement("div", { style: { fontWeight: 700, color: C.navy, fontSize: 15 } }, `案件詳細：${detailCase.id}`),
+          React.createElement("span", { style: { background: HOLDER_COLOR[detailCase.holderType].bg, color: HOLDER_COLOR[detailCase.holderType].text, padding: "2px 8px", borderRadius: 3, fontSize: 11, fontWeight: 700 } }, `${HOLDER_COLOR[detailCase.holderType].dot} ${detailCase.holder}`)
+        ),
+        React.createElement("div", { style: { fontSize: 12, color: C.textLight, marginBottom: 14 } }, `${detailCase.prop} ${detailCase.unit} ｜ 発生日 ${detailCase.date}`),
+
+        React.createElement("div", { style: { background: C.bg, border: `1px solid ${C.borderLight}`, borderRadius: 4, padding: 12, marginBottom: 14 } },
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 6 } }, detailCase.title),
+          React.createElement("div", { style: { fontSize: 12, color: C.textMid, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 } },
+            React.createElement("div", null, `事故種別：${detailCase.type}`),
+            React.createElement("div", null, `AI適用率：${detailCase.prob}%`),
+            React.createElement("div", null, `見積・保険金額：${fmtMoney(detailCase.cost)}`),
+            detailCase.holderType !== "done" && React.createElement("div", null, detailCase.daysToLimit <= 180 ? `⚠ 時効まで${detailCase.daysToLimit}日` : `${detailCase.daysStalled}日経過`)
+          )
+        ),
+
+        React.createElement("div", { style: { marginBottom: 12 } },
+          React.createElement("label", { style: { fontSize: 11, color: C.textMid, fontWeight: 700, display: "block", marginBottom: 4 } }, "🏦 保険会社進捗（変更可）"),
+          React.createElement("select", {
+            value: detailCase.insStatus,
+            onChange: (e) => updateCaseStatus(detailCase.id, "insStatus", e.target.value),
+            style: { width: "100%", border: `1px solid ${C.border}`, padding: "6px 8px", fontSize: 13 }
+          },
+            INSURANCE_STATUS_OPTIONS.map(opt => React.createElement("option", { key: opt, value: opt }, opt))
+          )
+        ),
+        React.createElement("div", { style: { marginBottom: 16 } },
+          React.createElement("label", { style: { fontSize: 11, color: C.textMid, fontWeight: 700, display: "block", marginBottom: 4 } }, "🔨 工事手配進捗（変更可）"),
+          React.createElement("select", {
+            value: detailCase.workStatus,
+            onChange: (e) => updateCaseStatus(detailCase.id, "workStatus", e.target.value),
+            style: { width: "100%", border: `1px solid ${C.border}`, padding: "6px 8px", fontSize: 13 }
+          },
+            CONSTRUCTION_STATUS_OPTIONS.map(opt => React.createElement("option", { key: opt, value: opt }, opt))
+          )
+        ),
+
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8 } },
+          React.createElement("div", { style: { display: "flex", gap: 8 } },
+            detailCase.holderType !== "done" && React.createElement(Btn, { label: "📝 催促文を生成", small: true, onClick: () => { openRemind(detailCase, "reminder"); } }),
+            needsQuote(detailCase) && React.createElement(Btn, { label: "🏗 見積り依頼", small: true, onClick: () => { openRemind(detailCase, "quote"); } })
+          ),
+          React.createElement(Btn, { label: "閉じる", small: true, primary: true, onClick: () => setDetailCaseId(null) })
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
